@@ -219,4 +219,46 @@ async function spSubmitComment(postId){
 }
 </script>
 
+
+<?php
+// Related Expedition CTA — match blog to expedition by tag
+$blog_tags = strtolower(get_post_meta($pid, 'fw_blog_tags', true));
+$exp_link = $exp_name = $exp_desc = '';
+
+if (strpos($blog_tags, 'umling la') !== false || strpos($blog_tags, 'leh ladakh') !== false) {
+    $exp_link = '/expedition/dream-leh-ladakh-expedition/';
+    $exp_name = 'Dream Leh Ladakh Expedition';
+    $exp_desc = 'Drive Umling La, Pangong Tso, Nubra Valley and more — guided self-drive convoy, Sep 2026';
+} elseif (strpos($blog_tags, 'spiti') !== false) {
+    $exp_link = '/expedition/magical-spiti-valley-expedition/';
+    $exp_name = 'Magical Spiti Valley Expedition';
+    $exp_desc = 'Key Monastery, Chandrataal Lake, Hikkim — guided self-drive convoy, Dec 2026';
+} elseif (strpos($blog_tags, 'adi kailash') !== false || strpos($blog_tags, 'om parvat') !== false) {
+    $exp_link = '/expedition/adi-kailash-om-parvat-self-drive-expedition/';
+    $exp_name = 'Adi Kailash Om Parvat Expedition';
+    $exp_desc = 'Drive to India's sacred Himalayan peak — guided self-drive convoy, 2026';
+} elseif (strpos($blog_tags, 'mustang') !== false || strpos($blog_tags, 'nepal') !== false) {
+    $exp_link = '/expedition/upper-mustang-muktinath-expedition/';
+    $exp_name = 'Upper Mustang Expedition';
+    $exp_desc = 'The Forbidden Kingdom — guided self-drive convoy into Lo Manthang, Nov 2026';
+} elseif (strpos($blog_tags, 'darma') !== false || strpos($blog_tags, 'rimkhim') !== false) {
+    $exp_link = '/expedition/rimkhim-pass-lapthal-darma-valley-expedition/';
+    $exp_name = 'Rimkhim Pass Darma Valley Expedition';
+    $exp_desc = 'Kumaon's most remote off-road valley — guided self-drive convoy, 2026';
+}
+
+if ($exp_link):
+?>
+<section style="background:#1a1410;border-top:3px solid #c1440e;padding:52px 5vw;margin-top:0">
+  <div style="max-width:800px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:32px;flex-wrap:wrap">
+    <div>
+      <div style="font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#e8a020;margin-bottom:10px">Related Expedition</div>
+      <h3 style="font-family:'Barlow Condensed',sans-serif;font-size:32px;color:#fff;letter-spacing:1px;margin-bottom:8px"><?php echo esc_html($exp_name); ?></h3>
+      <p style="font-size:14px;color:rgba(255,255,255,.6);line-height:1.6;max-width:480px"><?php echo esc_html($exp_desc); ?></p>
+    </div>
+    <a href="<?php echo esc_url($exp_link); ?>" style="display:inline-block;padding:14px 32px;background:#c1440e;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:18px;letter-spacing:2px;text-transform:uppercase;border-radius:2px;white-space:nowrap;text-decoration:none;flex-shrink:0">View Expedition →</a>
+  </div>
+</section>
+<?php endif; ?>
+
 <?php get_footer(); ?>
