@@ -1,0 +1,115 @@
+===============================================================
+  FREEWHEEL EXPEDITIONS — WORDPRESS SETUP GUIDE v2.0
+  (Fresh Install — Clean Start)
+===============================================================
+
+WHAT'S NEW IN v2.0
+-------------------
+✅ Nav CSS embedded directly — no plugin can override it
+✅ Elementor header/footer templates are suppressed
+✅ WooCommerce injections are blocked
+✅ All sidebar widgets are blocked
+✅ Admin bar offset fixed for logged-in users
+
+
+STEP 1 — DELETE OLD THEME (if re-uploading)
+--------------------------------------------
+1. Go to Appearance → Themes
+2. Activate any default theme (like "Twenty Twenty-Four")
+3. Then click on FreeWheel theme → Delete
+4. Now upload the new ZIP (next step)
+
+
+STEP 2 — UPLOAD & ACTIVATE THEME
+----------------------------------
+1. Appearance → Themes → Add New → Upload Theme
+2. Choose freewheel-theme.zip → Install Now → Activate
+
+
+STEP 3 — CREATE THESE 10 PAGES
+--------------------------------
+Go to Pages → Add New for each page below.
+Set the EXACT slug shown. Publish each page.
+
+  Page Title          |  Slug (URL name)
+  --------------------|------------------
+  Home                |  (set as homepage — see Step 4)
+  Nepal Expedition    |  nepal
+  Leh Ladakh          |  leh
+  Spiti Valley        |  spiti
+  Adi Kailash         |  adikailash
+  Past Expeditions    |  expeditions
+  Community           |  community
+  Merchandise         |  merchandise
+  My Dashboard        |  dashboard
+  Road Buddies        |  connect
+
+HOW TO SET SLUG:
+  Open page → look at URL/Permalink under the title
+  Click Edit → type the slug → click OK → Publish
+
+
+STEP 4 — SET HOMEPAGE
+-----------------------
+1. Settings → Reading
+2. Select "A static page"
+3. Homepage: select your "Home" page
+4. Save Changes
+
+
+STEP 5 — SET PERMALINKS
+-------------------------
+1. Settings → Permalinks
+2. Select "Post name"
+3. Save Changes
+
+
+STEP 6 — CLEAR CACHE
+----------------------
+In the WordPress top bar → Caching → Clear Cache
+
+
+STEP 7 — DISABLE CONFLICTING PLUGINS (IMPORTANT!)
+---------------------------------------------------
+These plugins fight with your theme. Deactivate them:
+
+Go to Plugins → Installed Plugins → Deactivate:
+
+  ❌ ElementsKit / ElementsKit Lite
+  ❌ MetSlider (if injecting into header)
+  ❌ Any "Header Footer" plugin
+  ❌ WooCommerce (if you don't have a shop)
+  ❌ SeedProd / Coming Soon Page builders
+
+  ✅ KEEP: Yoast SEO, WPForms, wpForo (Community), GoDaddy plugins
+
+
+STEP 8 — DELETE ALL ELEMENTOR TEMPLATES
+-----------------------------------------
+1. Templates → Theme Builder
+2. Delete ALL Header templates
+3. Delete ALL Footer templates
+4. Save
+
+
+DONE! Your site should now look exactly like your design.
+
+
+TROUBLESHOOTING
+----------------
+White bar showing at top?
+→ Templates → Theme Builder → delete all header templates
+
+Nav not visible?
+→ Plugins → deactivate ElementsKit
+→ Clear cache → hard refresh (Ctrl+Shift+R)
+
+Wrong page showing?
+→ Check slug matches exactly (lowercase, no spaces)
+→ Settings → Permalinks → Save Changes
+
+Old content showing?
+→ Make sure you deleted/trashed old Elementor pages
+→ Clear GoDaddy cache
+
+===============================================================

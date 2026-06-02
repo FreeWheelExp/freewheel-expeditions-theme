@@ -1,0 +1,205 @@
+/* ═══════════════════════════════════════════════════════════════
+   fw-animate.css — FreeWheel Expeditions · Animation Layer v1.0
+   Purely additive — no existing styles overridden
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Page Transition Overlay ── */
+#fw-page-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #080705;
+  transform: translateY(-100%);
+  pointer-events: none;
+}
+#fw-page-overlay.fw-leaving {
+  animation: fw-overlay-in 0.45s cubic-bezier(0.76,0,0.24,1) forwards;
+}
+#fw-page-overlay.fw-entering {
+  transform: translateY(0);
+  animation: fw-overlay-out 0.45s cubic-bezier(0.76,0,0.24,1) 0.1s forwards;
+}
+@keyframes fw-overlay-in {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+@keyframes fw-overlay-out {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-100%); }
+}
+
+/* ── Scroll Reveal Base ── */
+.fw-reveal {
+  opacity: 0;
+  transform: translateY(36px);
+  transition: opacity 0.7s cubic-bezier(0.22,1,0.36,1),
+              transform 0.7s cubic-bezier(0.22,1,0.36,1);
+  will-change: opacity, transform;
+}
+.fw-reveal.fw-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.fw-reveal-left {
+  opacity: 0;
+  transform: translateX(-40px);
+  transition: opacity 0.7s cubic-bezier(0.22,1,0.36,1),
+              transform 0.7s cubic-bezier(0.22,1,0.36,1);
+}
+.fw-reveal-left.fw-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+.fw-reveal-right {
+  opacity: 0;
+  transform: translateX(40px);
+  transition: opacity 0.7s cubic-bezier(0.22,1,0.36,1),
+              transform 0.7s cubic-bezier(0.22,1,0.36,1);
+}
+.fw-reveal-right.fw-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+.fw-reveal-scale {
+  opacity: 0;
+  transform: scale(0.92);
+  transition: opacity 0.6s cubic-bezier(0.22,1,0.36,1),
+              transform 0.6s cubic-bezier(0.22,1,0.36,1);
+}
+.fw-reveal-scale.fw-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ── Stagger delays ── */
+.fw-stagger > * { opacity: 0; transform: translateY(28px); transition: opacity 0.6s cubic-bezier(0.22,1,0.36,1), transform 0.6s cubic-bezier(0.22,1,0.36,1); }
+.fw-stagger.fw-visible > *:nth-child(1) { opacity:1; transform:translateY(0); transition-delay: 0s; }
+.fw-stagger.fw-visible > *:nth-child(2) { opacity:1; transform:translateY(0); transition-delay: 0.08s; }
+.fw-stagger.fw-visible > *:nth-child(3) { opacity:1; transform:translateY(0); transition-delay: 0.16s; }
+.fw-stagger.fw-visible > *:nth-child(4) { opacity:1; transform:translateY(0); transition-delay: 0.24s; }
+.fw-stagger.fw-visible > *:nth-child(5) { opacity:1; transform:translateY(0); transition-delay: 0.32s; }
+.fw-stagger.fw-visible > *:nth-child(6) { opacity:1; transform:translateY(0); transition-delay: 0.40s; }
+.fw-stagger.fw-visible > *:nth-child(n+7) { opacity:1; transform:translateY(0); transition-delay: 0.48s; }
+
+/* ── Parallax containers ── */
+.fw-parallax-wrap { overflow: hidden; }
+.fw-parallax-img  { will-change: transform; }
+
+/* ── Hero text animation ── */
+.fw-hero-word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(60px) rotate(3deg);
+  animation: fw-word-in 0.7s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+@keyframes fw-word-in {
+  to { opacity: 1; transform: translateY(0) rotate(0deg); }
+}
+
+/* ── Card hover lift ── */
+.fw-card-lift {
+  transition: transform 0.3s cubic-bezier(0.22,1,0.36,1),
+              box-shadow 0.3s ease;
+  will-change: transform;
+}
+.fw-card-lift:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 20px 60px rgba(0,0,0,.5), 0 0 0 1px rgba(193,68,14,.2);
+}
+
+/* ── Image reveal wipe ── */
+.fw-wipe-wrap {
+  position: relative;
+  overflow: hidden;
+}
+.fw-wipe-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--ink, #0f0d0b);
+  transform: translateX(0);
+  transition: transform 0.8s cubic-bezier(0.76,0,0.24,1);
+}
+.fw-wipe-wrap.fw-visible::after {
+  transform: translateX(101%);
+}
+
+/* ── Counter number animation ── */
+.fw-counter { display: inline-block; }
+
+/* ── Magnetic button effect ── */
+.fw-magnetic { transition: transform 0.3s cubic-bezier(0.22,1,0.36,1); display: inline-block; }
+
+/* ── Scroll progress bar ── */
+#fw-scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background: var(--rust, #c1440e);
+  z-index: 9998;
+  width: 0%;
+  transition: width 0.1s linear;
+  box-shadow: 0 0 8px rgba(193,68,14,.6);
+}
+
+/* ── Cursor spotlight ── */
+#fw-cursor-glow {
+  position: fixed;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(193,68,14,.06) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 1;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.3s ease;
+  opacity: 0;
+}
+
+/* ── Noise texture overlay ── */
+#fw-noise {
+  position: fixed;
+  inset: 0;
+  z-index: 9997;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-size: 128px;
+}
+
+/* ── Stat number pop ── */
+@keyframes fw-pop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+.fw-stat-pop { animation: fw-pop 0.4s ease; }
+
+/* ── Underline draw ── */
+.fw-underline-draw {
+  position: relative;
+  display: inline-block;
+}
+.fw-underline-draw::after {
+  content: '';
+  position: absolute;
+  left: 0; bottom: -2px;
+  width: 0; height: 2px;
+  background: var(--rust, #c1440e);
+  transition: width 0.4s cubic-bezier(0.22,1,0.36,1);
+}
+.fw-underline-draw:hover::after,
+.fw-underline-draw.fw-visible::after { width: 100%; }
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .fw-reveal, .fw-reveal-left, .fw-reveal-right, .fw-reveal-scale,
+  .fw-stagger > *, .fw-card-lift, .fw-wipe-wrap::after,
+  #fw-page-overlay, .fw-hero-word {
+    transition: none !important;
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

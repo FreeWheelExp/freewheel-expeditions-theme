@@ -1,0 +1,17 @@
+# FreeWheel Expeditions — robots.txt
+
+User-agent: *
+Allow: /
+
+Disallow: /wp-admin/
+Disallow: /wp-login.php
+Disallow: /dashboard/
+Disallow: /my-account/
+Disallow: /register/
+Disallow: /login/
+Disallow: /admin-dashboard/
+Disallow: /wp-content/plugins/
+Disallow: /wp-content/uploads/*.css
+Disallow: /wp-content/uploads/*.js
+
+Sitemap: https://freewheelexpeditions.in/sitemap_index.xml

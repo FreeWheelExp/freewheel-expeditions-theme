@@ -1,0 +1,138 @@
+===============================================================
+  FREEWHEEL EXPEDITIONS — SUPABASE SETUP GUIDE (FREE DATABASE)
+===============================================================
+
+Supabase is 100% FREE for your use case:
+  ✅ Up to 50,000 registered users
+  ✅ 500MB database storage
+  ✅ 1GB file storage (photos/videos)
+  ✅ No credit card required
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 1 — CREATE FREE SUPABASE ACCOUNT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Go to: https://supabase.com
+2. Click "Start your project" (free)
+3. Sign up with GitHub or email
+4. Click "New Project"
+5. Fill in:
+   - Project name: FreeWheel Expeditions
+   - Database password: (create a strong password, save it!)
+   - Region: Southeast Asia (Singapore) — closest to India
+6. Click "Create new project"
+   (Takes 1-2 minutes to set up)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 2 — CREATE THE MEMBERS TABLE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. In your Supabase project, click "SQL Editor" in left sidebar
+2. Click "New query"
+3. Paste this SQL and click "Run":
+
+-- Create members table
+CREATE TABLE fw_members (
+  id          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  first_name  text NOT NULL,
+  last_name   text,
+  email       text UNIQUE NOT NULL,
+  phone       text,
+  city        text,
+  created_at  timestamptz DEFAULT now()
+);
+
+-- Allow anyone to insert (for registration)
+ALTER TABLE fw_members ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow public registration"
+  ON fw_members FOR INSERT
+  WITH CHECK (true);
+
+-- Allow users to read their own data
+CREATE POLICY "Users read own data"
+  ON fw_members FOR SELECT
+  USING (email = auth.email());
+
+4. You should see "Success. No rows returned"
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 3 — GET YOUR API KEYS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. In Supabase, click "Settings" (gear icon, bottom left)
+2. Click "API"
+3. You'll see two important values:
+
+   Project URL:     https://xxxxxxxxxxxxxx.supabase.co
+   anon public key: eyJhbGciOi... (long string)
+
+4. Copy both — you need them in the next step
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 4 — ADD YOUR KEYS TO THE THEME
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. In WordPress admin: Appearance → Theme File Editor
+2. Click "fw-scripts.js" in the right sidebar
+3. Find these two lines near the BOTTOM of the file:
+
+   var FW_SUPABASE_URL  = 'YOUR_SUPABASE_URL';
+   var FW_SUPABASE_KEY  = 'YOUR_SUPABASE_ANON_KEY';
+
+4. Replace them with YOUR actual values, like:
+
+   var FW_SUPABASE_URL  = 'https://abcxyz123.supabase.co';
+   var FW_SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5...';
+
+5. Click "Update File"
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 5 — TEST REGISTRATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Visit your website
+2. Click "Register" in the nav
+3. Fill in the form and submit
+4. Go back to Supabase → Table Editor → fw_members
+5. You should see the new member row! ✅
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+VIEW YOUR REGISTERED MEMBERS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+In Supabase:
+  → Table Editor → fw_members
+  You'll see all registered members with their details
+
+You can also:
+  → Authentication → Users
+  To see all signed-up users with email/password
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+UPLOADING IMAGES & VIDEOS (Storage)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Supabase Storage lets you store expedition photos/videos:
+1. Supabase → Storage → New Bucket
+2. Name it: expedition-media
+3. Set to Public
+4. Upload files directly from the dashboard
+5. Files get a public URL you can use anywhere
+
+Max file size: 50MB per file (free plan)
+Total storage: 1GB free
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHAT GETS SAVED WHEN SOMEONE REGISTERS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ✅ First Name
+  ✅ Last Name
+  ✅ Email (used for login)
+  ✅ Phone Number
+  ✅ City
+  ✅ Password (encrypted — never stored in plain text)
+  ✅ Registration date & time
+
+===============================================================

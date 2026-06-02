@@ -1,0 +1,134 @@
+
+╔══════════════════════════════════════════════════════════════════╗
+║       FREEWHEEL EXPEDITIONS — ADMIN GUIDE v3.0                  ║
+║       How to manage your site from WordPress Dashboard          ║
+╚══════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+QUICK START AFTER UPLOADING THEME
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Upload freewheel-theme-v8.zip → Appearance → Themes → Activate
+2. Settings → Permalinks → Post name → Save Changes
+3. Go to 🏔️ Expeditions in the left menu → Add your trips
+4. Go to 📸 Past Albums → Add your past expedition albums
+5. Go to 🛍️ Merchandise → Add your products
+6. Visit your site — it all shows up automatically!
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🏔️ MANAGING EXPEDITIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Location: WordPress Admin → 🏔️ Expeditions
+
+ADD A NEW EXPEDITION:
+  1. Click "Add New Expedition"
+  2. Title = expedition name (e.g. "Dream Leh Ladakh")
+  3. Fill in:
+     • Status       → Upcoming or Past
+     • Dates        → Display text (e.g. "August 2026")
+     • Month Label  → Card badge text (e.g. "Aug 2026")
+     • Duration     → e.g. "15 Nights / 16 Days"
+     • Destination  → e.g. "Leh Ladakh"
+     • Price + Unit → e.g. 34999 + "per person"
+     • Total Slots  → e.g. 20
+     • Slots Filled → Update this as people book
+     • Overview     → 2-3 paragraphs about the trip
+     • Highlights   → Key places, one per line
+     • Itinerary    → Add each day with title + description
+     • Inclusions   → One per line (accommodation, meals, etc.)
+     • Exclusions   → One per line (fuel, flights, etc.)
+  4. Featured Image → Set the card thumbnail photo
+  5. Photo Gallery  → Upload carousel photos for the trip page
+  6. Publish ✅
+
+UPDATE SLOTS WHEN SOMEONE BOOKS:
+  → Expeditions → Edit → Slots Filled → increase by 1 → Update
+  The website automatically shows new "X slots left" count.
+
+MARK AS COMPLETED:
+  → Expeditions → Edit → Status → Past / Completed → Update
+  It disappears from upcoming and stops showing on homepage.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📸 MANAGING PAST EXPEDITION ALBUMS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Location: WordPress Admin → 📸 Past Albums
+
+ADD A NEW ALBUM:
+  1. Click "Add New Album"
+  2. Title = album name (e.g. "Winter Spiti 2026")
+  3. Fill in date, duration, travellers, location
+  4. Featured Image → Set the big hero/cover photo
+  5. Album Photos → Upload all expedition photos
+  6. Display Order → 1 = top, 2 = second, etc.
+  7. Publish ✅
+
+CHANGE PHOTOS:
+  → Past Albums → Edit album → Album Photos section
+  → Click "Add Photos" → Select from Media Library
+  → Remove unwanted photos with ✕
+  → Update ✅
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🛍️ MANAGING MERCHANDISE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Location: WordPress Admin → 🛍️ Merchandise
+
+ADD A PRODUCT:
+  1. Click "Add New Product"
+  2. Title = product name
+  3. Fill in price, category, description
+  4. Stock Status → In Stock / New Arrival / Limited / Out of Stock
+  5. Featured Image → product photo (square, 600×600px ideal)
+  6. Publish ✅
+
+MARK OUT OF STOCK (instant, no code needed):
+  → Merchandise → Click product name → Stock Status → Out of Stock
+  → Click Update
+  The website immediately shows "SOLD OUT" overlay + grey button.
+
+MARK NEW ARRIVAL:
+  → Stock Status → New Arrival → Update
+  Blue "New Arrival" badge appears on the card automatically.
+
+MARK LIMITED STOCK:
+  → Stock Status → Limited Stock → Update
+  Orange "⚡ Limited" badge appears.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MIGRATION FROM OLD THEME
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Your 4 existing expeditions (Nepal, Leh, Spiti, Adi Kailash) need
+to be re-entered in the new admin panel. Here's how:
+
+1. Go to Expeditions → Add New
+2. Copy details from your old site into the fields
+3. Upload the trip photos to Media Library
+4. Set Featured Image = thumbnail
+5. Add to Gallery = carousel photos
+6. Set Display Order: Nepal=1, Adi Kailash=2, Leh=3, Spiti=4
+7. Publish all 4
+
+The old page-nepal.php etc. still work as fallback, but new
+expedition posts will use the dynamic single-fw_expedition.php.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TIPS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Always clear cache after big updates (GoDaddy → Caching → Clear)
+• Expedition card photo: 800×500px landscape works best
+• Product photo: 600×600px square works best
+• Album cover: 1920×800px landscape works best
+• Album photos: 1200×800px landscape works best
+• The list view shows stock status colored badges at a glance
+• Sort products by Display Order number (1 = appears first)
+
+╔══════════════════════════════════════════════════════════════════╗
+║  Need to add a new expedition? 2 minutes.                       ║
+║  Mark something out of stock? 10 seconds.                       ║
+║  Update slot count? 10 seconds.                                 ║
+╚══════════════════════════════════════════════════════════════════╝

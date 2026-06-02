@@ -1,0 +1,90 @@
+===============================================================
+  FREEWHEEL — OTP SMS SETUP GUIDE (Fast2SMS)
+===============================================================
+
+Fast2SMS is the easiest & cheapest SMS provider in India.
+Free ₹50 credits on signup — enough for ~200 OTPs to start.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 1 — CREATE FAST2SMS ACCOUNT (FREE)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Go to: https://www.fast2sms.com
+2. Click "Register" — sign up with your mobile number
+3. You get ₹50 free credits automatically
+4. Go to: Dev API → API Keys
+5. Copy your API Key (long string)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 2 — CREATE OTP SESSIONS TABLE IN SUPABASE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Go to your Supabase project → SQL Editor
+2. Run this SQL:
+
+CREATE TABLE fw_otp_sessions (
+  phone      text PRIMARY KEY,
+  otp        text NOT NULL,
+  expires_at timestamptz NOT NULL,
+  created_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE fw_otp_sessions ENABLE ROW LEVEL SECURITY;
+
+-- Allow public to insert/update/delete (needed for OTP flow)
+CREATE POLICY "otp_public_access"
+  ON fw_otp_sessions
+  FOR ALL
+  USING (true)
+  WITH CHECK (true);
+
+3. Click Run — you should see "Success"
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 3 — ADD YOUR FAST2SMS KEY TO THE THEME
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. WordPress Admin → Appearance → Theme File Editor
+2. Click "fw-scripts.js" in the right panel
+3. Find this line near the top of the file:
+
+   var FW_FAST2SMS_KEY = 'YOUR_FAST2SMS_API_KEY';
+
+4. Replace with your actual key:
+
+   var FW_FAST2SMS_KEY = 'abcXYZ123yourkey...';
+
+5. Click "Update File"
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HOW IT WORKS AFTER SETUP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. User enters phone number → clicks Send OTP
+2. A 6-digit OTP is generated in the browser
+3. OTP is stored in Supabase (fw_otp_sessions) with 5-min expiry
+4. OTP is sent via Fast2SMS to the user's phone
+5. User enters OTP → it's verified against Supabase
+6. If correct → user is logged in / profile created
+7. Used OTP is deleted immediately (can't reuse)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DEMO MODE (Before Setup)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Without Fast2SMS key, the system works in demo mode:
+- OTP is shown on screen (for testing only)
+- No real SMS is sent
+- Everything else (form, profile, dashboard) works normally
+
+This lets you test the full flow before paying for SMS.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FAST2SMS PRICING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Quick SMS (what we use): ~₹0.25 per SMS
+₹50 free credits = ~200 OTPs free
+Recharge as needed — no monthly fee
+
+===============================================================
