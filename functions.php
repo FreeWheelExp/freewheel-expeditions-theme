@@ -2454,9 +2454,8 @@ function fw_expedition_card($pid){
           <div class="tc-dur" style="color:var(--amber);font-size:13px;font-weight:500;margin:4px 0 4px">'.esc_html($dur).'</div>
           '.($m('fw_dates')?'<div style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:10px;letter-spacing:.5px">📅 '.esc_html($m('fw_dates')).'</div>':'').'
           <div class="tc-dets"><div class="tc-det">📍 '.esc_html($dest).'</div><div class="tc-det">🚙 Self Drive</div></div>
-          <div class="tc-slots"><div class="slot-bar"><div class="slot-fill" style="width:'.$pct.'%"></div></div><div class="slot-txt">'.$left.' slots left</div></div>
           <div class="tc-price"><span class="p-from">from</span><span class="p-num">₹'.number_format($price).'</span><span class="p-note">/ '.esc_html($unit).'</span></div>
-          <div class="tc-btns"><a href="'.esc_url($link).'" class="det-btn">More Details</a></div>
+          <div class="tc-btns"><a href="'.esc_url($link).'" class="det-btn">More Details</a><a href="https://wa.me/917817838060?text='.rawurlencode('Hi! I want to enquire about the '.$title.' expedition.').'" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;background:#25D366;color:#fff;text-decoration:none;border-radius:2px;font-size:13px;font-weight:600;letter-spacing:1px;margin-top:8px">💬 WhatsApp Enquiry</a></div>
         </div>
       </div>';
 }

@@ -313,35 +313,10 @@ function closeModal(id){
 
 
 
-<!-- ── REGISTER COMING SOON POPUP ── -->
-<div id="fwComingSoonOverlay" onclick="if(event.target===this)fwComingSoonClose()" style="display:none;position:fixed;inset:0;z-index:4000;background:rgba(8,5,3,.94);align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(8px)">
-  <div style="background:#0f0d0b;border:1px solid rgba(193,68,14,.35);border-radius:4px;padding:44px 36px;max-width:420px;width:100%;position:relative;text-align:center;animation:regIn .3s ease">
-    <button onclick="fwComingSoonClose()" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,.08);border:none;color:#fff;width:32px;height:32px;border-radius:2px;cursor:pointer;font-size:16px">&#10005;</button>
-    <div style="font-size:48px;margin-bottom:16px">🚀</div>
-    <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--rust);margin-bottom:10px">Member Portal</div>
-    <div style="font-family:var(--headline);font-size:32px;color:#fff;letter-spacing:2px;margin-bottom:10px">Coming Soon</div>
-    <p style="font-size:14px;color:rgba(255,255,255,.5);line-height:1.7;margin-bottom:28px">We're building something epic for our road warriors — member dashboards, loyalty perks & exclusive convoy access.<br><br>Subscribe to be first in line when it drops.</p>
-    <button onclick="fwComingSoonClose();if(typeof fwSubOpen==='function')fwSubOpen();" style="width:100%;padding:14px;background:var(--rust);border:none;color:#fff;font-family:var(--headline);font-size:18px;letter-spacing:2px;cursor:pointer;border-radius:2px;transition:background .2s" onmouseover="this.style.background='#a03508'" onmouseout="this.style.background='var(--rust)'">
-      ✉️ NOTIFY ME FIRST
-    </button>
-    <div style="font-size:11px;color:rgba(255,255,255,.22);margin-top:14px;letter-spacing:1px">No spam · Unsubscribe anytime</div>
-  </div>
-</div>
+<!-- Register links directly to /register/ page -->
 <script>
-function fwComingSoon(){
-  var ov=document.getElementById('fwComingSoonOverlay');
-  if(ov){ov.style.display='flex';document.body.style.overflow='hidden';}
-}
-function fwComingSoonClose(){
-  var ov=document.getElementById('fwComingSoonOverlay');
-  if(ov){ov.style.display='none';document.body.style.overflow='';}
-}
-document.addEventListener('keydown',function(e){
-  if(e.key==='Escape'){
-    var ov=document.getElementById('fwComingSoonOverlay');
-    if(ov&&ov.style.display==='flex') fwComingSoonClose();
-  }
-});
+function fwComingSoon(){ window.location.href='/register/'; }
+function fwComingSoonClose(){}
 </script>
 
 <!-- ── FW SUBSCRIBE OTP MODAL ── -->
