@@ -13,10 +13,10 @@
   <div class="foot-links">
     <a href="<?php echo home_url('/expeditions/'); ?>">Expeditions</a>
     <a href="<?php echo home_url('/blog/'); ?>">Blog</a>
-    <a href="<?php echo home_url('/connect/'); ?>">Contact</a>
+    <a href="https://wa.me/917817838060" target="_blank">Contact</a>
     <a href="https://instagram.com/freewheelexpeditions" target="_blank" rel="noopener noreferrer">Instagram</a>
     <a href="https://www.facebook.com/groups/freewheelexpeditions" target="_blank" rel="noopener noreferrer">Facebook</a>
-    <a href="/cdn-cgi/l/email-protection#2048454c4c4f6046524545574845454c45585045444954494f4e530e494e">Email</a>
+    <a href="#" onclick="window.location='mai'+'lto:'+'info@freewheelexpeditions.in';return false;">Email</a>
     <a href="<?php echo home_url('/privacy-policy/'); ?>">Privacy Policy</a>
     <a href="<?php echo home_url('/terms-and-conditions/'); ?>">Terms</a>
     <a href="<?php echo home_url('/refund-policy/'); ?>">Refund Policy</a>
