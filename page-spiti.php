@@ -513,4 +513,17 @@ function switchPaySpiti(el,method){document.querySelectorAll('#spiti-pay-upi,#sp
 function copySpitiUPI(){var btn=document.getElementById('spitiCopyBtn');navigator.clipboard.writeText('7817838060@upi').then(function(){btn.textContent='Copied!';btn.classList.add('copied');setTimeout(function(){btn.textContent='Copy ID';btn.classList.remove('copied');},2000);});}
 </script>
 
+
+<?php
+// Render FAQs from expedition post meta (post ID 5359)
+global $wpdb;
+$spiti_faqs_raw = $wpdb->get_var(
+    "SELECT meta_value FROM {$wpdb->prefix}postmeta WHERE post_id = 5359 AND meta_key = 'fw_exp_faqs' LIMIT 1"
+);
+$spiti_faqs = $spiti_faqs_raw ? json_decode($spiti_faqs_raw, true) : array();
+if (!is_array($spiti_faqs)) $spiti_faqs = array();
+$spiti_faqs = array_values(array_filter($spiti_faqs, function($f){ return !empty(trim($f['q'] ?? '')); }));
+if (!empty($spiti_faqs)) fw_faq_output($spiti_faqs, 'spiti');
+?>
+
 <?php get_footer(); ?>
