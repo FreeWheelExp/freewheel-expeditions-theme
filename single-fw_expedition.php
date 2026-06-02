@@ -9,7 +9,7 @@ get_header();
 if (have_posts()) { the_post(); }
 
 $id         = get_the_ID();
-$title      = html_entity_decode(get_the_title(), ENT_QUOTES, 'UTF-8');
+$title      = html_entity_decode(get_the_title(), ENT_HTML5, 'UTF-8');
 $m          = function($k) use ($id) { return get_post_meta($id, $k, true); };
 $thumb      = get_the_post_thumbnail_url($id, 'full');
 $dates      = $m('fw_dates');
@@ -436,7 +436,7 @@ echo '<script type="application/ld+json">' . json_encode($schema_exp, JSON_UNESC
 
         <?php
           $wa_num_book  = $wa_num;
-          $wa_text_book = 'Hi FreeWheel! 👋 I want to book the *' . html_entity_decode(get_the_title(), ENT_QUOTES, 'UTF-8') . '* expedition.' . ($dates ? ' Dates: ' . $dates . '.' : '') . ' Please share booking details.';
+          $wa_text_book = 'Hi FreeWheel! 👋 I want to book the *' . $title . '* expedition.' . ($dates ? ' Dates: ' . $dates . '.' : '') . ' Please share booking details.';
         ?>
         <a href="https://wa.me/<?php echo $wa_num_book; ?>?text=<?php echo urlencode($wa_text_book); ?>"
            target="_blank"
@@ -628,7 +628,7 @@ if (!empty($all_faqs)) fw_faq_output($all_faqs, 'custom');
 <!-- MOBILE STICKY BOOKING BAR (hidden on desktop via CSS) -->
 <?php
   $mob_wa_num  = '917817838060';
-  $mob_wa_text = urlencode('Hi FreeWheel! 👋 I want to book the *' . html_entity_decode(get_the_title(), ENT_QUOTES, 'UTF-8') . '* expedition.' . ($dates ? ' Dates: ' . $dates . '.' : '') . ' Please share booking details.');
+  $mob_wa_text = urlencode('Hi FreeWheel! 👋 I want to book the *' . $title . '* expedition.' . ($dates ? ' Dates: ' . $dates . '.' : '') . ' Please share booking details.');
 ?>
 <div class="mob-book-bar" id="mobBookBar">
   <a href="https://wa.me/<?php echo $mob_wa_num; ?>?text=<?php echo $mob_wa_text; ?>"
