@@ -16,7 +16,6 @@
     <a href="https://wa.me/917817838060" target="_blank">Contact</a>
     <a href="https://instagram.com/freewheelexpeditions" target="_blank" rel="noopener noreferrer">Instagram</a>
     <a href="https://www.facebook.com/groups/freewheelexpeditions" target="_blank" rel="noopener noreferrer">Facebook</a>
-    <a href="#" onclick="window.location='mai'+'lto:'+'info@freewheelexpeditions.in';return false;">Email</a>
     <a href="<?php echo home_url('/privacy-policy/'); ?>">Privacy Policy</a>
     <a href="<?php echo home_url('/terms-and-conditions/'); ?>">Terms</a>
     <a href="<?php echo home_url('/refund-policy/'); ?>">Refund Policy</a>
