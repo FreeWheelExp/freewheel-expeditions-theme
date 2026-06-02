@@ -24,7 +24,7 @@ a{color:inherit;text-decoration:none}
 img{max-width:100%;height:auto}
 
 /* Hero */
-.dest-hero{min-height:70vh;background:linear-gradient(to bottom,rgba(15,13,11,.4) 0%,rgba(15,13,11,.85) 100%),url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&q=80') center/cover no-repeat;display:flex;align-items:flex-end;padding:60px 5vw}
+.dest-hero{min-height:70vh;background:linear-gradient(to bottom,rgba(15,13,11,.4) 0%,rgba(15,13,11,.85) 100%),url('https://freewheelexpeditions.in/wp-content/uploads/2026/04/IMG_20240702_052916-scaled.webp') center/cover no-repeat;display:flex;align-items:flex-end;padding:60px 5vw}
 .dest-hero-inner{max-width:900px}
 .dest-eyebrow{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--amber);margin-bottom:16px}
 .dest-h1{font-family:var(--headline);font-size:clamp(48px,8vw,90px);line-height:.92;letter-spacing:2px;color:#fff;margin-bottom:20px}
