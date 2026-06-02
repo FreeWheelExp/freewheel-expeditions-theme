@@ -13,7 +13,7 @@ html,body,body.page,#page,#content,#primary,#main,.site,.site-content,.entry-con
 body{background:var(--ink);color:#fff;font-family:'Inter',sans-serif;font-size:16px;line-height:1.7}
 a{color:inherit;text-decoration:none}
 img{max-width:100%;height:auto}
-.dest-hero{min-height:70vh;background:linear-gradient(to bottom,rgba(15,13,11,.4) 0%,rgba(15,13,11,.85) 100%),url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80') center/cover no-repeat;display:flex;align-items:flex-end;padding:60px 5vw}
+.dest-hero{min-height:70vh;background:linear-gradient(to bottom,rgba(15,13,11,.4) 0%,rgba(15,13,11,.85) 100%),url('https://freewheelexpeditions.in/wp-content/uploads/2026/04/vlcsnap-2026-04-30-14h42m46s367.webp') center/cover no-repeat;display:flex;align-items:flex-end;padding:60px 5vw}
 .dest-hero-inner{max-width:900px}
 .dest-eyebrow{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--amber);margin-bottom:16px}
 .dest-h1{font-family:var(--headline);font-size:clamp(48px,8vw,90px);line-height:.92;letter-spacing:2px;color:#fff;margin-bottom:20px}
