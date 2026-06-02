@@ -365,7 +365,7 @@ nav{padding-left:max(5vw,env(safe-area-inset-left));padding-right:max(5vw,env(sa
     <p class="trip-sub">Where the Himalayas whisper ancient stories and every valley touches the soul</p>
     <div class="trip-quick">
       <div class="tq-item"><div class="tq-label">Duration</div><div class="tq-val">8 Nights / 9 Days</div></div>
-      <div class="tq-item"><div class="tq-label">Upcoming Dates</div><div class="tq-val">23rd May – 31st May 2026</div></div>
+      <div class="tq-item"><div class="tq-label">Upcoming Dates</div><div class="tq-val">Nov 2026</div></div>
       <div class="tq-item"><div class="tq-label">Starting From</div><div class="tq-val">₹5,000 per Car/person</div></div>
       <div class="tq-item"><div class="tq-label">Trip Style</div><div class="tq-val">Self Drive</div></div>
     </div>
@@ -591,7 +591,7 @@ function tgNavLB(dir) {
 
         <div class="dates-card">
           <div class="dc-label">Upcoming Dates</div>
-          <div class="dc-date">23rd May – 31st May 2026</div>
+          <div class="dc-date">Nov 2026</div>
           <div class="dc-note">DM or WhatsApp for exact dates &amp; availability</div>
           <div style="margin-top:14px">
             <a href="https://wa.me/917817838060?text=Hi! I am interested in The Forbidden Mustang Expedition" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:11px;background:#25d366;color:#fff;text-decoration:none;font-family:var(--headline);font-size:15px;letter-spacing:1px;border-radius:2px">💬 WhatsApp Us</a>
