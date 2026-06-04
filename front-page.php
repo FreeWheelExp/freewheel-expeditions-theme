@@ -538,7 +538,7 @@ nav{padding-left:max(5vw,env(safe-area-inset-left));padding-right:max(5vw,env(sa
           <div class="album-hero">
             <div class="album-hero-bg" style="background:#1a1410">
               <?php if($cover): ?>
-              <img src="<?php echo esc_url($cover); ?>" alt="<?php echo esc_attr($title); ?>" class="album-cover"
+              <img loading="lazy" src="<?php echo esc_url($cover); ?>" alt="<?php echo esc_attr($title); ?>" class="album-cover"
                    style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:.55">
               <?php endif; ?>
             </div>
@@ -576,7 +576,7 @@ nav{padding-left:max(5vw,env(safe-area-inset-left));padding-right:max(5vw,env(sa
                  data-gslug="<?php echo esc_attr($slug); ?>"
                  data-gidx="<?php echo $j; ?>"
                  onclick="fwLbOpen('<?php echo esc_attr($slug); ?>',<?php echo $j; ?>)">
-              <img src="<?php echo esc_url($url); ?>" 
+              <img loading="lazy" src="<?php echo esc_url($url); ?>" 
                    alt="<?php echo esc_attr($title); ?> photo <?php echo $j+1; ?>"
                    style="width:100%;height:100%;object-fit:cover;object-position:center">
               <div class="thumb-overlay"><span>🔍</span></div>
@@ -679,7 +679,7 @@ if (!empty($_fw_testis)):
             <div class="fw-testi-author">
               <div class="fw-testi-avatar">
                 <?php if($_photo): ?>
-                <img src="<?php echo esc_url($_photo); ?>" alt="<?php echo esc_attr($_name); ?>">
+                <img loading="lazy" src="<?php echo esc_url($_photo); ?>" alt="<?php echo esc_attr($_name); ?>">
                 <?php else: ?>
                 <span><?php echo esc_html($_initials); ?></span>
                 <?php endif; ?>
@@ -813,7 +813,7 @@ if (!empty($_fw_testis)):
 <!-- LIGHTBOX -->
 <div id="fwLb" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.96);align-items:center;justify-content:center;flex-direction:column" onclick="if(event.target===this)fwLbClose()">
   <button onclick="fwLbClose()" style="position:absolute;top:18px;right:22px;background:none;border:none;color:#fff;font-size:32px;cursor:pointer;line-height:1;z-index:2">✕</button>
-  <img id="fwLbImg" src="" alt="" style="max-width:92vw;max-height:80vh;object-fit:contain;display:block;border-radius:2px">
+  <img loading="lazy" id="fwLbImg" src="" alt="" style="max-width:92vw;max-height:80vh;object-fit:contain;display:block;border-radius:2px">
   <div style="display:flex;align-items:center;gap:24px;margin-top:18px">
     <button onclick="fwLbNav(-1)" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;width:44px;height:44px;border-radius:50%;font-size:20px;cursor:pointer">&#8592;</button>
     <span id="fwLbCount" style="color:rgba(255,255,255,.6);font-size:14px;letter-spacing:2px;min-width:60px;text-align:center"></span>
