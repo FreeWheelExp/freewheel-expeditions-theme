@@ -24,20 +24,20 @@ body.admin-bar .mobile-menu { top: 96px !important; }
 :root{--ink:#0f0d0b;--paper:#f7f3ec;--rust:#c1440e;--amber:#e8a020;--teal:#2a7a6e;--sand:#d4b896;--smoke:#e8e2d8;--headline:'Bebas Neue',sans-serif;--body:'Barlow',sans-serif}
 html{scroll-behavior:smooth}
 body{font-family:var(--body);background:var(--paper);color:var(--ink);overflow-x:hidden}
-nav{position:fixed;top:0;left:0;right:0;z-index:9000;display:flex;align-items:center;justify-content:space-between;padding:0 5vw;height:64px;background:rgba(15,13,11,0.96);border-bottom:2px solid var(--rust)}
+nav{position:fixed;top:0;left:0;right:0;z-index:9000;display:flex;align-items:center;justify-content:space-between;padding:0 5vw;height:64px;background:rgba(15,13,11,0.96);border-bottom:2px solid var(--rust);overflow:visible}
 .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
 .nav-logo img{height:40px;width:40px;object-fit:contain;border-radius:50%;border:2px solid var(--amber)}
 .nav-brand{font-family:var(--headline);font-size:20px;color:#fff;letter-spacing:2px;line-height:1}
 .nav-brand span{display:block;font-family:var(--body);font-size:9px;font-weight:300;letter-spacing:4px;text-transform:uppercase;color:var(--amber)}
-.nav-links{display:flex;gap:24px;list-style:none;align-items:center}
+.nav-links{display:flex;gap:24px;list-style:none;align-items:center;overflow:visible}
 .nav-links a{text-decoration:none;font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.65);transition:color .2s}
 .nav-links a:hover{color:var(--amber)}
 .nav-cta{padding:8px 18px;background:var(--rust) !important;color:#fff !important;border-radius:2px}
 .nav-cta:hover{background:#a03508 !important}
-.nav-dropdown{position:relative}
-.nav-dropdown:hover .nav-drop-menu{display:block}
-.nav-drop-toggle{display:flex;align-items:center;gap:4px}
-.nav-drop-menu{display:none;position:absolute;top:100%;left:0;background:#1a1410;border:1px solid rgba(255,255,255,.1);border-top:2px solid var(--rust);min-width:200px;z-index:999;margin-top:8px}
+.nav-dropdown{position:relative;display:flex;align-items:center}
+.nav-dropdown:hover .nav-drop-menu,.nav-dropdown.open .nav-drop-menu,.nav-dropdown:focus-within .nav-drop-menu{display:block}
+.nav-drop-toggle{display:flex;align-items:center;gap:4px;background:none;border:none;cursor:pointer;font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.65);padding:0;height:64px}
+.nav-drop-menu{display:none;position:absolute;top:64px;left:0;background:#1a1410;border:1px solid rgba(255,255,255,.1);border-top:3px solid var(--rust);min-width:220px;z-index:99999;margin-top:0;padding:6px 0;box-shadow:0 16px 40px rgba(0,0,0,.6)}
 .nav-drop-menu li{list-style:none}
 .nav-drop-menu a{display:block;padding:12px 18px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.65);text-decoration:none;white-space:nowrap;transition:background .2s,color .2s}
 .nav-drop-menu a:hover{background:rgba(193,68,14,.15);color:var(--amber)}
@@ -325,12 +325,12 @@ nav{padding-left:max(5vw,env(safe-area-inset-left));padding-right:max(5vw,env(sa
 :root{--ink:#0f0d0b;--paper:#f7f3ec;--rust:#c1440e;--amber:#e8a020;--teal:#2a7a6e;--sand:#d4b896;--smoke:#e8e2d8;--headline:'Bebas Neue',sans-serif;--body:'Barlow',sans-serif}
 html{scroll-behavior:smooth}
 body{font-family:var(--body);background:var(--paper);color:var(--ink);overflow-x:hidden}
-nav{position:fixed;top:0;left:0;right:0;z-index:9000;display:flex;align-items:center;justify-content:space-between;padding:0 5vw;height:64px;background:rgba(15,13,11,0.96);border-bottom:2px solid var(--rust)}
+nav{position:fixed;top:0;left:0;right:0;z-index:9000;display:flex;align-items:center;justify-content:space-between;padding:0 5vw;height:64px;background:rgba(15,13,11,0.96);border-bottom:2px solid var(--rust);overflow:visible}
 .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
 .nav-logo img{height:40px;width:40px;object-fit:contain;border-radius:50%;border:2px solid var(--amber)}
 .nav-brand{font-family:var(--headline);font-size:20px;color:#fff;letter-spacing:2px;line-height:1}
 .nav-brand span{display:block;font-family:var(--body);font-size:9px;font-weight:300;letter-spacing:4px;text-transform:uppercase;color:var(--amber)}
-.nav-links{display:flex;gap:24px;list-style:none;align-items:center}
+.nav-links{display:flex;gap:24px;list-style:none;align-items:center;overflow:visible}
 .nav-links a{text-decoration:none;font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.65);transition:color .2s}
 .nav-links a:hover{color:var(--amber)}
 .nav-cta{padding:8px 18px;background:var(--rust) !important;color:#fff !important;border-radius:2px}
@@ -603,12 +603,12 @@ nav{padding-left:max(5vw,env(safe-area-inset-left));padding-right:max(5vw,env(sa
 :root{--ink:#0f0d0b;--paper:#f7f3ec;--rust:#c1440e;--amber:#e8a020;--teal:#2a7a6e;--sand:#d4b896;--smoke:#e8e2d8;--headline:'Bebas Neue',sans-serif;--body:'Barlow',sans-serif}
 html{scroll-behavior:smooth}
 body{font-family:var(--body);background:var(--paper);color:var(--ink);overflow-x:hidden}
-nav{position:fixed;top:0;left:0;right:0;z-index:9000;display:flex;align-items:center;justify-content:space-between;padding:0 5vw;height:64px;background:rgba(15,13,11,0.96);border-bottom:2px solid var(--rust)}
+nav{position:fixed;top:0;left:0;right:0;z-index:9000;display:flex;align-items:center;justify-content:space-between;padding:0 5vw;height:64px;background:rgba(15,13,11,0.96);border-bottom:2px solid var(--rust);overflow:visible}
 .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
 .nav-logo img{height:40px;width:40px;object-fit:contain;border-radius:50%;border:2px solid var(--amber)}
 .nav-brand{font-family:var(--headline);font-size:20px;color:#fff;letter-spacing:2px;line-height:1}
 .nav-brand span{display:block;font-family:var(--body);font-size:9px;font-weight:300;letter-spacing:4px;text-transform:uppercase;color:var(--amber)}
-.nav-links{display:flex;gap:24px;list-style:none;align-items:center}
+.nav-links{display:flex;gap:24px;list-style:none;align-items:center;overflow:visible}
 .nav-links a{text-decoration:none;font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.65);transition:color .2s}
 .nav-links a:hover{color:var(--amber)}
 .nav-cta{padding:8px 18px;background:var(--rust) !important;color:#fff !important;border-radius:2px}
@@ -881,12 +881,12 @@ nav{padding-left:max(5vw,env(safe-area-inset-left));padding-right:max(5vw,env(sa
 :root{--ink:#0f0d0b;--paper:#f7f3ec;--rust:#c1440e;--amber:#e8a020;--teal:#2a7a6e;--sand:#d4b896;--smoke:#e8e2d8;--headline:'Bebas Neue',sans-serif;--body:'Barlow',sans-serif}
 html{scroll-behavior:smooth}
 body{font-family:var(--body);background:var(--paper);color:var(--ink);overflow-x:hidden}
-nav{position:fixed;top:0;left:0;right:0;z-index:9000;display:flex;align-items:center;justify-content:space-between;padding:0 5vw;height:64px;background:rgba(15,13,11,0.96);border-bottom:2px solid var(--rust)}
+nav{position:fixed;top:0;left:0;right:0;z-index:9000;display:flex;align-items:center;justify-content:space-between;padding:0 5vw;height:64px;background:rgba(15,13,11,0.96);border-bottom:2px solid var(--rust);overflow:visible}
 .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
 .nav-logo img{height:40px;width:40px;object-fit:contain;border-radius:50%;border:2px solid var(--amber)}
 .nav-brand{font-family:var(--headline);font-size:20px;color:#fff;letter-spacing:2px;line-height:1}
 .nav-brand span{display:block;font-family:var(--body);font-size:9px;font-weight:300;letter-spacing:4px;text-transform:uppercase;color:var(--amber)}
-.nav-links{display:flex;gap:24px;list-style:none;align-items:center}
+.nav-links{display:flex;gap:24px;list-style:none;align-items:center;overflow:visible}
 .nav-links a{text-decoration:none;font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.65);transition:color .2s}
 .nav-links a:hover{color:var(--amber)}
 .nav-cta{padding:8px 18px;background:var(--rust) !important;color:#fff !important;border-radius:2px}
@@ -1159,12 +1159,12 @@ nav{padding-left:max(5vw,env(safe-area-inset-left));padding-right:max(5vw,env(sa
 :root{--ink:#0f0d0b;--paper:#f7f3ec;--rust:#c1440e;--amber:#e8a020;--teal:#2a7a6e;--sand:#d4b896;--smoke:#e8e2d8;--headline:'Bebas Neue',sans-serif;--body:'Barlow',sans-serif}
 html{scroll-behavior:smooth}
 body{font-family:var(--body);background:var(--paper);color:var(--ink);overflow-x:hidden}
-nav{position:fixed;top:0;left:0;right:0;z-index:9000;display:flex;align-items:center;justify-content:space-between;padding:0 5vw;height:64px;background:rgba(15,13,11,0.96);border-bottom:2px solid var(--rust)}
+nav{position:fixed;top:0;left:0;right:0;z-index:9000;display:flex;align-items:center;justify-content:space-between;padding:0 5vw;height:64px;background:rgba(15,13,11,0.96);border-bottom:2px solid var(--rust);overflow:visible}
 .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
 .nav-logo img{height:40px;width:40px;object-fit:contain;border-radius:50%;border:2px solid var(--amber)}
 .nav-brand{font-family:var(--headline);font-size:20px;color:#fff;letter-spacing:2px;line-height:1}
 .nav-brand span{display:block;font-family:var(--body);font-size:9px;font-weight:300;letter-spacing:4px;text-transform:uppercase;color:var(--amber)}
-.nav-links{display:flex;gap:24px;list-style:none;align-items:center}
+.nav-links{display:flex;gap:24px;list-style:none;align-items:center;overflow:visible}
 .nav-links a{text-decoration:none;font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.65);transition:color .2s}
 .nav-links a:hover{color:var(--amber)}
 .nav-cta{padding:8px 18px;background:var(--rust) !important;color:#fff !important;border-radius:2px}
@@ -1442,14 +1442,14 @@ nav{position:fixed;top:0;left:0;right:0;z-index:900;display:flex;align-items:cen
 .nav-logo img{height:40px;width:40px;object-fit:contain;border-radius:50%;border:2px solid var(--amber)}
 .nav-brand{font-family:var(--headline);font-size:20px;color:#fff;letter-spacing:2px;line-height:1}
 .nav-brand span{display:block;font-family:var(--body);font-size:9px;font-weight:300;letter-spacing:4px;text-transform:uppercase;color:var(--amber)}
-.nav-links{display:flex;gap:24px;list-style:none;align-items:center}
+.nav-links{display:flex;gap:24px;list-style:none;align-items:center;overflow:visible}
 .nav-links a{text-decoration:none;font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.65);transition:color .2s}
 .nav-links a:hover{color:var(--amber)}
 .nav-cta{padding:8px 18px;background:var(--rust) !important;color:#fff !important;border-radius:2px}
 .nav-cta:hover{background:#a03508 !important}
-.nav-dropdown{position:relative}
-.nav-dropdown:hover .nav-drop-menu{display:block}
-.nav-drop-menu{display:none;position:absolute;top:100%;left:0;background:#1a1410;border:1px solid rgba(255,255,255,.1);border-top:2px solid var(--rust);min-width:200px;z-index:999;margin-top:8px}
+.nav-dropdown{position:relative;display:flex;align-items:center}
+.nav-dropdown:hover .nav-drop-menu,.nav-dropdown.open .nav-drop-menu,.nav-dropdown:focus-within .nav-drop-menu{display:block}
+.nav-drop-menu{display:none;position:absolute;top:64px;left:0;background:#1a1410;border:1px solid rgba(255,255,255,.1);border-top:3px solid var(--rust);min-width:220px;z-index:99999;margin-top:0;padding:6px 0;box-shadow:0 16px 40px rgba(0,0,0,.6)}
 .nav-drop-menu li{list-style:none}
 .nav-drop-menu a{display:block;padding:12px 18px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.65);text-decoration:none;white-space:nowrap;transition:background .2s,color .2s}
 .nav-drop-menu a:hover{background:rgba(193,68,14,.15);color:var(--amber)}
