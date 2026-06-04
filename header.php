@@ -301,7 +301,7 @@ function closeModal(id){
   <ul class="nav-links">
     <li><a href="<?php echo home_url('/'); ?>#about">About</a></li>
     <li class="nav-dropdown">
-      <button class="nav-drop-toggle" onclick="this.closest('.nav-dropdown').classList.toggle('open')">Expeditions ▾</button>
+      <button class="nav-drop-toggle" data-dropdown="expeditions">Expeditions ▾</button>
       <ul class="nav-drop-menu">
         <li><a href="<?php echo home_url('/'); ?>#upcoming">Upcoming Expeditions</a></li>
         <li><a href="<?php echo home_url('/'); ?>#past">Past Expeditions</a></li>
@@ -351,8 +351,20 @@ function closeModal(id){
 function fwComingSoon(){ window.location.href='/register/'; }
 function fwComingSoonClose(){}
 
-// Close dropdown on outside click
+// Dropdown toggle via event delegation
 document.addEventListener('click', function(e){
+  var toggle = e.target.closest('[data-dropdown]');
+  if(toggle){
+    e.stopPropagation();
+    var dropdown = toggle.closest('.nav-dropdown');
+    var isOpen = dropdown.classList.contains('open');
+    // Close all dropdowns
+    document.querySelectorAll('.nav-dropdown.open').forEach(function(d){ d.classList.remove('open'); });
+    // Toggle clicked one
+    if(!isOpen) dropdown.classList.add('open');
+    return;
+  }
+  // Close all if clicked outside
   document.querySelectorAll('.nav-dropdown.open').forEach(function(d){
     if(!d.contains(e.target)) d.classList.remove('open');
   });
