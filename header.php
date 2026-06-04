@@ -296,30 +296,12 @@ function closeModal(id){
   </button>
   <ul class="nav-links">
     <li><a href="<?php echo home_url('/'); ?>#about">About</a></li>
-    <li class="nav-dropdown">
-      <button class="nav-drop-toggle" onclick="var d=this.parentElement;var o=d.classList.contains('open');document.querySelectorAll('.nav-dropdown').forEach(function(x){x.classList.remove('open');});if(!o)d.classList.add('open');">Expeditions ▾</button>
-      <ul class="nav-drop-menu">
-        <li><a href="<?php echo home_url('/'); ?>#upcoming">Upcoming Expeditions</a></li>
-        <li><a href="<?php echo home_url('/'); ?>#past">Past Expeditions</a></li>
-        <li style="border-top:1px solid rgba(255,255,255,.08);margin:4px 0"></li>
-        <li><a href="<?php echo home_url('/self-drive-leh-ladakh/'); ?>">Self Drive Leh Ladakh</a></li>
-        <li><a href="<?php echo home_url('/self-drive-spiti-valley/'); ?>">Self Drive Spiti Valley</a></li>
-        <li><a href="<?php echo home_url('/self-drive-adi-kailash/'); ?>">Self Drive Adi Kailash</a></li>
-        <li><a href="<?php echo home_url('/self-drive-darma-valley/'); ?>">Self Drive Darma Valley</a></li>
-        <li><a href="<?php echo home_url('/self-drive-upper-mustang/'); ?>">Self Drive Upper Mustang</a></li>
-      </ul>
-    </li>
+    <li><a href="<?php echo home_url('/'); ?>#upcoming">Expeditions</a></li>
     <li><a href="<?php echo home_url('/merchandise/'); ?>">Merchandise</a></li>
     <li><a href="<?php echo home_url('/community/'); ?>">Community</a></li>
     <li><a href="<?php echo home_url('/blog/'); ?>">Blog</a></li>
     <li id="navMyAccount" style="display:none"></li>
-    <li>
-      <div class="nav-search-wrap" id="navSearchWrap">
-        <input type="text" class="nav-search-input" id="navSearchInput" placeholder="Search expeditions..." autocomplete="off">
-        <button class="nav-search-btn" onclick="toggleNavSearch()" title="Search">🔍</button>
-        <div class="nav-search-results" id="navSearchResults"></div>
-      </div>
-    </li>
+    <li><button class="nav-search-btn" onclick="fwSearchOpen()" title="Search" style="background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:16px;padding:4px 8px;min-height:44px">🔍</button></li>
     <li><a href="<?php echo esc_url(home_url('/register/')); ?>" class="nav-cta" style="font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase">Register</a></li>
   </ul>
 </nav>
@@ -347,14 +329,7 @@ function closeModal(id){
 function fwComingSoon(){ window.location.href='/register/'; }
 function fwComingSoonClose(){}
 
-// Close dropdown when clicking outside
-document.addEventListener('click', function(e){
-  if(!e.target.classList.contains('nav-drop-toggle')){
-    document.querySelectorAll('.nav-dropdown.open').forEach(function(d){ d.classList.remove('open'); });
-  }
-});
-
-// Search data
+// Search overlay
 var fwSearchData = [
   {title:"Leh Ladakh Self Drive Expedition", url:"/expedition/dream-leh-ladakh-expedition/", tag:"Expedition"},
   {title:"Spiti Valley Self Drive Expedition", url:"/expedition/magical-spiti-valley-expedition/", tag:"Expedition"},
@@ -366,39 +341,48 @@ var fwSearchData = [
   {title:"Self Drive Adi Kailash Guide", url:"/self-drive-adi-kailash/", tag:"Guide"},
   {title:"Self Drive Darma Valley Guide", url:"/self-drive-darma-valley/", tag:"Guide"},
   {title:"Self Drive Upper Mustang Guide", url:"/self-drive-upper-mustang/", tag:"Guide"},
-  {title:"Umling La Highest Motorable Road", url:"/blog/umling-la-worlds-highest-motorable-road-ladakh/", tag:"Blog"},
-  {title:"Chitkul to Spiti Valley", url:"/blog/chitkul-to-spiti-valley-kinnaur-route/", tag:"Blog"},
+  {title:"Umling La Highest Motorable Road Ladakh", url:"/blog/umling-la-worlds-highest-motorable-road-ladakh/", tag:"Blog"},
+  {title:"Chitkul to Spiti Valley Kinnaur Route", url:"/blog/chitkul-to-spiti-valley-kinnaur-route/", tag:"Blog"}
 ];
-
-// Search toggle
-function toggleNavSearch(){
-  var wrap = document.getElementById('navSearchWrap');
-  var input = document.getElementById('navSearchInput');
-  if(!wrap) return;
-  wrap.classList.toggle('active');
-  if(wrap.classList.contains('active')){ 
-    input.focus();
-    input.oninput = function(){
-      var q = this.value.toLowerCase().trim();
-      var res = document.getElementById('navSearchResults');
-      if(q.length < 2){ res.style.display='none'; return; }
-      var matches = fwSearchData.filter(function(d){ return d.title.toLowerCase().indexOf(q) !== -1; }).slice(0,6);
-      res.style.display = 'block';
-      if(matches.length === 0){
-        res.innerHTML = '<div class="nsr-item" style="color:rgba(255,255,255,.3)">No results found</div>';
-      } else {
-        res.innerHTML = matches.map(function(m){
-          return '<a class="nsr-item" href="'+m.url+'">'+m.title+' <span class="nsr-tag">'+m.tag+'</span></a>';
-        }).join('');
-      }
-    };
+function fwSearchOpen(){
+  document.getElementById('fwSearchOverlay').style.display='flex';
+  document.getElementById('fwSearchBox').value='';
+  document.getElementById('fwSearchList').innerHTML='';
+  document.getElementById('fwSearchBox').focus();
+  document.body.style.overflow='hidden';
+}
+function fwSearchClose(){
+  document.getElementById('fwSearchOverlay').style.display='none';
+  document.body.style.overflow='';
+}
+function fwSearchRun(q){
+  q = q.toLowerCase().trim();
+  var list = document.getElementById('fwSearchList');
+  if(q.length < 2){ list.innerHTML='<p style="color:rgba(255,255,255,.3);font-size:13px;padding:12px 0">Type at least 2 characters...</p>'; return; }
+  var matches = fwSearchData.filter(function(d){ return d.title.toLowerCase().indexOf(q) !== -1; });
+  if(matches.length === 0){
+    list.innerHTML='<p style="color:rgba(255,255,255,.3);font-size:13px;padding:12px 0">No results found for "'+q+'"</p>';
   } else {
-    input.value='';
-    var res = document.getElementById('navSearchResults');
-    if(res) res.style.display='none';
+    list.innerHTML = matches.map(function(m){
+      return '<a href="'+m.url+'" style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.08);text-decoration:none;color:#fff;font-size:15px" onclick="fwSearchClose()">'
+        +'<span>'+m.title+'</span>'
+        +'<span style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--amber);flex-shrink:0;margin-left:16px">'+m.tag+'</span>'
+        +'</a>';
+    }).join('');
   }
 }
 </script>
+
+<!-- Search Overlay -->
+<div id="fwSearchOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(8,5,3,.97);padding:80px 5vw 40px;flex-direction:column;backdrop-filter:blur(8px)">
+  <button onclick="fwSearchClose()" style="position:absolute;top:20px;right:24px;background:rgba(255,255,255,.1);border:none;color:#fff;width:40px;height:40px;font-size:20px;cursor:pointer;border-radius:2px">✕</button>
+  <div style="max-width:640px;margin:0 auto;width:100%">
+    <div style="font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--amber);margin-bottom:16px">Search</div>
+    <input id="fwSearchBox" type="text" placeholder="Search expeditions, guides, blogs..." oninput="fwSearchRun(this.value)" onkeydown="if(event.key==='Escape')fwSearchClose()"
+      style="width:100%;padding:16px 20px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-bottom:3px solid var(--rust);color:#fff;font-size:18px;outline:none;border-radius:2px;box-sizing:border-box">
+    <div id="fwSearchList" style="margin-top:8px"></div>
+  </div>
+</div>
 
 <!-- ── FW SUBSCRIBE OTP MODAL ── -->
 <div id="fwOtpOverlay" style="position:fixed;inset:0;z-index:3000;background:rgba(8,5,3,.94);display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(8px)">
