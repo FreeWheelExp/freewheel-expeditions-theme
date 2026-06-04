@@ -301,7 +301,7 @@ function closeModal(id){
   <ul class="nav-links">
     <li><a href="<?php echo home_url('/'); ?>#about">About</a></li>
     <li class="nav-dropdown">
-      <button class="nav-drop-toggle" data-dropdown="expeditions">Expeditions ▾</button>
+      <button class="nav-drop-toggle" onclick="var d=this.parentElement;var o=d.classList.contains('open');document.querySelectorAll('.nav-dropdown').forEach(function(x){x.classList.remove('open');});if(!o)d.classList.add('open');">Expeditions ▾</button>
       <ul class="nav-drop-menu">
         <li><a href="<?php echo home_url('/'); ?>#upcoming">Upcoming Expeditions</a></li>
         <li><a href="<?php echo home_url('/'); ?>#past">Past Expeditions</a></li>
@@ -351,26 +351,14 @@ function closeModal(id){
 function fwComingSoon(){ window.location.href='/register/'; }
 function fwComingSoonClose(){}
 
-// Dropdown toggle via event delegation
+// Close dropdown when clicking outside
 document.addEventListener('click', function(e){
-  var toggle = e.target.closest('[data-dropdown]');
-  if(toggle){
-    e.stopPropagation();
-    var dropdown = toggle.closest('.nav-dropdown');
-    var isOpen = dropdown.classList.contains('open');
-    // Close all dropdowns
+  if(!e.target.classList.contains('nav-drop-toggle')){
     document.querySelectorAll('.nav-dropdown.open').forEach(function(d){ d.classList.remove('open'); });
-    // Toggle clicked one
-    if(!isOpen) dropdown.classList.add('open');
-    return;
   }
-  // Close all if clicked outside
-  document.querySelectorAll('.nav-dropdown.open').forEach(function(d){
-    if(!d.contains(e.target)) d.classList.remove('open');
-  });
 });
 
-// Search functionality
+// Search data
 var fwSearchData = [
   {title:"Leh Ladakh Self Drive Expedition", url:"/expedition/dream-leh-ladakh-expedition/", tag:"Expedition"},
   {title:"Spiti Valley Self Drive Expedition", url:"/expedition/magical-spiti-valley-expedition/", tag:"Expedition"},
@@ -382,39 +370,38 @@ var fwSearchData = [
   {title:"Self Drive Adi Kailash Guide", url:"/self-drive-adi-kailash/", tag:"Guide"},
   {title:"Self Drive Darma Valley Guide", url:"/self-drive-darma-valley/", tag:"Guide"},
   {title:"Self Drive Upper Mustang Guide", url:"/self-drive-upper-mustang/", tag:"Guide"},
-  {title:"Umling La — World's Highest Road", url:"/blog/umling-la-worlds-highest-motorable-road-ladakh/", tag:"Blog"},
+  {title:"Umling La Highest Motorable Road", url:"/blog/umling-la-worlds-highest-motorable-road-ladakh/", tag:"Blog"},
   {title:"Chitkul to Spiti Valley", url:"/blog/chitkul-to-spiti-valley-kinnaur-route/", tag:"Blog"},
 ];
 
+// Search toggle
 function toggleNavSearch(){
   var wrap = document.getElementById('navSearchWrap');
   var input = document.getElementById('navSearchInput');
+  if(!wrap) return;
   wrap.classList.toggle('active');
-  if(wrap.classList.contains('active')){ input.focus(); }
-  else { input.value=''; document.getElementById('navSearchResults').classList.remove('visible'); }
-}
-
-document.addEventListener('DOMContentLoaded', function(){
-  var input = document.getElementById('navSearchInput');
-  if(!input) return;
-  input.addEventListener('input', function(){
-    var q = this.value.toLowerCase().trim();
+  if(wrap.classList.contains('active')){ 
+    input.focus();
+    input.oninput = function(){
+      var q = this.value.toLowerCase().trim();
+      var res = document.getElementById('navSearchResults');
+      if(q.length < 2){ res.style.display='none'; return; }
+      var matches = fwSearchData.filter(function(d){ return d.title.toLowerCase().indexOf(q) !== -1; }).slice(0,6);
+      res.style.display = 'block';
+      if(matches.length === 0){
+        res.innerHTML = '<div class="nsr-item" style="color:rgba(255,255,255,.3)">No results found</div>';
+      } else {
+        res.innerHTML = matches.map(function(m){
+          return '<a class="nsr-item" href="'+m.url+'">'+m.title+' <span class="nsr-tag">'+m.tag+'</span></a>';
+        }).join('');
+      }
+    };
+  } else {
+    input.value='';
     var res = document.getElementById('navSearchResults');
-    if(q.length < 2){ res.classList.remove('visible'); return; }
-    var matches = fwSearchData.filter(function(d){ return d.title.toLowerCase().includes(q); }).slice(0,6);
-    if(matches.length === 0){ res.innerHTML='<div class="nsr-item" style="color:rgba(255,255,255,.3)">No results found</div>'; }
-    else { res.innerHTML = matches.map(function(m){ return '<a class="nsr-item" href="'+m.url+'">'+m.title+'<span class="nsr-tag">'+m.tag+'</span></a>'; }).join(''); }
-    res.classList.add('visible');
-  });
-  document.addEventListener('click', function(e){
-    if(!document.getElementById('navSearchWrap').contains(e.target)){
-      document.getElementById('navSearchResults').classList.remove('visible');
-    }
-  });
-  input.addEventListener('keydown', function(e){
-    if(e.key==='Escape'){ toggleNavSearch(); }
-  });
-});
+    if(res) res.style.display='none';
+  }
+}
 </script>
 
 <!-- ── FW SUBSCRIBE OTP MODAL ── -->
@@ -528,6 +515,7 @@ function fwSuccessClose(){
   if(ov){ov.style.display='none';document.body.style.overflow='';}
 }
 </script>
+
 
 
 
