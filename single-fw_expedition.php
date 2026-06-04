@@ -592,7 +592,6 @@ document.addEventListener('keydown',function(e){
 // FAQs: get post ID reliably from URL slug as ultimate fallback
 $faq_post_id = $id ? $id : get_the_ID();
 // Debug — remove after fix
-error_log('FW FAQ DEBUG: id=' . $id . ' post_id=' . get_the_ID() . ' faqs_raw=' . get_post_meta($id, 'fw_exp_faqs', true));
 if (!$faq_post_id) {
     $faq_slug    = get_query_var('fw_expedition') ?: basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
     $faq_post    = get_page_by_path($faq_slug, OBJECT, 'fw_expedition');
@@ -623,7 +622,6 @@ $common_faqs = array();
 $all_faqs = array_merge($exp_faqs, $common_faqs);
 
 if (!empty($all_faqs)) fw_faq_output($all_faqs, 'custom');
-else echo '<!-- FAQ DEBUG: post_id=' . $faq_post_id . ' exp_faqs_count=' . count($exp_faqs) . ' raw=' . substr($exp_faqs_raw,0,100) . ' -->';
 ?>
 
 <!-- MOBILE STICKY BOOKING BAR (hidden on desktop via CSS) -->
