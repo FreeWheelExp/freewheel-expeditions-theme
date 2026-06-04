@@ -85,13 +85,24 @@ nav{position:fixed;top:0;left:0;right:0;z-index:900;display:flex;align-items:cen
 .nav-login{padding:8px 16px;border:1px solid rgba(255,255,255,.25);color:rgba(255,255,255,.7) !important;border-radius:2px;transition:all .2s}
 .nav-login:hover{border-color:var(--rust);color:#fff !important}
 .nav-dropdown{position:relative!important;z-index:901!important}
-.nav-dropdown:hover .nav-drop-menu,
-.nav-dropdown.open .nav-drop-menu{display:block!important;visibility:visible!important;opacity:1!important;pointer-events:all!important}
-.nav-drop-toggle{display:flex!important;align-items:center;gap:4px;cursor:pointer}
-.nav-drop-menu{display:none;position:absolute!important;top:calc(100% + 2px)!important;left:0!important;background:#1a1410!important;border:1px solid rgba(255,255,255,.15)!important;border-top:3px solid var(--rust)!important;min-width:220px!important;z-index:9999!important;margin-top:0!important;padding:6px 0!important;list-style:none!important;box-shadow:0 16px 40px rgba(0,0,0,.6)!important}
+.nav-dropdown:hover .nav-drop-menu,.nav-dropdown.open .nav-drop-menu{display:block!important;visibility:visible!important;opacity:1!important;pointer-events:all!important}
+.nav-drop-toggle{display:flex!important;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.65);padding:0;background:none;border:none;min-height:44px}
+.nav-drop-toggle:hover{color:var(--amber)!important}
+.nav-drop-menu{display:none;position:absolute!important;top:100%!important;left:50%!important;transform:translateX(-50%)!important;background:#1a1410!important;border:1px solid rgba(255,255,255,.15)!important;border-top:3px solid var(--rust)!important;min-width:240px!important;z-index:9999!important;margin-top:0!important;padding:6px 0!important;list-style:none!important;box-shadow:0 16px 40px rgba(0,0,0,.6)!important}
 .nav-drop-menu li{list-style:none!important;padding:0!important;margin:0!important}
-.nav-drop-menu a{display:block!important;padding:13px 20px!important;font-size:11px!important;letter-spacing:2px!important;text-transform:uppercase!important;color:rgba(255,255,255,.7)!important;text-decoration:none!important;white-space:nowrap!important;transition:background .2s,color .2s!important;border-left:3px solid transparent!important}
+.nav-drop-menu a{display:block!important;padding:12px 20px!important;font-size:11px!important;letter-spacing:2px!important;text-transform:uppercase!important;color:rgba(255,255,255,.7)!important;text-decoration:none!important;white-space:nowrap!important;transition:background .2s,color .2s!important;border-left:3px solid transparent!important}
 .nav-drop-menu a:hover{background:rgba(193,68,14,.15)!important;color:var(--amber)!important;border-left-color:var(--rust)!important}
+/* Search bar */
+.nav-search-wrap{position:relative;display:flex;align-items:center}
+.nav-search-input{width:0;opacity:0;padding:0;border:none;background:rgba(255,255,255,.08);color:#fff;font-size:12px;letter-spacing:1px;border-radius:2px;transition:width .3s,opacity .3s,padding .3s;outline:none}
+.nav-search-wrap.active .nav-search-input{width:180px;opacity:1;padding:8px 12px}
+.nav-search-btn{background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:16px;padding:4px 8px;transition:color .2s;min-height:44px}
+.nav-search-btn:hover{color:var(--amber)}
+.nav-search-results{display:none;position:absolute;top:calc(100% + 8px);right:0;background:#1a1410;border:1px solid rgba(255,255,255,.15);border-top:3px solid var(--rust);min-width:280px;z-index:9999;box-shadow:0 16px 40px rgba(0,0,0,.6)}
+.nav-search-results.visible{display:block}
+.nsr-item{display:block;padding:12px 16px;font-size:12px;letter-spacing:1px;color:rgba(255,255,255,.7);text-decoration:none;border-bottom:1px solid rgba(255,255,255,.06);transition:background .2s}
+.nsr-item:hover{background:rgba(193,68,14,.15);color:var(--amber)}
+.nsr-tag{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-left:8px}
 .btn-solid{display:inline-block;padding:13px 34px;background:var(--rust);color:#fff;text-decoration:none;font-family:var(--headline);font-size:18px;letter-spacing:2px;border:none;cursor:pointer;transition:background .2s,transform .15s;border-radius:2px}
 .btn-solid:hover{background:#a03508;transform:translateY(-2px)}
 .btn-ghost{display:inline-block;padding:12px 34px;border:2px solid rgba(255,255,255,.3);color:#fff;text-decoration:none;font-family:var(--headline);font-size:18px;letter-spacing:2px;cursor:pointer;transition:border-color .2s,transform .15s;background:transparent;border-radius:2px}
@@ -290,7 +301,7 @@ function closeModal(id){
   <ul class="nav-links">
     <li><a href="<?php echo home_url('/'); ?>#about">About</a></li>
     <li class="nav-dropdown">
-      <span class="nav-drop-toggle" style="font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.65);cursor:pointer">Expeditions ▾</span>
+      <button class="nav-drop-toggle" onclick="this.closest('.nav-dropdown').classList.toggle('open')">Expeditions ▾</button>
       <ul class="nav-drop-menu">
         <li><a href="<?php echo home_url('/'); ?>#upcoming">Upcoming Expeditions</a></li>
         <li><a href="<?php echo home_url('/'); ?>#past">Past Expeditions</a></li>
@@ -306,6 +317,13 @@ function closeModal(id){
     <li><a href="<?php echo home_url('/community/'); ?>">Community</a></li>
     <li><a href="<?php echo home_url('/blog/'); ?>">Blog</a></li>
     <li id="navMyAccount" style="display:none"></li>
+    <li>
+      <div class="nav-search-wrap" id="navSearchWrap">
+        <input type="text" class="nav-search-input" id="navSearchInput" placeholder="Search expeditions..." autocomplete="off">
+        <button class="nav-search-btn" onclick="toggleNavSearch()" title="Search">🔍</button>
+        <div class="nav-search-results" id="navSearchResults"></div>
+      </div>
+    </li>
     <li><a href="<?php echo esc_url(home_url('/register/')); ?>" class="nav-cta" style="font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase">Register</a></li>
   </ul>
 </nav>
@@ -332,6 +350,59 @@ function closeModal(id){
 <script>
 function fwComingSoon(){ window.location.href='/register/'; }
 function fwComingSoonClose(){}
+
+// Close dropdown on outside click
+document.addEventListener('click', function(e){
+  document.querySelectorAll('.nav-dropdown.open').forEach(function(d){
+    if(!d.contains(e.target)) d.classList.remove('open');
+  });
+});
+
+// Search functionality
+var fwSearchData = [
+  {title:'Leh Ladakh Self Drive Expedition', url:'/expedition/dream-leh-ladakh-expedition/', tag:'Expedition'},
+  {title:'Spiti Valley Self Drive Expedition', url:'/expedition/magical-spiti-valley-expedition/', tag:'Expedition'},
+  {title:'Adi Kailash Om Parvat Expedition', url:'/expedition/adi-kailash-om-parvat-self-drive-expedition/', tag:'Expedition'},
+  {title:'Darma Valley Expedition', url:'/expedition/rimkhim-pass-lapthal-darma-valley-expedition/', tag:'Expedition'},
+  {title:'Upper Mustang Expedition', url:'/expedition/upper-mustang-muktinath-expedition/', tag:'Expedition'},
+  {title:'Self Drive Leh Ladakh Guide', url:'/self-drive-leh-ladakh/', tag:'Guide'},
+  {title:'Self Drive Spiti Valley Guide', url:'/self-drive-spiti-valley/', tag:'Guide'},
+  {title:'Self Drive Adi Kailash Guide', url:'/self-drive-adi-kailash/', tag:'Guide'},
+  {title:'Self Drive Darma Valley Guide', url:'/self-drive-darma-valley/', tag:'Guide'},
+  {title:'Self Drive Upper Mustang Guide', url:'/self-drive-upper-mustang/', tag:'Guide'},
+  {title:'Umling La — World's Highest Road', url:'/blog/umling-la-worlds-highest-motorable-road-ladakh/', tag:'Blog'},
+  {title:'Chitkul to Spiti Valley', url:'/blog/chitkul-to-spiti-valley-kinnaur-route/', tag:'Blog'},
+];
+
+function toggleNavSearch(){
+  var wrap = document.getElementById('navSearchWrap');
+  var input = document.getElementById('navSearchInput');
+  wrap.classList.toggle('active');
+  if(wrap.classList.contains('active')){ input.focus(); }
+  else { input.value=''; document.getElementById('navSearchResults').classList.remove('visible'); }
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  var input = document.getElementById('navSearchInput');
+  if(!input) return;
+  input.addEventListener('input', function(){
+    var q = this.value.toLowerCase().trim();
+    var res = document.getElementById('navSearchResults');
+    if(q.length < 2){ res.classList.remove('visible'); return; }
+    var matches = fwSearchData.filter(function(d){ return d.title.toLowerCase().includes(q); }).slice(0,6);
+    if(matches.length === 0){ res.innerHTML='<div class="nsr-item" style="color:rgba(255,255,255,.3)">No results found</div>'; }
+    else { res.innerHTML = matches.map(function(m){ return '<a class="nsr-item" href="'+m.url+'">'+m.title+'<span class="nsr-tag">'+m.tag+'</span></a>'; }).join(''); }
+    res.classList.add('visible');
+  });
+  document.addEventListener('click', function(e){
+    if(!document.getElementById('navSearchWrap').contains(e.target)){
+      document.getElementById('navSearchResults').classList.remove('visible');
+    }
+  });
+  input.addEventListener('keydown', function(e){
+    if(e.key==='Escape'){ toggleNavSearch(); }
+  });
+});
 </script>
 
 <!-- ── FW SUBSCRIBE OTP MODAL ── -->
