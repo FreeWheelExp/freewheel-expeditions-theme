@@ -84,11 +84,11 @@ nav{position:fixed;top:0;left:0;right:0;z-index:900;display:flex;align-items:cen
 .nav-cta:hover{background:#a03508 !important}
 .nav-login{padding:8px 16px;border:1px solid rgba(255,255,255,.25);color:rgba(255,255,255,.7) !important;border-radius:2px;transition:all .2s}
 .nav-login:hover{border-color:var(--rust);color:#fff !important}
-.nav-dropdown{position:static!important;z-index:901!important;height:64px;display:flex;align-items:center}
-.nav-dropdown:hover .nav-drop-menu,.nav-dropdown.open .nav-drop-menu{display:block!important;visibility:visible!important;opacity:1!important;pointer-events:all!important}
+.nav-dropdown{position:relative;z-index:901}
+.nav-dropdown:hover .nav-drop-menu,.nav-dropdown.open .nav-drop-menu{display:block}
 .nav-drop-toggle{display:flex!important;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.65);padding:0;background:none;border:none;min-height:44px}
 .nav-drop-toggle:hover{color:var(--amber)!important}
-.nav-drop-menu{display:none;position:absolute!important;top:64px!important;left:0!important;background:#1a1410!important;border:1px solid rgba(255,255,255,.15)!important;border-top:3px solid var(--rust)!important;min-width:240px!important;z-index:9999!important;margin-top:0!important;padding:6px 0!important;list-style:none!important;box-shadow:0 16px 40px rgba(0,0,0,.6)!important}
+.nav-drop-menu{display:none;position:absolute;top:100%;left:0;background:#1a1410;border:1px solid rgba(255,255,255,.15);border-top:3px solid var(--rust);min-width:220px;z-index:99999;padding:6px 0;list-style:none;box-shadow:0 16px 40px rgba(0,0,0,.6)}
 .nav-drop-menu li{list-style:none!important;padding:0!important;margin:0!important}
 .nav-drop-menu a{display:block!important;padding:12px 20px!important;font-size:11px!important;letter-spacing:2px!important;text-transform:uppercase!important;color:rgba(255,255,255,.7)!important;text-decoration:none!important;white-space:nowrap!important;transition:background .2s,color .2s!important;border-left:3px solid transparent!important}
 .nav-drop-menu a:hover{background:rgba(193,68,14,.15)!important;color:var(--amber)!important;border-left-color:var(--rust)!important}
@@ -528,5 +528,6 @@ function fwSuccessClose(){
   if(ov){ov.style.display='none';document.body.style.overflow='';}
 }
 </script>
+
 
 
