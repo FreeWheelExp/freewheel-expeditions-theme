@@ -72,23 +72,23 @@ body.admin-bar .mobile-menu { top: 96px !important; }
 :root{--ink:#0f0d0b;--paper:#f7f3ec;--rust:#c1440e;--amber:#e8a020;--teal:#2a7a6e;--sand:#d4b896;--smoke:#e8e2d8;--headline:'Bebas Neue',sans-serif;--body:'Barlow',sans-serif}
 html{scroll-behavior:smooth}
 body{font-family:var(--body);background:var(--paper);color:var(--ink);overflow-x:hidden}
-nav{position:fixed;top:0;left:0;right:0;z-index:900;display:flex;align-items:center;justify-content:space-between;padding:0 5vw;height:64px;background:rgba(15,13,11,0.96);border-bottom:2px solid var(--rust)}
+nav{position:fixed;top:0;left:0;right:0;z-index:900;display:flex;align-items:center;justify-content:space-between;padding:0 5vw;height:64px;background:rgba(15,13,11,0.96);border-bottom:2px solid var(--rust);overflow:visible}
 .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
 .nav-logo img{height:40px;width:40px;object-fit:contain;border-radius:50%;border:2px solid var(--amber)}
 .nav-brand{font-family:var(--headline);font-size:20px;color:#fff;letter-spacing:2px;line-height:1}
 .nav-brand span{display:block;font-family:var(--body);font-size:9px;font-weight:300;letter-spacing:4px;text-transform:uppercase;color:var(--amber)}
-.nav-links{display:flex;gap:24px;list-style:none;align-items:center}
+.nav-links{display:flex;gap:24px;list-style:none;align-items:center;overflow:visible}
 .nav-links a{text-decoration:none;font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.65);transition:color .2s}
 .nav-links a:hover{color:var(--amber)}
 .nav-cta{padding:8px 18px;background:var(--rust) !important;color:#fff !important;border-radius:2px}
 .nav-cta:hover{background:#a03508 !important}
 .nav-login{padding:8px 16px;border:1px solid rgba(255,255,255,.25);color:rgba(255,255,255,.7) !important;border-radius:2px;transition:all .2s}
 .nav-login:hover{border-color:var(--rust);color:#fff !important}
-.nav-dropdown{position:relative!important;z-index:901!important}
+.nav-dropdown{position:static!important;z-index:901!important;height:64px;display:flex;align-items:center}
 .nav-dropdown:hover .nav-drop-menu,.nav-dropdown.open .nav-drop-menu{display:block!important;visibility:visible!important;opacity:1!important;pointer-events:all!important}
 .nav-drop-toggle{display:flex!important;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.65);padding:0;background:none;border:none;min-height:44px}
 .nav-drop-toggle:hover{color:var(--amber)!important}
-.nav-drop-menu{display:none;position:absolute!important;top:100%!important;left:50%!important;transform:translateX(-50%)!important;background:#1a1410!important;border:1px solid rgba(255,255,255,.15)!important;border-top:3px solid var(--rust)!important;min-width:240px!important;z-index:9999!important;margin-top:0!important;padding:6px 0!important;list-style:none!important;box-shadow:0 16px 40px rgba(0,0,0,.6)!important}
+.nav-drop-menu{display:none;position:absolute!important;top:64px!important;left:0!important;background:#1a1410!important;border:1px solid rgba(255,255,255,.15)!important;border-top:3px solid var(--rust)!important;min-width:240px!important;z-index:9999!important;margin-top:0!important;padding:6px 0!important;list-style:none!important;box-shadow:0 16px 40px rgba(0,0,0,.6)!important}
 .nav-drop-menu li{list-style:none!important;padding:0!important;margin:0!important}
 .nav-drop-menu a{display:block!important;padding:12px 20px!important;font-size:11px!important;letter-spacing:2px!important;text-transform:uppercase!important;color:rgba(255,255,255,.7)!important;text-decoration:none!important;white-space:nowrap!important;transition:background .2s,color .2s!important;border-left:3px solid transparent!important}
 .nav-drop-menu a:hover{background:rgba(193,68,14,.15)!important;color:var(--amber)!important;border-left-color:var(--rust)!important}
@@ -528,4 +528,5 @@ function fwSuccessClose(){
   if(ov){ov.style.display='none';document.body.style.overflow='';}
 }
 </script>
+
 
