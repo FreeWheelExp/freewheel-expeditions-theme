@@ -289,7 +289,19 @@ function closeModal(id){
   </button>
   <ul class="nav-links">
     <li><a href="<?php echo home_url('/'); ?>#about">About</a></li>
-    <li><a href="<?php echo home_url('/'); ?>#upcoming">Expeditions</a></li>
+    <li class="nav-dropdown">
+      <span class="nav-drop-toggle" style="font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.65);cursor:pointer">Expeditions ▾</span>
+      <ul class="nav-drop-menu">
+        <li><a href="<?php echo home_url('/'); ?>#upcoming">Upcoming Expeditions</a></li>
+        <li><a href="<?php echo home_url('/'); ?>#past">Past Expeditions</a></li>
+        <li style="border-top:1px solid rgba(255,255,255,.08);margin:4px 0"></li>
+        <li><a href="<?php echo home_url('/self-drive-leh-ladakh/'); ?>">Self Drive Leh Ladakh</a></li>
+        <li><a href="<?php echo home_url('/self-drive-spiti-valley/'); ?>">Self Drive Spiti Valley</a></li>
+        <li><a href="<?php echo home_url('/self-drive-adi-kailash/'); ?>">Self Drive Adi Kailash</a></li>
+        <li><a href="<?php echo home_url('/self-drive-darma-valley/'); ?>">Self Drive Darma Valley</a></li>
+        <li><a href="<?php echo home_url('/self-drive-upper-mustang/'); ?>">Self Drive Upper Mustang</a></li>
+      </ul>
+    </li>
     <li><a href="<?php echo home_url('/merchandise/'); ?>">Merchandise</a></li>
     <li><a href="<?php echo home_url('/community/'); ?>">Community</a></li>
     <li><a href="<?php echo home_url('/blog/'); ?>">Blog</a></li>
@@ -305,6 +317,9 @@ function closeModal(id){
   <a href="<?php echo home_url('/merchandise/'); ?>" onclick="closeMobileMenu()">Merchandise</a>
   <a href="<?php echo home_url('/community/'); ?>" onclick="closeMobileMenu()">Community</a>
   <a href="<?php echo home_url('/blog/'); ?>" onclick="closeMobileMenu()">Blog</a>
+  <a href="<?php echo home_url('/self-drive-leh-ladakh/'); ?>" onclick="closeMobileMenu()">Leh Ladakh Guide</a>
+  <a href="<?php echo home_url('/self-drive-spiti-valley/'); ?>" onclick="closeMobileMenu()">Spiti Valley Guide</a>
+  <a href="<?php echo home_url('/self-drive-adi-kailash/'); ?>" onclick="closeMobileMenu()">Adi Kailash Guide</a>
   <a href="<?php echo esc_url(home_url('/register/')); ?>" onclick="closeMobileMenu()" class="mob-cta" style="text-align:center">Register</a>
 </div>
 
