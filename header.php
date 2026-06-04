@@ -372,18 +372,18 @@ document.addEventListener('click', function(e){
 
 // Search functionality
 var fwSearchData = [
-  {title:'Leh Ladakh Self Drive Expedition', url:'/expedition/dream-leh-ladakh-expedition/', tag:'Expedition'},
-  {title:'Spiti Valley Self Drive Expedition', url:'/expedition/magical-spiti-valley-expedition/', tag:'Expedition'},
-  {title:'Adi Kailash Om Parvat Expedition', url:'/expedition/adi-kailash-om-parvat-self-drive-expedition/', tag:'Expedition'},
-  {title:'Darma Valley Expedition', url:'/expedition/rimkhim-pass-lapthal-darma-valley-expedition/', tag:'Expedition'},
-  {title:'Upper Mustang Expedition', url:'/expedition/upper-mustang-muktinath-expedition/', tag:'Expedition'},
-  {title:'Self Drive Leh Ladakh Guide', url:'/self-drive-leh-ladakh/', tag:'Guide'},
-  {title:'Self Drive Spiti Valley Guide', url:'/self-drive-spiti-valley/', tag:'Guide'},
-  {title:'Self Drive Adi Kailash Guide', url:'/self-drive-adi-kailash/', tag:'Guide'},
-  {title:'Self Drive Darma Valley Guide', url:'/self-drive-darma-valley/', tag:'Guide'},
-  {title:'Self Drive Upper Mustang Guide', url:'/self-drive-upper-mustang/', tag:'Guide'},
-  {title:'Umling La — World's Highest Road', url:'/blog/umling-la-worlds-highest-motorable-road-ladakh/', tag:'Blog'},
-  {title:'Chitkul to Spiti Valley', url:'/blog/chitkul-to-spiti-valley-kinnaur-route/', tag:'Blog'},
+  {title:"Leh Ladakh Self Drive Expedition", url:"/expedition/dream-leh-ladakh-expedition/", tag:"Expedition"},
+  {title:"Spiti Valley Self Drive Expedition", url:"/expedition/magical-spiti-valley-expedition/", tag:"Expedition"},
+  {title:"Adi Kailash Om Parvat Expedition", url:"/expedition/adi-kailash-om-parvat-self-drive-expedition/", tag:"Expedition"},
+  {title:"Darma Valley Expedition", url:"/expedition/rimkhim-pass-lapthal-darma-valley-expedition/", tag:"Expedition"},
+  {title:"Upper Mustang Expedition", url:"/expedition/upper-mustang-muktinath-expedition/", tag:"Expedition"},
+  {title:"Self Drive Leh Ladakh Guide", url:"/self-drive-leh-ladakh/", tag:"Guide"},
+  {title:"Self Drive Spiti Valley Guide", url:"/self-drive-spiti-valley/", tag:"Guide"},
+  {title:"Self Drive Adi Kailash Guide", url:"/self-drive-adi-kailash/", tag:"Guide"},
+  {title:"Self Drive Darma Valley Guide", url:"/self-drive-darma-valley/", tag:"Guide"},
+  {title:"Self Drive Upper Mustang Guide", url:"/self-drive-upper-mustang/", tag:"Guide"},
+  {title:"Umling La — World's Highest Road", url:"/blog/umling-la-worlds-highest-motorable-road-ladakh/", tag:"Blog"},
+  {title:"Chitkul to Spiti Valley", url:"/blog/chitkul-to-spiti-valley-kinnaur-route/", tag:"Blog"},
 ];
 
 function toggleNavSearch(){
@@ -528,3 +528,4 @@ function fwSuccessClose(){
   if(ov){ov.style.display='none';document.body.style.overflow='';}
 }
 </script>
+
