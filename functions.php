@@ -343,6 +343,7 @@ function freewheel_enqueue_assets() {
     // call supabase.createClient() in inline <script> blocks within the page body.
     // Moving this to footer (true) would break auth — keep as false (head).
     wp_enqueue_script('supabase-js', 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', array(), null, false);
+    wp_enqueue_script('razorpay-checkout', 'https://checkout.razorpay.com/v1/checkout.js', array(), null, false);
     wp_enqueue_script('fw-data', get_template_directory_uri().'/fw-data.js', array(), '5.1', true);
     wp_enqueue_script('fw-scripts', get_template_directory_uri().'/fw-scripts.js', array('fw-data'), '5.1', true);
     wp_localize_script('fw-scripts', 'FW_AUTH', array(
@@ -2554,4 +2555,234 @@ function fw_get_payment_details() {
         'bank'    => 'Nainital Bank, Haldwani',
     ));
     exit;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RAZORPAY INTEGRATION
+   Keys defined in wp-config.php:
+     define( 'FW_RAZORPAY_KEY_ID',     'rzp_test_...' );
+     define( 'FW_RAZORPAY_KEY_SECRET', '...' );
+═══════════════════════════════════════════════════════════ */
+if ( ! defined( 'FW_RAZORPAY_KEY_ID' ) )     define( 'FW_RAZORPAY_KEY_ID',     '' );
+if ( ! defined( 'FW_RAZORPAY_KEY_SECRET' ) ) define( 'FW_RAZORPAY_KEY_SECRET', '' );
+
+/* Expose Razorpay key ID (public) to frontend */
+add_action( 'wp_head', function() {
+    if ( FW_RAZORPAY_KEY_ID ) {
+        echo '<script>window.FW_RZP_KEY=' . json_encode( FW_RAZORPAY_KEY_ID ) . ';</script>' . "\n";
+    }
+}, 5 );
+
+/* ── REST: Create Razorpay Order ── */
+add_action( 'rest_api_init', function() {
+    register_rest_route( 'freewheel/v1', '/rzp-create-order', array(
+        'methods'             => 'POST',
+        'callback'            => 'fw_rzp_create_order',
+        'permission_callback' => '__return_true',
+    ));
+    register_rest_route( 'freewheel/v1', '/rzp-verify-payment', array(
+        'methods'             => 'POST',
+        'callback'            => 'fw_rzp_verify_payment',
+        'permission_callback' => '__return_true',
+    ));
+});
+
+function fw_rzp_create_order( $req ) {
+    /* Auth check */
+    $user = fw_get_authed_user( $req );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $p       = $req->get_json_params() ?: array();
+    $amount  = intval( $p['amount'] ?? 0 );   /* in paise */
+    $type    = sanitize_text_field( $p['type'] ?? '' );   /* expedition | merchandise */
+    $ref_id  = sanitize_text_field( $p['ref_id'] ?? '' ); /* expedition post ID or product ID */
+    $note    = sanitize_text_field( $p['note'] ?? '' );
+
+    if ( $amount < 100 ) {
+        return new WP_Error( 'invalid_amount', 'Amount must be at least ₹1.', array( 'status' => 400 ) );
+    }
+    if ( ! in_array( $type, array( 'expedition', 'merchandise' ), true ) ) {
+        return new WP_Error( 'invalid_type', 'type must be expedition or merchandise.', array( 'status' => 400 ) );
+    }
+    if ( ! FW_RAZORPAY_KEY_ID || ! FW_RAZORPAY_KEY_SECRET ) {
+        return new WP_Error( 'rzp_config', 'Payment gateway not configured.', array( 'status' => 503 ) );
+    }
+
+    $receipt = 'fw_' . $type[0] . '_' . time() . '_' . substr( $user['id'], 0, 8 );
+
+    $body = wp_json_encode( array(
+        'amount'          => $amount,
+        'currency'        => 'INR',
+        'receipt'         => $receipt,
+        'notes'           => array(
+            'user_id'  => $user['id'],
+            'user_email' => $user['email'],
+            'type'     => $type,
+            'ref_id'   => $ref_id,
+            'note'     => $note,
+        ),
+    ));
+
+    $response = wp_remote_post( 'https://api.razorpay.com/v1/orders', array(
+        'headers' => array(
+            'Content-Type'  => 'application/json',
+            'Authorization' => 'Basic ' . base64_encode( FW_RAZORPAY_KEY_ID . ':' . FW_RAZORPAY_KEY_SECRET ),
+        ),
+        'body'    => $body,
+        'timeout' => 15,
+    ));
+
+    if ( is_wp_error( $response ) ) {
+        return new WP_Error( 'rzp_network', 'Could not reach payment gateway.', array( 'status' => 502 ) );
+    }
+
+    $data = json_decode( wp_remote_retrieve_body( $response ), true );
+    $code = wp_remote_retrieve_response_code( $response );
+
+    if ( $code !== 200 || empty( $data['id'] ) ) {
+        return new WP_Error( 'rzp_error', $data['error']['description'] ?? 'Payment order creation failed.', array( 'status' => 502 ) );
+    }
+
+    return rest_ensure_response( array(
+        'success'  => true,
+        'order_id' => $data['id'],
+        'amount'   => $data['amount'],
+        'currency' => $data['currency'],
+        'receipt'  => $receipt,
+    ));
+}
+
+function fw_rzp_verify_payment( $req ) {
+    /* Auth check */
+    $user = fw_get_authed_user( $req );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $p                  = $req->get_json_params() ?: array();
+    $razorpay_order_id  = sanitize_text_field( $p['razorpay_order_id']   ?? '' );
+    $razorpay_payment_id= sanitize_text_field( $p['razorpay_payment_id'] ?? '' );
+    $razorpay_signature = sanitize_text_field( $p['razorpay_signature']  ?? '' );
+    $type               = sanitize_text_field( $p['type']    ?? '' );
+    $ref_id             = sanitize_text_field( $p['ref_id']  ?? '' );
+    $amount             = intval( $p['amount'] ?? 0 );
+    $seats              = intval( $p['seats']  ?? 1 );
+    $note               = sanitize_text_field( $p['note']    ?? '' );
+
+    if ( ! $razorpay_order_id || ! $razorpay_payment_id || ! $razorpay_signature ) {
+        return new WP_Error( 'missing_params', 'Payment verification data incomplete.', array( 'status' => 400 ) );
+    }
+
+    /* Verify signature */
+    $expected = hash_hmac( 'sha256', $razorpay_order_id . '|' . $razorpay_payment_id, FW_RAZORPAY_KEY_SECRET );
+    if ( ! hash_equals( $expected, $razorpay_signature ) ) {
+        return new WP_Error( 'sig_mismatch', 'Payment verification failed. Please contact support.', array( 'status' => 400 ) );
+    }
+
+    /* Payment verified — record in Supabase */
+    if ( $type === 'expedition' ) {
+        /* Get expedition title from WP */
+        $trip_title = '';
+        $trip_dates = '';
+        if ( $ref_id ) {
+            $post = get_post( intval( $ref_id ) );
+            if ( $post ) {
+                $trip_title = $post->post_title;
+                $trip_dates = get_post_meta( $post->ID, 'fw_dates', true );
+            }
+        }
+
+        $booking = array(
+            'user_id'       => $user['id'],
+            'trip_id'       => $ref_id,
+            'trip_title'    => $trip_title,
+            'trip_dates'    => $trip_dates,
+            'seats'         => $seats,
+            'amount_total'  => $amount,
+            'amount_paid'   => $amount,
+            'payment_mode'  => 'razorpay',
+            'payment_ref'   => $razorpay_payment_id,
+            'status'        => 'confirmed',
+            'notes'         => $note,
+        );
+
+        $sb_resp = wp_remote_post( FW_SUPABASE_URL . '/rest/v1/fw_bookings', array(
+            'headers' => array(
+                'apikey'        => FW_SUPABASE_SERVICE,
+                'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE,
+                'Content-Type'  => 'application/json',
+                'Prefer'        => 'return=representation',
+            ),
+            'body'    => wp_json_encode( $booking ),
+            'timeout' => 10,
+        ));
+
+        $sb_code = wp_remote_retrieve_response_code( $sb_resp );
+        if ( $sb_code !== 201 ) {
+            /* Payment succeeded but DB failed — log and alert */
+            error_log( 'FW RZP: Booking DB insert failed for payment ' . $razorpay_payment_id );
+        }
+
+        /* Send admin notification email */
+        $member_name = $user['email'];
+        wp_mail(
+            get_option('admin_email'),
+            'New Booking Confirmed — ' . $trip_title,
+            "Payment confirmed via Razorpay.\n\nPayment ID: {$razorpay_payment_id}\nUser: {$member_name}\nTrip: {$trip_title}\nSeats: {$seats}\nAmount: ₹" . number_format($amount/100) . "\n\nLogin to admin panel to view details.",
+            array('Content-Type: text/plain; charset=UTF-8')
+        );
+
+        return rest_ensure_response( array(
+            'success' => true,
+            'type'    => 'expedition',
+            'message' => 'Booking confirmed! We\'ll send details on WhatsApp.',
+        ));
+    }
+
+    if ( $type === 'merchandise' ) {
+        $product_name = sanitize_text_field( $p['product_name'] ?? '' );
+        $size         = sanitize_text_field( $p['size'] ?? '' );
+
+        $order = array(
+            'user_id'      => $user['id'],
+            'product_id'   => $ref_id,
+            'product_name' => $product_name,
+            'size'         => $size,
+            'amount'       => $amount,
+            'payment_mode' => 'razorpay',
+            'payment_ref'  => $razorpay_payment_id,
+            'status'       => 'paid',
+            'notes'        => $note,
+        );
+
+        $sb_resp = wp_remote_post( FW_SUPABASE_URL . '/rest/v1/fw_orders', array(
+            'headers' => array(
+                'apikey'        => FW_SUPABASE_SERVICE,
+                'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE,
+                'Content-Type'  => 'application/json',
+                'Prefer'        => 'return=representation',
+            ),
+            'body'    => wp_json_encode( $order ),
+            'timeout' => 10,
+        ));
+
+        $sb_code = wp_remote_retrieve_response_code( $sb_resp );
+        if ( $sb_code !== 201 ) {
+            error_log( 'FW RZP: Order DB insert failed for payment ' . $razorpay_payment_id );
+        }
+
+        /* Admin notification */
+        wp_mail(
+            get_option('admin_email'),
+            'New Merchandise Order — ' . $product_name,
+            "Payment confirmed via Razorpay.\n\nPayment ID: {$razorpay_payment_id}\nUser: {$user['email']}\nProduct: {$product_name}\nSize: {$size}\nAmount: ₹" . number_format($amount/100) . "\n\nLogin to admin panel to process.",
+            array('Content-Type: text/plain; charset=UTF-8')
+        );
+
+        return rest_ensure_response( array(
+            'success' => true,
+            'type'    => 'merchandise',
+            'message' => 'Order placed! We\'ll ship within 3–5 days.',
+        ));
+    }
+
+    return new WP_Error( 'invalid_type', 'Unknown payment type.', array( 'status' => 400 ) );
 }

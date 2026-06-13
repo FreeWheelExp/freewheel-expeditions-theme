@@ -431,27 +431,76 @@ echo '<script type="application/ld+json">' . json_encode($schema_exp, JSON_UNESC
 
 
 
-      <!-- BOOK NOW — WhatsApp CTA -->
+      <!-- BOOK NOW — Razorpay + WhatsApp -->
       <div style="padding:20px 24px 24px">
-
         <?php
           $wa_num_book  = $wa_num;
           $wa_text_book = 'Hi FreeWheel! 👋 I want to book the *' . $title . '* expedition.' . ($dates ? ' Dates: ' . $dates . '.' : '') . ' Please share booking details.';
+          $exp_post_id  = get_the_ID();
         ?>
+
+        <!-- Seats selector -->
+        <div style="margin-bottom:14px">
+          <label style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.45);display:block;margin-bottom:6px">Number of Seats</label>
+          <div style="display:flex;align-items:center;gap:10px">
+            <button onclick="fwExpSeatChange(-1)" style="width:36px;height:36px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:18px;cursor:pointer;border-radius:2px">−</button>
+            <span id="expSeatCount" style="font-family:var(--headline);font-size:28px;color:#fff;min-width:30px;text-align:center">1</span>
+            <button onclick="fwExpSeatChange(1)" style="width:36px;height:36px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:18px;cursor:pointer;border-radius:2px">+</button>
+            <span style="font-size:13px;color:rgba(255,255,255,.4)">× ₹<?php echo number_format($price); ?></span>
+          </div>
+          <div style="margin-top:8px;font-size:13px;color:rgba(255,255,255,.6)">Total: <strong id="expTotalAmt" style="color:var(--amber)">₹<?php echo number_format($price); ?></strong></div>
+        </div>
+
+        <button id="rzpExpBtn" onclick="fwExpRzpPay()"
+          style="width:100%;padding:16px;background:var(--rust);border:none;color:#fff;font-family:var(--headline);font-size:18px;letter-spacing:2px;cursor:pointer;border-radius:2px;transition:background .2s;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          PAY &amp; BOOK NOW
+        </button>
+        <div id="rzpExpMsg" style="font-size:12px;text-align:center;min-height:16px;margin-bottom:8px"></div>
+
         <a href="https://wa.me/<?php echo $wa_num_book; ?>?text=<?php echo urlencode($wa_text_book); ?>"
            target="_blank"
-           class="book-btn"
-           style="display:flex;align-items:center;justify-content:center;gap:10px;text-decoration:none;padding:18px;font-size:18px;letter-spacing:2px;margin-bottom:0">
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.528 5.85L.057 23.077a.75.75 0 0 0 .943.895l5.344-1.705A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.726 9.726 0 0 1-4.964-1.355l-.355-.212-3.693 1.178 1.131-3.595-.232-.371A9.725 9.725 0 0 1 2.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg>
-          BOOK NOW
+           style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.6);font-size:12px;letter-spacing:1px;text-decoration:none;border-radius:2px;transition:background .2s"
+           onmouseover="this.style.background='rgba(255,255,255,.1)'" onmouseout="this.style.background='rgba(255,255,255,.05)'">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.528 5.85L.057 23.077a.75.75 0 0 0 .943.895l5.344-1.705A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.726 9.726 0 0 1-4.964-1.355l-.355-.212-3.693 1.178 1.131-3.595-.232-.371A9.725 9.725 0 0 1 2.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg>
+          OR ENQUIRE ON WHATSAPP
         </a>
-        <div style="text-align:center;font-size:11px;color:rgba(255,255,255,.35);margin-top:10px;line-height:1.6">
-          Chat with us on WhatsApp · Instant reply<br>
-          +91 78178 38060 · +91 78382 95852
-        </div>
+        <div style="text-align:center;font-size:11px;color:rgba(255,255,255,.25);margin-top:10px">Secure payment · UPI / Cards / NetBanking via Razorpay</div>
 
       </div>
     </div><!-- /pay-panel -->
+
+      <script>
+      var _expSeats=1, _expPrice=<?php echo intval($price); ?>, _expPostId='<?php echo esc_js(get_the_ID()); ?>', _expTitle='<?php echo esc_js($title); ?>', _expDates='<?php echo esc_js($dates); ?>';
+      function fwExpSeatChange(d){_expSeats=Math.max(1,Math.min(10,_expSeats+d));document.getElementById('expSeatCount').textContent=_expSeats;document.getElementById('expTotalAmt').textContent='₹'+(_expSeats*_expPrice).toLocaleString('en-IN');}
+      async function fwExpRzpPay(){
+        var btn=document.getElementById('rzpExpBtn'),msg=document.getElementById('rzpExpMsg');
+        msg.textContent='';msg.style.color='#f87171';
+        var session=null;try{session=JSON.parse(localStorage.getItem('fw_session')||'null');}catch(e){}
+        if(!session||!session.access_token||session.expires_at<Date.now()){msg.textContent='Please log in to book.';setTimeout(function(){window.location.href=window.FW_AUTH.login_url+'?redirect='+encodeURIComponent(window.location.href);},1200);return;}
+        if(!window.FW_RZP_KEY){msg.textContent='Payment gateway not configured.';return;}
+        btn.disabled=true;btn.textContent='Creating order…';
+        var amountPaise=_expSeats*_expPrice*100;
+        try{
+          var or=await fetch(window.FW_AUTH.rest_url+'/rzp-create-order',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},body:JSON.stringify({amount:amountPaise,type:'expedition',ref_id:_expPostId,note:_expTitle+' · '+_expDates+' · '+_expSeats+' seat(s)'})});
+          var od=await or.json();if(!or.ok)throw new Error(od.message||'Order creation failed.');
+          var rzp=new Razorpay({key:window.FW_RZP_KEY,amount:od.amount,currency:od.currency,name:'FreeWheel Expeditions',description:_expTitle+(_expDates?' · '+_expDates:'')+' · '+_expSeats+' seat(s)',order_id:od.order_id,prefill:{email:session.email,name:session.first_name||''},theme:{color:'#c1440e'},
+            modal:{ondismiss:function(){btn.disabled=false;btn.textContent='PAY & BOOK NOW';}},
+            handler:async function(r){
+              btn.textContent='Verifying…';
+              try{
+                var vr=await fetch(window.FW_AUTH.rest_url+'/rzp-verify-payment',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},body:JSON.stringify({razorpay_order_id:r.razorpay_order_id,razorpay_payment_id:r.razorpay_payment_id,razorpay_signature:r.razorpay_signature,type:'expedition',ref_id:_expPostId,amount:amountPaise,seats:_expSeats,note:_expTitle+' · '+_expDates})});
+                var vd=await vr.json();if(!vr.ok)throw new Error(vd.message||'Verification failed.');
+                btn.style.background='#16a34a';btn.textContent='✓ BOOKING CONFIRMED!';
+                msg.textContent=vd.message||'Booking confirmed!';msg.style.color='#4ade80';
+              }catch(err){msg.textContent='Payment received. Contact support with ID: '+r.razorpay_payment_id;btn.disabled=false;btn.textContent='PAY & BOOK NOW';}
+            }
+          });
+          rzp.on('payment.failed',function(resp){msg.textContent='Payment failed: '+(resp.error.description||'Try again.');btn.disabled=false;btn.textContent='PAY & BOOK NOW';});
+          rzp.open();
+        }catch(err){msg.textContent=err.message||'Something went wrong.';btn.disabled=false;btn.textContent='PAY & BOOK NOW';}
+      }
+      </script>
 
     <div id="sidebarSub" style="background:linear-gradient(135deg,var(--teal),#1a5a50);padding:20px">
       <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:6px">Member Perk</div>

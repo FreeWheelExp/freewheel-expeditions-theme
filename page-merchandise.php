@@ -353,8 +353,19 @@ $wa_num = '917817838060';
 
     <!-- Payment tabs -->
     <div class="pay-tabs">
-      <button class="pay-tab active" onclick="fwPayTab(this,'upi')">📱 UPI</button>
+      <button class="pay-tab active" onclick="fwPayTab(this,'rzp')">💳 Pay Online</button>
+      <button class="pay-tab" onclick="fwPayTab(this,'upi')">📱 UPI</button>
       <button class="pay-tab" onclick="fwPayTab(this,'bank')">🏦 Bank Transfer</button>
+    </div>
+
+    <!-- Razorpay (default) -->
+    <div class="pay-panel visible" id="pay-panel-rzp">
+      <button id="rzpMerchBtn" onclick="fwCartRzpPay()"
+        style="width:100%;padding:14px;background:var(--rust);border:none;color:#fff;font-family:var(--headline);font-size:18px;letter-spacing:2px;cursor:pointer;border-radius:2px;margin-top:8px;transition:background .2s">
+        PAY NOW
+      </button>
+      <div id="rzpMerchMsg" style="font-size:12px;text-align:center;margin-top:8px;min-height:16px"></div>
+      <div style="text-align:center;font-size:11px;color:rgba(255,255,255,.3);margin-top:6px">UPI · Cards · NetBanking · Secure via Razorpay</div>
     </div>
 
     <!-- UPI -->
@@ -594,6 +605,95 @@ function fwPayTab(btn,id){
   document.querySelectorAll('.pay-panel').forEach(function(p){p.classList.remove('visible');});
   btn.classList.add('active');
   document.getElementById('pay-panel-'+id).classList.add('visible');
+}
+
+async function fwCartRzpPay(){
+  var btn=document.getElementById('rzpMerchBtn');
+  var msg=document.getElementById('rzpMerchMsg');
+  msg.textContent=''; msg.style.color='#f87171';
+
+  // Build cart total
+  var total=0;
+  var cartDesc=[];
+  Object.values(FW_CART).forEach(function(item){
+    total+=item.price*item.qty;
+    cartDesc.push(item.name+(item.size?' ('+item.size+')':'')+'×'+item.qty);
+  });
+  if(total<=0){msg.textContent='Your cart is empty.';return;}
+
+  // Apply 5% discount if 3+ items
+  var totalQty=Object.values(FW_CART).reduce(function(s,i){return s+i.qty;},0);
+  if(totalQty>=3) total=Math.round(total*0.95);
+
+  // Check login
+  var session=null;
+  try{session=JSON.parse(localStorage.getItem('fw_session')||'null');}catch(e){}
+  if(!session||!session.access_token||session.expires_at<Date.now()){
+    msg.textContent='Please log in to purchase.';
+    setTimeout(function(){window.location.href=(window.FW_AUTH?window.FW_AUTH.login_url:'/login/')+'?redirect='+encodeURIComponent(window.location.href);},1200);
+    return;
+  }
+  if(!window.FW_RZP_KEY){msg.textContent='Payment gateway not configured.';return;}
+
+  btn.disabled=true; btn.textContent='Creating order…';
+  var amountPaise=total*100;
+  var descStr=cartDesc.join(', ');
+  var firstItem=Object.keys(FW_CART)[0]||'';
+
+  try{
+    var or=await fetch((window.FW_AUTH?window.FW_AUTH.rest_url:'/wp-json/freewheel/v1')+'/rzp-create-order',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+      body:JSON.stringify({amount:amountPaise,type:'merchandise',ref_id:firstItem,note:descStr})
+    });
+    var od=await or.json();
+    if(!or.ok) throw new Error(od.message||'Order creation failed.');
+
+    var rzp=new Razorpay({
+      key:window.FW_RZP_KEY,
+      amount:od.amount,
+      currency:od.currency,
+      name:'FreeWheel Expeditions',
+      description:'Merchandise: '+descStr.substring(0,100),
+      order_id:od.order_id,
+      prefill:{email:session.email,name:session.first_name||''},
+      theme:{color:'#c1440e'},
+      modal:{ondismiss:function(){btn.disabled=false;btn.textContent='PAY NOW';}},
+      handler:async function(r){
+        btn.textContent='Verifying…';
+        try{
+          var vr=await fetch((window.FW_AUTH?window.FW_AUTH.rest_url:'/wp-json/freewheel/v1')+'/rzp-verify-payment',{
+            method:'POST',
+            headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+            body:JSON.stringify({
+              razorpay_order_id:r.razorpay_order_id,
+              razorpay_payment_id:r.razorpay_payment_id,
+              razorpay_signature:r.razorpay_signature,
+              type:'merchandise',ref_id:firstItem,
+              amount:amountPaise,product_name:descStr,size:''
+            })
+          });
+          var vd=await vr.json();
+          if(!vr.ok) throw new Error(vd.message||'Verification failed.');
+          btn.style.background='#16a34a'; btn.textContent='✓ ORDER PLACED!';
+          msg.textContent=vd.message||'Order placed! We\'ll ship within 3–5 days.'; msg.style.color='#4ade80';
+          FW_CART={};fwRenderCart();
+          setTimeout(function(){fwCloseCart();},3000);
+        }catch(err){
+          msg.textContent='Payment received. Contact support with ID: '+r.razorpay_payment_id;
+          btn.disabled=false; btn.textContent='PAY NOW';
+        }
+      }
+    });
+    rzp.on('payment.failed',function(resp){
+      msg.textContent='Payment failed: '+(resp.error.description||'Please try again.');
+      btn.disabled=false; btn.textContent='PAY NOW';
+    });
+    rzp.open();
+  }catch(err){
+    msg.textContent=err.message||'Something went wrong.';
+    btn.disabled=false; btn.textContent='PAY NOW';
+  }
 }
 function filterMerch(btn,cat){
   document.querySelectorAll('.filt').forEach(function(b){b.classList.remove('active');});

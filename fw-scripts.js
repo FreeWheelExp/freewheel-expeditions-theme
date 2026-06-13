@@ -993,15 +993,21 @@ function selectSize(btn){
 }
 
 // Buy modal
-var curItem='', curPrice=0;
+var curItem='', curPrice=0, curName='';
 function openBuy(id, name, price){
-  curItem=id; curPrice=price;
+  curItem=id; curPrice=price; curName=name;
   document.getElementById('buyTitle').textContent = name;
-  document.getElementById('buyPrice').textContent = '?' + price.toLocaleString('en-IN');
-  var waMsg = 'Hi%21%20I%20want%20to%20buy%20' + encodeURIComponent(name) + '%20(?' + price + ').%20Please%20confirm%20my%20order.';
-  document.getElementById('waBtn').href = 'https://wa.me/917817838060?text=' + waMsg;
+  document.getElementById('buyPrice').textContent = '₹' + price.toLocaleString('en-IN');
+  var waMsg = 'Hi%21%20I%20want%20to%20buy%20' + encodeURIComponent(name) + '%20(%E2%82%B9' + price + ').%20Please%20confirm%20my%20order.';
+  var waBtn = document.getElementById('waBtn');
+  if(waBtn) waBtn.href = 'https://wa.me/917817838060?text=' + waMsg;
   document.getElementById('buyOverlay').classList.add('open');
   document.body.style.overflow='hidden';
+  // Reset state
+  var rzpMsg = document.getElementById('rzpMerchMsg');
+  if(rzpMsg){ rzpMsg.textContent=''; }
+  var rzpBtn = document.getElementById('rzpMerchBtn');
+  if(rzpBtn){ rzpBtn.disabled=false; rzpBtn.textContent='PAY NOW — ₹'+price.toLocaleString('en-IN'); }
 }
 function closeBuy(){document.getElementById('buyOverlay').classList.remove('open');document.body.style.overflow='';}
 function closeBuyIfOutside(e){if(e.target===document.getElementById('buyOverlay'))closeBuy();}
@@ -1011,8 +1017,85 @@ function switchPay2(btn, id){
   btn.classList.add('active');
   document.getElementById('pay-' + id).classList.add('visible');
 }
-/* copyUPI2 removed - payment details moved server-side */
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeBuy();});
+
+async function fwMerchRzpPay(){
+  var btn=document.getElementById('rzpMerchBtn');
+  var msg=document.getElementById('rzpMerchMsg');
+  if(!btn||!msg) return;
+  msg.textContent=''; msg.style.color='#f87171';
+
+  // Get selected size if any
+  var sizeEl = document.querySelector('.sz-btn.selected');
+  var size = sizeEl ? sizeEl.textContent.trim() : '';
+
+  // Check login
+  var session=null;
+  try{session=JSON.parse(localStorage.getItem('fw_session')||'null');}catch(e){}
+  if(!session||!session.access_token||session.expires_at<Date.now()){
+    msg.textContent='Please log in to purchase.';
+    setTimeout(function(){window.location.href=(window.FW_AUTH?window.FW_AUTH.login_url:'/login/')+'?redirect='+encodeURIComponent(window.location.href);},1200);
+    return;
+  }
+  if(!window.FW_RZP_KEY){msg.textContent='Payment gateway not configured.';return;}
+
+  btn.disabled=true; btn.textContent='Creating order…';
+  var amountPaise = curPrice * 100;
+
+  try{
+    var or=await fetch((window.FW_AUTH?window.FW_AUTH.rest_url:'/wp-json/freewheel/v1')+'/rzp-create-order',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+      body:JSON.stringify({amount:amountPaise,type:'merchandise',ref_id:curItem,note:curName+(size?' · Size: '+size:'')})
+    });
+    var od=await or.json();
+    if(!or.ok) throw new Error(od.message||'Order creation failed.');
+
+    var rzp=new Razorpay({
+      key:window.FW_RZP_KEY,
+      amount:od.amount,
+      currency:od.currency,
+      name:'FreeWheel Expeditions',
+      description:curName+(size?' ('+size+')':''),
+      order_id:od.order_id,
+      prefill:{email:session.email,name:session.first_name||''},
+      theme:{color:'#c1440e'},
+      modal:{ondismiss:function(){btn.disabled=false;btn.textContent='PAY NOW — ₹'+curPrice.toLocaleString('en-IN');}},
+      handler:async function(r){
+        btn.textContent='Verifying…';
+        try{
+          var vr=await fetch((window.FW_AUTH?window.FW_AUTH.rest_url:'/wp-json/freewheel/v1')+'/rzp-verify-payment',{
+            method:'POST',
+            headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+            body:JSON.stringify({
+              razorpay_order_id:r.razorpay_order_id,
+              razorpay_payment_id:r.razorpay_payment_id,
+              razorpay_signature:r.razorpay_signature,
+              type:'merchandise',ref_id:curItem,
+              amount:amountPaise,product_name:curName,size:size
+            })
+          });
+          var vd=await vr.json();
+          if(!vr.ok) throw new Error(vd.message||'Verification failed.');
+          btn.style.background='#16a34a'; btn.textContent='✓ ORDER PLACED!';
+          msg.textContent=vd.message||'Order placed! We\'ll ship within 3–5 days.'; msg.style.color='#4ade80';
+          setTimeout(function(){closeBuy();},3000);
+        }catch(err){
+          msg.textContent='Payment received. Contact support with ID: '+r.razorpay_payment_id;
+          btn.disabled=false; btn.textContent='PAY NOW — ₹'+curPrice.toLocaleString('en-IN');
+        }
+      }
+    });
+    rzp.on('payment.failed',function(resp){
+      msg.textContent='Payment failed: '+(resp.error.description||'Please try again.');
+      btn.disabled=false; btn.textContent='PAY NOW — ₹'+curPrice.toLocaleString('en-IN');
+    });
+    rzp.open();
+  }catch(err){
+    msg.textContent=err.message||'Something went wrong. Please try again.';
+    btn.disabled=false; btn.textContent='PAY NOW — ₹'+curPrice.toLocaleString('en-IN');
+  }
+}
 
 
 
