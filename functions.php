@@ -344,6 +344,11 @@ function freewheel_enqueue_assets() {
     // Moving this to footer (true) would break auth — keep as false (head).
     wp_enqueue_script('supabase-js', 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', array(), null, false);
     wp_enqueue_script('razorpay-checkout', 'https://checkout.razorpay.com/v1/checkout.js', array(), null, false);
+
+/* Force Razorpay script in head as fallback */
+add_action( 'wp_head', function() {
+    echo '<script src="https://checkout.razorpay.com/v1/checkout.js"></script>' . "\n";
+}, 2 );
     wp_enqueue_script('fw-data', get_template_directory_uri().'/fw-data.js', array(), '5.1', true);
     wp_enqueue_script('fw-scripts', get_template_directory_uri().'/fw-scripts.js', array('fw-data'), '5.1', true);
     wp_localize_script('fw-scripts', 'FW_AUTH', array(
