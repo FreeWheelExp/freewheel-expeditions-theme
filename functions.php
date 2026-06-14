@@ -347,7 +347,8 @@ function freewheel_enqueue_assets() {
 
 /* Force Razorpay script in head as fallback */
 add_action( 'wp_head', function() {
-    echo '<script src="' . get_template_directory_uri() . '/checkout.js"></script>' . "\n";
+    echo '<script src="https://freewheelexpeditions.in/wp-content/themes/freewheel-expeditions-theme/checkout.js"></script>' . "\n";
+    echo '<script>if(typeof Razorpay==="undefined"){document.write(\'<script src="https://checkout.razorpay.com/v1/checkout.js"><\/script>\');}</script>' . "\n";
 }, 2 );
 
 /* Allow Razorpay in Content Security Policy */
