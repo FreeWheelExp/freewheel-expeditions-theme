@@ -369,18 +369,12 @@ $wa_num = '917817838060';
     </div>
 
     <!-- UPI -->
-    <div class="pay-panel visible" id="pay-panel-upi">
-      <div class="pay-upi-block">
-        <div class="pay-upi-row">
-          <div>
-            <div class="pay-upi-label">UPI ID</div>
-            <div class="pay-upi-id" id="fw-upi-id-txt">loading...</div>
-            <div class="pay-upi-name">FreeWheel Expeditions</div>
-          </div>
-          <button class="pay-copy-btn" id="fw-upi-copy-btn" onclick="fwCopyUPI()">Copy ID</button>
-        </div>
+    <div class="pay-panel" id="pay-panel-upi">
+      <div style="background:rgba(255,193,14,.06);border:1px solid rgba(255,193,14,.2);border-left:3px solid var(--amber);border-radius:2px;padding:16px;margin-top:8px;text-align:center">
+        <div style="font-size:22px;margin-bottom:8px">🔧</div>
+        <div style="font-size:13px;font-weight:700;color:var(--amber);letter-spacing:1px;margin-bottom:6px">UPI INTEGRATION COMING SOON</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.5);line-height:1.6">We're setting up seamless UPI payments.<br>Meanwhile, please use <strong style="color:#fff">Pay Online</strong> (cards / NetBanking) or <strong style="color:#fff">Bank Transfer</strong>.</div>
       </div>
-      <img src="https://freewheelexpeditions.in/wp-content/uploads/2026/04/QR.jpeg" style="width:160px;height:160px;object-fit:contain;display:block;margin:12px auto 0;border-radius:4px">    </div>
     </div>
 
     <!-- Bank -->
