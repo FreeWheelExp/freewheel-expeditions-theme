@@ -2524,20 +2524,12 @@ require_once get_template_directory() . '/fw-seo.php';
 // ── Security headers ─────────────────────────────────────────────
 add_action('send_headers', 'fw_add_security_headers');
 function fw_add_security_headers() {
-    // Block clickjacking
     header('X-Frame-Options: SAMEORIGIN');
-    // Prevent MIME sniffing
     header('X-Content-Type-Options: nosniff');
-    // Referrer — send origin only on cross-site requests
     header('Referrer-Policy: strict-origin-when-cross-origin');
-    // Force HTTPS for 1 year (only enable after confirming SSL works)
     header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
-    // Allow payment APIs (Razorpay needs this)
     header('Permissions-Policy: camera=(), microphone=(), geolocation=()');
-    // Basic XSS protection for older browsers
     header('X-XSS-Protection: 1; mode=block');
-    // CSP — allow Razorpay scripts and frames
-    header("Content-Security-Policy: script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://api.razorpay.com https://cdn.jsdelivr.net https://www.googletagmanager.com https://fonts.googleapis.com; frame-src https://api.razorpay.com https://checkout.razorpay.com; connect-src 'self' https://api.razorpay.com https://checkout.razorpay.com https://*.supabase.co;");
 }
 
 // ── Hide WordPress version from all outputs ───────────────────────
