@@ -207,7 +207,7 @@ async function regSubmitDetails() {
   try {
     var result = await _sb.auth.signInWithOtp({
       email: email,
-      options: { shouldCreateUser: true }
+      options: { shouldCreateUser: true, emailRedirectTo: null }
     });
     if (result.error) throw result.error;
 
@@ -318,7 +318,7 @@ async function regResendOtp() {
   var btn = document.getElementById('regResendBtn');
   btn.disabled = true;
   try {
-    await _sb.auth.signInWithOtp({ email: _reg.email, options: { shouldCreateUser: true } });
+    await _sb.auth.signInWithOtp({ email: _reg.email, options: { shouldCreateUser: true, emailRedirectTo: null } });
     showMsg('regMsg2', 'New code sent to ' + _reg.email, 'success');
     startResendTimer();
     ['ro0','ro1','ro2','ro3','ro4','ro5'].forEach(function(id){ document.getElementById(id).value=''; });

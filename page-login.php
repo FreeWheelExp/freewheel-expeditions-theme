@@ -136,7 +136,7 @@ async function loginSendOtp() {
   try {
     var result = await _sb.auth.signInWithOtp({
       email: email,
-      options: { shouldCreateUser: false }
+      options: { shouldCreateUser: false, emailRedirectTo: null }
     });
     if (result.error) throw result.error;
 
@@ -239,7 +239,7 @@ async function loginResendOtp() {
   var btn = document.getElementById('loginResendBtn');
   btn.disabled = true;
   try {
-    await _sb.auth.signInWithOtp({ email: _loginEmail, options: { shouldCreateUser: false } });
+    await _sb.auth.signInWithOtp({ email: _loginEmail, options: { shouldCreateUser: false, emailRedirectTo: null } });
     var msg = document.getElementById('loginMsg2');
     msg.textContent = 'New code sent to ' + _loginEmail; msg.className = 'login-msg success';
     loginStartTimer();
