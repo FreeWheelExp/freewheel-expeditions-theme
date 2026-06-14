@@ -349,6 +349,18 @@ function freewheel_enqueue_assets() {
 add_action( 'wp_head', function() {
     echo '<script src="https://checkout.razorpay.com/v1/checkout.js"></script>' . "\n";
 }, 2 );
+
+/* Allow Razorpay in Content Security Policy */
+add_filter( 'wp_headers', function( $headers ) {
+    if ( isset( $headers['Content-Security-Policy'] ) ) {
+        $headers['Content-Security-Policy'] = str_replace(
+            "script-src",
+            "script-src https://checkout.razorpay.com https://api.razorpay.com",
+            $headers['Content-Security-Policy']
+        );
+    }
+    return $headers;
+} );
     wp_enqueue_script('fw-data', get_template_directory_uri().'/fw-data.js', array(), '5.1', true);
     wp_enqueue_script('fw-scripts', get_template_directory_uri().'/fw-scripts.js', array('fw-data'), '5.1', true);
     wp_localize_script('fw-scripts', 'FW_AUTH', array(
@@ -2520,10 +2532,12 @@ function fw_add_security_headers() {
     header('Referrer-Policy: strict-origin-when-cross-origin');
     // Force HTTPS for 1 year (only enable after confirming SSL works)
     header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
-    // Disable browser features not needed
-    header('Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()');
+    // Allow payment APIs (Razorpay needs this)
+    header('Permissions-Policy: camera=(), microphone=(), geolocation=()');
     // Basic XSS protection for older browsers
     header('X-XSS-Protection: 1; mode=block');
+    // CSP — allow Razorpay scripts and frames
+    header("Content-Security-Policy: script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://api.razorpay.com https://cdn.jsdelivr.net https://www.googletagmanager.com https://fonts.googleapis.com; frame-src https://api.razorpay.com https://checkout.razorpay.com; connect-src 'self' https://api.razorpay.com https://checkout.razorpay.com https://*.supabase.co;");
 }
 
 // ── Hide WordPress version from all outputs ───────────────────────
