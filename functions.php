@@ -2589,7 +2589,7 @@ add_action( 'rest_api_init', function() {
 
 function fw_rzp_create_order( $req ) {
     /* Auth check */
-    $user = fw_get_authed_user( $req );
+    $user = fw_validate_token( $req );
     if ( is_wp_error( $user ) ) return $user;
 
     $p       = $req->get_json_params() ?: array();
@@ -2654,7 +2654,7 @@ function fw_rzp_create_order( $req ) {
 
 function fw_rzp_verify_payment( $req ) {
     /* Auth check */
-    $user = fw_get_authed_user( $req );
+    $user = fw_validate_token( $req );
     if ( is_wp_error( $user ) ) return $user;
 
     $p                  = $req->get_json_params() ?: array();
