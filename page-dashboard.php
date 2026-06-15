@@ -175,10 +175,7 @@ body{font-family:var(--body);background:#0a0805!important;color:#fff;overflow-x:
           <div class="usub" id="greetSub">—</div>
         </div>
       </div>
-      <div style="display:flex;gap:10px;align-items:center">
-        <button onclick="openEditProfile()" style="padding:9px 18px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;font-family:var(--body);font-size:12px;letter-spacing:1px;cursor:pointer;border-radius:2px;white-space:nowrap">&#9998; Edit Profile</button>
-        <button class="logout-btn" onclick="doLogout()">Sign Out</button>
-      </div>
+
     </div>
   </div>
 
