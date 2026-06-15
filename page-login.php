@@ -139,12 +139,31 @@ async function doLogin() {
     }
 
     /* Store session */
+    /* Also fetch avatar_url from profile */
+    var avatarUrl = '';
+    var role = '';
+    try {
+      var profR = await fetch(FW_AUTH.rest_url + '/fw-get-profile', {
+        headers: { 'Authorization': 'Bearer ' + session.access_token }
+      });
+      if (profR.ok) {
+        var profD = await profR.json();
+        if (profD.profile) {
+          avatarUrl = profD.profile.avatar_url || '';
+          role = profD.profile.role || '';
+          if (!firstName) firstName = profD.profile.first_name || '';
+        }
+      }
+    } catch(e) {}
+
     localStorage.setItem('fw_session', JSON.stringify({
       access_token:  session.access_token,
       refresh_token: session.refresh_token,
       user_id:       session.user.id,
       email:         session.user.email,
       first_name:    firstName,
+      avatar_url:    avatarUrl,
+      role:          role,
       expires_at:    Date.now() + (session.expires_in * 1000),
     }));
 
