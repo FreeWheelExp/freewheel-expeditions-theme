@@ -97,7 +97,6 @@ get_header();
           </button>
           <div id="admDropdown" style="display:none;position:absolute;right:0;top:calc(100% + 6px);background:#1a1410;border:1px solid rgba(193,68,14,.3);border-radius:2px;min-width:160px;z-index:100">
             <a href="<?php echo esc_url(home_url('/dashboard/')); ?>" style="display:block;padding:10px 16px;font-size:13px;color:rgba(255,255,255,.7);text-decoration:none;border-bottom:1px solid rgba(255,255,255,.06)">My Dashboard</a>
-            <a href="<?php echo esc_url(home_url('/edit-profile/')); ?>" style="display:block;padding:10px 16px;font-size:13px;color:rgba(255,255,255,.7);text-decoration:none;border-bottom:1px solid rgba(255,255,255,.06)">Edit Profile</a>
             <a href="#" onclick="admLogout()" style="display:block;padding:10px 16px;font-size:13px;color:#f87171;text-decoration:none">Log Out</a>
           </div>
         </div>
