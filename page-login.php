@@ -121,11 +121,15 @@ async function doLogin() {
     var session = result.data.session;
     if (!session) throw new Error('Login failed. Please try again.');
 
-    /* Fetch profile */
-    var profileResp = await fetch(FW_AUTH.rest_url + '/fw-get-profile', {
-      headers: { 'Authorization': 'Bearer ' + session.access_token }
-    });
-    var profileData = await profileResp.json();
+    /* Fetch profile — non-fatal if fails */
+    var firstName = '';
+    try {
+      var profileResp = await fetch(FW_AUTH.rest_url + '/fw-get-profile', {
+        headers: { 'Authorization': 'Bearer ' + session.access_token }
+      });
+      var profileData = await profileResp.json();
+      if (profileData.profile) firstName = profileData.profile.first_name || '';
+    } catch(e) {}
 
     /* Store session */
     localStorage.setItem('fw_session', JSON.stringify({
@@ -133,7 +137,7 @@ async function doLogin() {
       refresh_token: session.refresh_token,
       user_id:       session.user.id,
       email:         session.user.email,
-      first_name:    profileData.profile ? profileData.profile.first_name : '',
+      first_name:    firstName,
       expires_at:    Date.now() + (session.expires_in * 1000),
     }));
 
