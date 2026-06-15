@@ -222,6 +222,7 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
     document.addEventListener('DOMContentLoaded', function() {
       var name = s.first_name || s.email || 'Account';
       var initials = name.slice(0,1).toUpperCase();
+      var avatarUrl = s.avatar_url || '';
 
       /* Desktop: replace Register button with user avatar + name */
       var dashUrl = (window.FW_AUTH && FW_AUTH.dashboard_url) || '/dashboard/';
@@ -235,11 +236,14 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
           var isAdmin = s.role === 'admin';
           var adminLink = isAdmin ? '<a href="/admin-dashboard/" style="display:block;padding:10px 16px;font-size:13px;color:rgba(255,255,255,.7);text-decoration:none;border-bottom:1px solid rgba(255,255,255,.06)">Admin Dashboard</a>' : '';
           var dropId = 'fwNavDrop_' + Date.now();
+          var avatarHtml = avatarUrl
+            ? '<img src="'+avatarUrl+'" style="width:30px;height:30px;border-radius:50%;border:2px solid var(--rust);object-fit:cover;flex-shrink:0">'
+            : '<div style="width:30px;height:30px;border-radius:50%;background:rgba(193,68,14,.3);border:2px solid var(--rust);display:flex;align-items:center;justify-content:center;font-family:var(--headline);font-size:13px;color:var(--rust);flex-shrink:0">'+initials+'</div>';
           var userNav = document.createElement('div');
           userNav.style.cssText = 'display:flex;align-items:center;gap:10px;position:relative';
           userNav.innerHTML =
             '<button onclick="document.getElementById(\'' + dropId + '\').style.display=document.getElementById(\'' + dropId + '\').style.display===\'none\'?\'block\':\'none\'" style="display:flex;align-items:center;gap:8px;background:transparent;border:none;cursor:pointer;color:#fff;font-size:12px;letter-spacing:1px;text-transform:uppercase;padding:0">'+
-              '<div style="width:30px;height:30px;border-radius:50%;background:rgba(193,68,14,.3);border:2px solid var(--rust);display:flex;align-items:center;justify-content:center;font-family:var(--headline);font-size:13px;color:var(--rust);flex-shrink:0">'+initials+'</div>'+
+              avatarHtml+
               '<span style="color:rgba(255,255,255,.8)">'+name+'</span>'+
               '<span style="color:rgba(255,255,255,.4);font-size:10px">▾</span>'+
             '</button>'+
