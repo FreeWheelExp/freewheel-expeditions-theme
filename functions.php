@@ -611,7 +611,7 @@ function fw_update_member_profile( $request ) {
     $user_id = $user['id'];
     $p       = $request->get_json_params() ?: array();
 
-    $allowed = array( 'first_name', 'last_name', 'phone', 'city', 'state', 'country', 'instagram' );
+    $allowed = array( 'first_name', 'last_name', 'phone', 'city', 'state', 'country', 'instagram', 'bio', 'avatar_url' );
     $update  = array( 'updated_at' => date( 'c' ) );
     foreach ( $allowed as $field ) {
         if ( isset( $p[ $field ] ) ) {
