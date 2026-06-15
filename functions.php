@@ -1139,6 +1139,9 @@ add_action( 'rest_api_init', function() {
     register_rest_route( 'freewheel/v1', '/admin/update-order',    array( 'methods'=>'POST', 'callback'=>'fw_admin_update_order',    'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/adjust-credits',  array( 'methods'=>'POST', 'callback'=>'fw_admin_adjust_credits',  'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/link-booking',    array( 'methods'=>'POST', 'callback'=>'fw_admin_link_booking',    'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/members',         array( 'methods'=>'GET',  'callback'=>'fw_admin_get_members',      'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/update-member',   array( 'methods'=>'POST', 'callback'=>'fw_admin_update_member',    'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/site-stats',      array( 'methods'=>'GET',  'callback'=>'fw_admin_site_stats',       'permission_callback'=>'__return_true' ));
 });
 
 /* ── Admin auth: WP admin OR fw_members role=admin ── */
@@ -2803,4 +2806,3 @@ function fw_rzp_verify_payment( $req ) {
 
     return new WP_Error( 'invalid_type', 'Unknown payment type.', array( 'status' => 400 ) );
 }
-
