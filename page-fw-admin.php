@@ -89,18 +89,7 @@ get_header();
           <div id="admWelcome" style="font-size:11px;color:rgba(255,255,255,.35);margin-top:2px;letter-spacing:1px"></div>
         </div>
       </div>
-      <div style="display:flex;gap:12px;align-items:center">
-        <a href="<?php echo esc_url(home_url('/')); ?>" style="font-size:11px;letter-spacing:1px;color:rgba(255,255,255,.4);text-decoration:none;text-transform:uppercase">← View Site</a>
-        <div style="position:relative">
-          <button id="admProfileBtn" onclick="toggleAdmMenu()" style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;padding:8px 14px;border-radius:2px;cursor:pointer;font-size:13px">
-            <span id="admNavName">Admin</span> ▾
-          </button>
-          <div id="admDropdown" style="display:none;position:absolute;right:0;top:calc(100% + 6px);background:#1a1410;border:1px solid rgba(193,68,14,.3);border-radius:2px;min-width:160px;z-index:100">
-            <a href="<?php echo esc_url(home_url('/dashboard/')); ?>" style="display:block;padding:10px 16px;font-size:13px;color:rgba(255,255,255,.7);text-decoration:none;border-bottom:1px solid rgba(255,255,255,.06)">My Dashboard</a>
-            <a href="#" onclick="admLogout()" style="display:block;padding:10px 16px;font-size:13px;color:#f87171;text-decoration:none">Log Out</a>
-          </div>
-        </div>
-      </div>
+      <a href="<?php echo esc_url(home_url('/')); ?>" style="font-size:11px;letter-spacing:1px;color:rgba(255,255,255,.4);text-decoration:none;text-transform:uppercase">← View Site</a>
     </div>
 
     <!-- Stats -->
