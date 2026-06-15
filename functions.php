@@ -2807,3 +2807,128 @@ function fw_rzp_verify_payment( $req ) {
 
     return new WP_Error( 'invalid_type', 'Unknown payment type.', array( 'status' => 400 ) );
 }
+
+/* ---- fw_admin_get_members ---- */
+function fw_admin_get_members( $request ) {
+    if ( ! fw_is_admin( $request ) ) return fw_admin_deny();
+    $resp = wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_members?select=id,email,first_name,last_name,phone,city,state,avatar_url,role,is_suspended,created_at&order=created_at.desc',
+        array( 'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE ), 'timeout' => 15 )
+    );
+    $members = json_decode( wp_remote_retrieve_body( $resp ), true );
+    if ( ! is_array( $members ) ) $members = array();
+    return rest_ensure_response( array( 'success' => true, 'members' => $members ) );
+}
+
+/* ---- fw_admin_update_member ---- */
+function fw_admin_update_member( $request ) {
+    if ( ! fw_is_admin( $request ) ) return fw_admin_deny();
+    $body    = json_decode( $request->get_body(), true );
+    $user_id = sanitize_text_field( $body['user_id'] ?? '' );
+    if ( empty( $user_id ) ) return new WP_Error( 'missing', 'user_id required.', array( 'status' => 400 ) );
+    $allowed = array( 'role', 'is_suspended' );
+    $update  = array( 'updated_at' => date('c') );
+    foreach ( $allowed as $f ) {
+        if ( isset( $body[$f] ) ) $update[$f] = $body[$f];
+    }
+    if ( isset( $update['role'] ) ) {
+        $valid_roles = array( 'member', 'moderator', 'super_admin' );
+        if ( ! in_array( $update['role'], $valid_roles ) ) {
+            return new WP_Error( 'invalid_role', 'Invalid role.', array( 'status' => 400 ) );
+        }
+    }
+    $resp = wp_remote_request(
+        FW_SUPABASE_URL . '/rest/v1/fw_members?id=eq.' . rawurlencode( $user_id ),
+        array( 'method' => 'PATCH', 'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE, 'Content-Type' => 'application/json', 'Prefer' => 'return=minimal' ), 'body' => wp_json_encode( $update ), 'timeout' => 10 )
+    );
+    if ( is_wp_error( $resp ) || wp_remote_retrieve_response_code( $resp ) >= 300 ) {
+        return new WP_Error( 'update_fail', 'Update failed.', array( 'status' => 500 ) );
+    }
+    return rest_ensure_response( array( 'success' => true ) );
+}
+
+/* ---- fw_count_rows helper ---- */
+function fw_count_rows( $url ) {
+    $resp = wp_remote_get( $url, array(
+        'headers' => array(
+            'apikey'        => FW_SUPABASE_SERVICE,
+            'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE,
+            'Prefer'        => 'count=exact',
+            'Range'         => '0-0',
+        ),
+        'timeout' => 10,
+    ));
+    $cr = wp_remote_retrieve_header( $resp, 'content-range' );
+    if ( preg_match( '/\/(\d+)$/', $cr, $m ) ) return (int) $m[1];
+    return 0;
+}
+
+/* ---- fw_admin_site_stats ---- */
+function fw_admin_site_stats( $request ) {
+    if ( ! fw_is_admin( $request ) ) return fw_admin_deny();
+    $base = FW_SUPABASE_URL . '/rest/v1/';
+    $total_members   = fw_count_rows( $base . 'fw_members?select=id' );
+    $blocked_members = fw_count_rows( $base . 'fw_members?select=id&is_suspended=eq.true' );
+    $total_bookings  = fw_count_rows( $base . 'fw_bookings?select=id' );
+    $total_orders    = fw_count_rows( $base . 'fw_orders?select=id' );
+    $published_blogs = fw_count_rows( $base . 'fw_blogs?select=id&status=eq.published' );
+    $published_albums= fw_count_rows( $base . 'fw_albums?select=id&status=eq.published' );
+    $approved_testis = fw_count_rows( $base . 'fw_testimonials?select=id&status=eq.approved' );
+    /* Role distribution */
+    $roles_resp = wp_remote_get( $base . 'fw_members?select=role', array( 'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE ), 'timeout' => 10 ) );
+    $roles_raw  = json_decode( wp_remote_retrieve_body( $roles_resp ), true );
+    if ( ! is_array( $roles_raw ) ) $roles_raw = array();
+    $role_map = array();
+    foreach ( $roles_raw as $r ) {
+        $role = $r['role'] ?? 'member';
+        $role_map[$role] = ( $role_map[$role] ?? 0 ) + 1;
+    }
+    $roles = array();
+    foreach ( $role_map as $role => $cnt ) { $roles[] = array( 'role' => $role, 'count' => $cnt ); }
+    /* Merchandise breakdown */
+    $orders_resp = wp_remote_get( $base . 'fw_orders?select=items', array( 'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE ), 'timeout' => 10 ) );
+    $orders_raw  = json_decode( wp_remote_retrieve_body( $orders_resp ), true );
+    if ( ! is_array( $orders_raw ) ) $orders_raw = array();
+    $merch_map = array();
+    foreach ( $orders_raw as $order ) {
+        $items = $order['items'] ?? array();
+        if ( is_string( $items ) ) $items = json_decode( $items, true ) ?: array();
+        if ( ! is_array( $items ) ) continue;
+        foreach ( $items as $item ) {
+            $name = $item['name'] ?? $item['product_name'] ?? 'Unknown';
+            $qty  = (int) ( $item['quantity'] ?? $item['qty'] ?? 1 );
+            $merch_map[$name] = ( $merch_map[$name] ?? 0 ) + $qty;
+        }
+    }
+    $merchandise = array();
+    foreach ( $merch_map as $name => $cnt ) { $merchandise[] = array( 'product_name' => $name, 'count' => $cnt ); }
+    usort( $merchandise, function( $a, $b ) { return $b['count'] - $a['count']; } );
+    /* Expeditions breakdown */
+    $book_resp = wp_remote_get( $base . 'fw_bookings?select=trip_name', array( 'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE ), 'timeout' => 10 ) );
+    $book_raw  = json_decode( wp_remote_retrieve_body( $book_resp ), true );
+    if ( ! is_array( $book_raw ) ) $book_raw = array();
+    $exp_map = array();
+    foreach ( $book_raw as $b ) {
+        $name = $b['trip_name'] ?? 'Unknown';
+        $exp_map[$name] = ( $exp_map[$name] ?? 0 ) + 1;
+    }
+    $expeditions = array();
+    foreach ( $exp_map as $name => $cnt ) { $expeditions[] = array( 'trip_name' => $name, 'count' => $cnt ); }
+    usort( $expeditions, function( $a, $b ) { return $b['count'] - $a['count']; } );
+    return rest_ensure_response( array(
+        'success' => true,
+        'stats'   => array(
+            'total_members'         => $total_members,
+            'active_members'        => $total_members - $blocked_members,
+            'blocked_members'       => $blocked_members,
+            'total_bookings'        => $total_bookings,
+            'total_orders'          => $total_orders,
+            'published_blogs'       => $published_blogs,
+            'published_albums'      => $published_albums,
+            'approved_testimonials' => $approved_testis,
+            'roles'                 => $roles,
+            'merchandise'           => $merchandise,
+            'expeditions'           => $expeditions,
+        ),
+    ));
+}
