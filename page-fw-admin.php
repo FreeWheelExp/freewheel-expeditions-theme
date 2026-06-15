@@ -82,9 +82,25 @@ get_header();
   <div class="adm-inner">
 
     <div class="adm-header">
-      <div class="adm-title">FW <span>Admin</span></div>
-      <div style="display:flex;gap:10px;align-items:center">
+      <div style="display:flex;align-items:center;gap:14px">
+        <img src="<?php echo esc_url(get_template_directory_uri()); ?>/images/logo.png" alt="FreeWheel" style="height:38px;width:auto;border-radius:50%;border:2px solid rgba(193,68,14,.4)">
+        <div>
+          <div class="adm-title" style="margin:0">FW <span>Admin</span></div>
+          <div id="admWelcome" style="font-size:11px;color:rgba(255,255,255,.35);margin-top:2px;letter-spacing:1px"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center">
         <a href="<?php echo esc_url(home_url('/')); ?>" style="font-size:11px;letter-spacing:1px;color:rgba(255,255,255,.4);text-decoration:none;text-transform:uppercase">← View Site</a>
+        <div style="position:relative">
+          <button id="admProfileBtn" onclick="toggleAdmMenu()" style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;padding:8px 14px;border-radius:2px;cursor:pointer;font-size:13px">
+            <span id="admNavName">Admin</span> ▾
+          </button>
+          <div id="admDropdown" style="display:none;position:absolute;right:0;top:calc(100% + 6px);background:#1a1410;border:1px solid rgba(193,68,14,.3);border-radius:2px;min-width:160px;z-index:100">
+            <a href="<?php echo esc_url(home_url('/dashboard/')); ?>" style="display:block;padding:10px 16px;font-size:13px;color:rgba(255,255,255,.7);text-decoration:none;border-bottom:1px solid rgba(255,255,255,.06)">My Dashboard</a>
+            <a href="<?php echo esc_url(home_url('/edit-profile/')); ?>" style="display:block;padding:10px 16px;font-size:13px;color:rgba(255,255,255,.7);text-decoration:none;border-bottom:1px solid rgba(255,255,255,.06)">Edit Profile</a>
+            <a href="#" onclick="admLogout()" style="display:block;padding:10px 16px;font-size:13px;color:#f87171;text-decoration:none">Log Out</a>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -306,12 +322,18 @@ function loadContent() {
   fetch(_admRest + '/admin/pending-content', {headers: h()})
     .then(function(r){ return r.json(); })
     .then(function(d){
+      if (!d.success && d.code === 'forbidden') {
+        ['blogList','testiList','albumList'].forEach(function(id){
+          document.getElementById(id).innerHTML = '<div class="adm-empty">Access denied.</div>';
+        });
+        return;
+      }
       _allContent.blogs  = d.blogs  || [];
       _allContent.testis = d.testimonials || [];
       _allContent.albums = d.albums || [];
       var pending = _allContent.blogs.filter(function(b){return b.status==='pending';}).length +
                     _allContent.testis.filter(function(t){return t.status==='pending';}).length +
-                    _allContent.albums.filter(function(a){return a.status==='pending';}).length;
+                    _allContent.blogs.filter(function(a){return a.status==='pending';}).length;
       document.getElementById('admStatPending').textContent = pending;
       document.getElementById('blogCount').textContent  = _allContent.blogs.filter(function(b){return b.status==='pending';}).length;
       document.getElementById('testiCount').textContent = _allContent.testis.filter(function(t){return t.status==='pending';}).length;
@@ -319,6 +341,11 @@ function loadContent() {
       renderBlogs(getFilteredContent(_allContent.blogs, 'pending'));
       renderTestis(getFilteredContent(_allContent.testis, 'pending'));
       renderAlbums(getFilteredContent(_allContent.albums, 'pending'));
+    })
+    .catch(function(e){
+      ['blogList','testiList','albumList'].forEach(function(id){
+        document.getElementById(id).innerHTML = '<div class="adm-empty">Error loading content. Please refresh.</div>';
+      });
     });
 }
 
@@ -773,6 +800,34 @@ function admTab(id, btn) {
   btn.classList.add('active');
   document.getElementById('panel-'+id).classList.add('active');
 }
+
+function toggleAdmMenu() {
+  var d = document.getElementById('admDropdown');
+  d.style.display = d.style.display === 'none' ? 'block' : 'none';
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#admProfileBtn') && !e.target.closest('#admDropdown')) {
+    var d = document.getElementById('admDropdown');
+    if (d) d.style.display = 'none';
+  }
+});
+function admLogout() {
+  localStorage.removeItem('fw_session');
+  window.location.href = '<?php echo esc_js(home_url("/login/")); ?>';
+}
+(function(){
+  try {
+    var s = JSON.parse(localStorage.getItem('fw_session')||'null');
+    if (s && s.first_name) {
+      var n = s.first_name;
+      var el = document.getElementById('admNavName');
+      var wel = document.getElementById('admWelcome');
+      if (el) el.textContent = n;
+      if (wel) wel.textContent = 'Welcome back, ' + n;
+    }
+  } catch(e){}
+})();
 </script>
 
 <?php get_footer(); ?>
+
