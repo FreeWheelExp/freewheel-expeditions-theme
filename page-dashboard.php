@@ -503,7 +503,7 @@ window.addEventListener('load', function() {
     var st   = prof.state      || '—';
     var co   = prof.country    || 'India';
     var since= prof.created_at ? new Date(prof.created_at).toLocaleDateString('en-IN',{month:'long',year:'numeric'}) : '—';
-    var av   = prof.profile_photo || '';
+    var av   = prof.avatar_url || prof.profile_photo || '';
     var tc   = prof.trips_completed || 0;
 
     _set('greetName', fn);
