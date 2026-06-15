@@ -121,15 +121,22 @@ async function doLogin() {
     var session = result.data.session;
     if (!session) throw new Error('Login failed. Please try again.');
 
-    /* Fetch profile — non-fatal if fails */
-    var firstName = '';
-    try {
-      var profileResp = await fetch(FW_AUTH.rest_url + '/fw-get-profile', {
-        headers: { 'Authorization': 'Bearer ' + session.access_token }
-      });
-      var profileData = await profileResp.json();
-      if (profileData.profile) firstName = profileData.profile.first_name || '';
-    } catch(e) {}
+    /* Get first_name from user metadata (always available) */
+    var meta = result.data.user.user_metadata || {};
+    var firstName = meta.first_name || '';
+
+    /* Also try profile fetch non-fatally */
+    if (!firstName) {
+      try {
+        var profileResp = await fetch(FW_AUTH.rest_url + '/fw-get-profile', {
+          headers: { 'Authorization': 'Bearer ' + session.access_token }
+        });
+        if (profileResp.ok) {
+          var profileData = await profileResp.json();
+          if (profileData.profile) firstName = profileData.profile.first_name || '';
+        }
+      } catch(e) {}
+    }
 
     /* Store session */
     localStorage.setItem('fw_session', JSON.stringify({
@@ -175,3 +182,4 @@ async function doLogin() {
 </script>
 
 <?php get_footer(); ?>
+
