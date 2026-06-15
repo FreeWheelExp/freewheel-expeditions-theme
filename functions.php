@@ -468,10 +468,12 @@ function fw_credit_balance( $user_id ) {
             'timeout' => 10,
         )
     );
-    $credits = json_decode( wp_remote_retrieve_body( $resp ), true ) ?: array();
+    $credits = json_decode( wp_remote_retrieve_body( $resp ), true );
+    if ( ! is_array( $credits ) ) $credits = array();
     $balance = 0;
     $now = time();
     foreach ( $credits as $c ) {
+        if ( ! is_array( $c ) ) continue;
         if ( is_null( $c['expires_at'] ) || strtotime( $c['expires_at'] ) > $now ) {
             $balance += (int) $c['amount'];
         }
@@ -551,7 +553,7 @@ function fw_register_member( $request ) {
         $err_code = wp_remote_retrieve_response_code( $member_resp );
         $err_detail = is_wp_error( $member_resp ) ? $member_resp->get_error_message() : $err_body;
         error_log( '[FW] fw_members insert failed ' . $err_code . ': ' . $err_detail );
-        return new WP_Error( 'db_fail', 'Database error saving new user: ' . $err_code . ' — ' . $err_detail, array( 'status' => 500 ) );
+        return new WP_Error( 'db_fail', 'Database error saving new user: ' . $err_code . ' - ' . $err_detail, array( 'status' => 500 ) );
     }
 
     // Award 50 registration credits
