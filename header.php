@@ -232,15 +232,30 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
       if (navCta) {
         var li = navCta.closest ? navCta.closest('li') : navCta.parentElement;
         if (li) {
+          var isAdmin = s.role === 'admin';
+          var adminLink = isAdmin ? '<a href="/admin-dashboard/" style="display:block;padding:10px 16px;font-size:13px;color:rgba(255,255,255,.7);text-decoration:none;border-bottom:1px solid rgba(255,255,255,.06)">Admin Dashboard</a>' : '';
+          var dropId = 'fwNavDrop_' + Date.now();
           var userNav = document.createElement('div');
-          userNav.style.cssText = 'display:flex;align-items:center;gap:10px';
+          userNav.style.cssText = 'display:flex;align-items:center;gap:10px;position:relative';
           userNav.innerHTML =
-            '<a href="'+dashUrl+'" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:#fff;font-size:12px;letter-spacing:1px;text-transform:uppercase">'+
+            '<button onclick="document.getElementById(\'' + dropId + '\').style.display=document.getElementById(\'' + dropId + '\').style.display===\'none\'?\'block\':\'none\'" style="display:flex;align-items:center;gap:8px;background:transparent;border:none;cursor:pointer;color:#fff;font-size:12px;letter-spacing:1px;text-transform:uppercase;padding:0">'+
               '<div style="width:30px;height:30px;border-radius:50%;background:rgba(193,68,14,.3);border:2px solid var(--rust);display:flex;align-items:center;justify-content:center;font-family:var(--headline);font-size:13px;color:var(--rust);flex-shrink:0">'+initials+'</div>'+
               '<span style="color:rgba(255,255,255,.8)">'+name+'</span>'+
-            '</a>';
+              '<span style="color:rgba(255,255,255,.4);font-size:10px">▾</span>'+
+            '</button>'+
+            '<div id="'+dropId+'" style="display:none;position:absolute;right:0;top:calc(100% + 8px);background:#1a1410;border:1px solid rgba(193,68,14,.3);border-radius:2px;min-width:180px;z-index:999">'+
+              '<a href="'+dashUrl+'" style="display:block;padding:10px 16px;font-size:13px;color:rgba(255,255,255,.7);text-decoration:none;border-bottom:1px solid rgba(255,255,255,.06)">My Dashboard</a>'+
+              adminLink+
+              '<a href="/edit-profile/" style="display:block;padding:10px 16px;font-size:13px;color:rgba(255,255,255,.7);text-decoration:none;border-bottom:1px solid rgba(255,255,255,.06)">Edit Profile</a>'+
+              '<a href="#" onclick="localStorage.removeItem(\'fw_session\');window.location.href=\'/login/\'" style="display:block;padding:10px 16px;font-size:13px;color:#f87171;text-decoration:none">Log Out</a>'+
+            '</div>';
           li.innerHTML = '';
           li.appendChild(userNav);
+          /* Close on outside click */
+          document.addEventListener('click', function(e) {
+            var drop = document.getElementById(dropId);
+            if (drop && !userNav.contains(e.target)) drop.style.display = 'none';
+          });
         }
       }
 
@@ -495,6 +510,7 @@ function fwSuccessClose(){
   if(ov){ov.style.display='none';document.body.style.overflow='';}
 }
 </script>
+
 
 
 
