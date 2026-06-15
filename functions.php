@@ -548,7 +548,10 @@ function fw_register_member( $request ) {
 
     if ( is_wp_error( $member_resp ) || wp_remote_retrieve_response_code( $member_resp ) >= 300 ) {
         $err_body = wp_remote_retrieve_body( $member_resp );
-        return new WP_Error( 'db_fail', 'Failed to create profile. Please try again.', array( 'status' => 500 ) );
+        $err_code = wp_remote_retrieve_response_code( $member_resp );
+        $err_detail = is_wp_error( $member_resp ) ? $member_resp->get_error_message() : $err_body;
+        error_log( '[FW] fw_members insert failed ' . $err_code . ': ' . $err_detail );
+        return new WP_Error( 'db_fail', 'Database error saving new user: ' . $err_code . ' — ' . $err_detail, array( 'status' => 500 ) );
     }
 
     // Award 50 registration credits
@@ -2798,3 +2801,4 @@ function fw_rzp_verify_payment( $req ) {
 
     return new WP_Error( 'invalid_type', 'Unknown payment type.', array( 'status' => 400 ) );
 }
+
