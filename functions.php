@@ -778,7 +778,7 @@ function fw_upload_trip_photo( $request ) {
     $ext  = array( 'image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp' )[ $mimetype ];
     $path = 'trip-photos/' . $user['id'] . '/' . $booking_id . '/' . time() . '.' . $ext;
 
-    $upload = wp_remote_request( FW_SUPABASE_URL . '/storage/v1/object/fw-member-media/' . $path, array(
+    $upload = wp_remote_request( FW_SUPABASE_URL . '/storage/v1/object/trip-photos/' . $path, array(
         'method'  => 'POST',
         'headers' => array(
             'apikey'        => FW_SUPABASE_SERVICE,
@@ -794,7 +794,7 @@ function fw_upload_trip_photo( $request ) {
         return new WP_Error( 'upload_fail', 'Storage upload failed.', array( 'status' => 500 ) );
     }
 
-    $url = FW_SUPABASE_URL . '/storage/v1/object/public/fw-member-media/' . $path;
+    $url = FW_SUPABASE_URL . '/storage/v1/object/public/trip-photos/' . $path;
 
     wp_remote_post( FW_SUPABASE_URL . '/rest/v1/fw_album_photos', array(
         'headers'     => array(
@@ -881,7 +881,7 @@ function fw_upload_image( $file, $storage_path ) {
     $final_path = $storage_path . '.webp';
     $final_mime = 'image/webp';
 
-    $upload = wp_remote_request( FW_SUPABASE_URL . '/storage/v1/object/fw-member-media/' . $final_path, array(
+    $upload = wp_remote_request( FW_SUPABASE_URL . '/storage/v1/object/avatars/' . $final_path, array(
         'method'  => 'POST',
         'headers' => array(
             'apikey'        => FW_SUPABASE_SERVICE,
@@ -902,7 +902,7 @@ function fw_upload_image( $file, $storage_path ) {
         return new WP_Error( 'upload_fail', 'Storage upload failed.', array( 'status' => 500 ) );
     }
 
-    return FW_SUPABASE_URL . '/storage/v1/object/public/fw-member-media/' . $final_path;
+    return FW_SUPABASE_URL . '/storage/v1/object/public/avatars/' . $final_path;
 }
 
 /* ── fw_get_albums ── */
