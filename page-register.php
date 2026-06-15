@@ -144,7 +144,7 @@ get_header();
         </div>
         <a href="<?php echo esc_url(home_url('/login/')); ?>" style="display:inline-block;padding:11px 22px;background:transparent;border:1px solid var(--rust);color:var(--rust);font-family:var(--headline);font-size:14px;letter-spacing:2px;text-decoration:none;border-radius:2px;white-space:nowrap;transition:background .2s" onmouseover="this.style.background='rgba(193,68,14,.15)'" onmouseout="this.style.background='transparent'">LOG IN →</a>
       </div>
-      <div class="reg-msg" style="margin-top:14px;color:rgba(255,255,255,.25)">By registering you agree to our <a href="<?php echo esc_url(home_url('/')); ?>" style="color:rgba(193,68,14,.6)">terms of use</a></div>
+      <div class="reg-msg" style="margin-top:14px;color:rgba(255,255,255,.25)">By registering you agree to our <a href="<?php echo esc_url(home_url('/terms/')); ?>" style="color:rgba(193,68,14,.6)">terms of use</a></div>
     </div>
 
     <!-- STEP 2: Email Verification -->
@@ -296,25 +296,41 @@ function _acFetch(type,query,listEl){
     _acRender(type,results,listEl);
     return;
   } else if(type==='state'){
-    url='https://countriesnow.space/api/v0.1/countries/states';
-    fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({country:country})})
-      .then(function(r){return r.json();})
-      .then(function(d){
-        var states=(d.data&&d.data.states)||[];
-        var results=states.filter(function(s){return s.name.toLowerCase().includes(query.toLowerCase());}).map(function(s){return s.name;});
-        _acCache[cacheKey]=results;
-        _acRender(type,results,listEl);
-      }).catch(function(){listEl.innerHTML='<div class="ac-loading">Error loading states.</div>';});
+    fetch('https://countriesnow.space/api/v0.1/countries/states',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({country:country})
+    }).then(function(r){return r.json();})
+    .then(function(d){
+      if(d.error) throw new Error('not found');
+      var states=(d.data&&d.data.states)||[];
+      var results=states.map(function(s){return s.name;}).filter(function(n){return n.toLowerCase().includes(query.toLowerCase());});
+      _acCache[cacheKey]=results;
+      _acRender(type,results,listEl);
+    }).catch(function(){
+      listEl.innerHTML='<div class="ac-loading">Type your state name manually.</div>';
+      document.getElementById('regState').value=query;
+      document.getElementById('regStateInput').value=query;
+    });
   } else if(type==='city'){
-    url='https://countriesnow.space/api/v0.1/countries/state/cities';
-    fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({country:country,state:state})})
-      .then(function(r){return r.json();})
-      .then(function(d){
-        var cities=(d.data)||[];
-        var results=cities.filter(function(c){return c.toLowerCase().includes(query.toLowerCase());}).slice(0,30);
-        _acCache[cacheKey]=results;
-        _acRender(type,results,listEl);
-      }).catch(function(){listEl.innerHTML='<div class="ac-loading">Error loading cities.</div>';});
+    var cityUrl=state
+      ?'https://countriesnow.space/api/v0.1/countries/state/cities'
+      :'https://countriesnow.space/api/v0.1/countries/cities';
+    var cityBody=state
+      ?JSON.stringify({country:country,state:state})
+      :JSON.stringify({country:country});
+    fetch(cityUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:cityBody})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.error) throw new Error('not found');
+      var cities=d.data||[];
+      var results=cities.filter(function(c){return c.toLowerCase().includes(query.toLowerCase());}).slice(0,30);
+      _acCache[cacheKey]=results;
+      _acRender(type,results,listEl);
+    }).catch(function(){
+      listEl.innerHTML='<div class="ac-loading">Type your city name manually.</div>';
+      document.getElementById('regCity').value=query;
+      document.getElementById('regCityInput').value=query;
+    });
   }
 }
 
