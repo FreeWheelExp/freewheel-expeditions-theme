@@ -1233,10 +1233,11 @@ function fw_admin_check( $request ) {
     if ( empty( $rows[0]['role'] ) ) {
         return rest_ensure_response( array( 'success' => false, 'is_admin' => false, 'reason' => 'no_member', 'uid' => $user['id'] ) );
     }
-    if ( $rows[0]['role'] !== 'admin' ) {
+    $admin_roles = array( 'admin', 'super_admin', 'moderator' );
+    if ( ! in_array( $rows[0]['role'], $admin_roles ) ) {
         return rest_ensure_response( array( 'success' => false, 'is_admin' => false, 'reason' => 'role_is_'.$rows[0]['role'] ) );
     }
-    return rest_ensure_response( array( 'success' => true, 'is_admin' => true, 'method' => 'supabase' ) );
+    return rest_ensure_response( array( 'success' => true, 'is_admin' => true, 'method' => 'supabase', 'role' => $rows[0]['role'] ) );
 }
 
 /* ── fw_admin_pending_content ── */
