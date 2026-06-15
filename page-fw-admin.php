@@ -100,6 +100,7 @@ get_header();
       <div class="adm-stat-box"><div class="adm-stat-n" id="admStatBookings">–</div><div class="adm-stat-l">Total Bookings</div></div>
       <div class="adm-stat-box"><div class="adm-stat-n" id="admStatOrders">–</div><div class="adm-stat-l">Total Orders</div></div>
       <div class="adm-stat-box"><div class="adm-stat-n" id="admStatUsers">–</div><div class="adm-stat-l">Members</div></div>
+      <div class="adm-stat-box"><div class="adm-stat-n" id="admStatBlocked">–</div><div class="adm-stat-l">Blocked</div></div>
     </div>
 
     <!-- Tabs -->
@@ -108,6 +109,7 @@ get_header();
       <button class="adm-tab" onclick="admTab('bookings',this)">Bookings</button>
       <button class="adm-tab" onclick="admTab('orders',this)">Orders</button>
       <button class="adm-tab" onclick="admTab('users',this)">Members</button>
+      <button class="adm-tab" id="tabStats" style="display:none" onclick="admTab('stats',this)">Site Stats</button>
     </div>
 
     <!-- ── CONTENT APPROVAL ── -->
@@ -210,32 +212,42 @@ get_header();
 
     <!-- ── MEMBERS ── -->
     <div id="panel-users" class="adm-panel">
-      <div class="adm-section-title">Members</div>
+      <div class="adm-section-title">Member Management</div>
       <div class="adm-search">
-        <input class="adm-input" id="userSearch" placeholder="Search by name, email or phone..." onkeydown="if(event.key==='Enter')searchUsers()">
-        <button onclick="searchUsers()" class="adm-btn btn-save">Search</button>
-        <button onclick="loadUsers()" class="adm-btn btn-secondary">All</button>
+        <input class="adm-input" id="memberSearch" placeholder="Search by name, email or phone…" oninput="filterMembers(this.value)">
       </div>
-      <div id="userList"><div class="adm-spinner">Loading...</div></div>
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+        <button class="adm-btn btn-secondary" onclick="filterMembersByStatus('all')">All</button>
+        <button class="adm-btn btn-secondary" onclick="filterMembersByStatus('active')">Active</button>
+        <button class="adm-btn btn-secondary" onclick="filterMembersByStatus('blocked')">Blocked</button>
+      </div>
+      <div id="membersList"><div class="adm-empty">Loading members…</div></div>
+    </div>
 
-      <!-- Credit adjustment -->
-      <div style="margin-top:28px;background:#0f0d0b;border:1px solid rgba(255,255,255,.08);border-radius:3px;padding:20px">
-        <div class="adm-section-title" style="margin-bottom:14px">Manual Credit Adjustment</div>
-        <div class="adm-grid-3" style="margin-bottom:12px">
-          <div><label class="adm-label">User ID</label><input class="adm-input" id="adjUserId" placeholder="Paste from member list"></div>
-          <div><label class="adm-label">Amount (+/-)</label><input class="adm-input" id="adjAmount" type="number" placeholder="e.g. 100 or -50"></div>
-          <div><label class="adm-label">Reason</label><input class="adm-input" id="adjNote" placeholder="Reason for adjustment"></div>
-        </div>
-        <button onclick="adjustCredits()" class="adm-btn btn-save">APPLY ADJUSTMENT</button>
-        <div id="adjMsg" style="font-size:12px;margin-top:10px"></div>
+    <!-- ── SITE STATS (super_admin only) ── -->
+    <div id="panel-stats" class="adm-panel">
+      <div class="adm-section-title">Site Statistics</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:28px">
+        <div class="adm-stat-box" style="border-color:rgba(193,68,14,.3)"><div class="adm-stat-n" id="statTotalMembers" style="color:var(--rust)">-</div><div class="adm-stat-l">Total Members</div></div>
+        <div class="adm-stat-box" style="border-color:rgba(74,222,128,.2)"><div class="adm-stat-n" id="statActiveMembers" style="color:#4ade80">-</div><div class="adm-stat-l">Active Members</div></div>
+        <div class="adm-stat-box" style="border-color:rgba(248,113,113,.2)"><div class="adm-stat-n" id="statBlockedMembers" style="color:#f87171">-</div><div class="adm-stat-l">Blocked Members</div></div>
+        <div class="adm-stat-box"><div class="adm-stat-n" id="statTotalBookings">-</div><div class="adm-stat-l">Total Bookings</div></div>
+        <div class="adm-stat-box"><div class="adm-stat-n" id="statTotalOrders">-</div><div class="adm-stat-l">Merch Orders</div></div>
+        <div class="adm-stat-box"><div class="adm-stat-n" id="statTotalBlogs">-</div><div class="adm-stat-l">Published Blogs</div></div>
+        <div class="adm-stat-box"><div class="adm-stat-n" id="statTotalAlbums">-</div><div class="adm-stat-l">Published Albums</div></div>
+        <div class="adm-stat-box"><div class="adm-stat-n" id="statTotalTestis">-</div><div class="adm-stat-l">Testimonials</div></div>
       </div>
+      <div class="adm-section-title">Merchandise Orders by Product</div>
+      <div id="statMerchandise"><div class="adm-empty">Loading...</div></div>
+      <div class="adm-section-title" style="margin-top:24px">Bookings by Expedition</div>
+      <div id="statExpeditions"><div class="adm-empty">Loading...</div></div>
+      <div class="adm-section-title" style="margin-top:24px">Role Distribution</div>
+      <div id="statRoles" style="display:flex;gap:12px;flex-wrap:wrap"></div>
     </div>
 
   </div>
 </div>
-</div>
 
-<div class="adm-toast" id="admToast"></div>
 
 <script>
 /* ── Boot ── */
@@ -304,7 +316,14 @@ function loadAll() {
   loadContent();
   loadBookings('');
   loadOrders();
-  loadUsers();
+  loadMembers();
+  try {
+    var _s = JSON.parse(localStorage.getItem('fw_session')||'null');
+    if (_s && _s.role === 'super_admin') {
+      var tabEl = document.getElementById('tabStats');
+      if (tabEl) { tabEl.style.display = 'block'; loadStats(); }
+    }
+  } catch(e) {}
 }
 
 /* ── CONTENT ── */
@@ -824,6 +843,67 @@ function admLogout() {
     }
   } catch(e){}
 })();
+/* ---- Members management ---- */
+var _allMembers = [];
+function loadMembers() {
+  fetch(_admRest + '/admin/members', {headers: h()})
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+      _allMembers = d.members || [];
+      var blocked = _allMembers.filter(function(m){ return m.is_suspended; }).length;
+      document.getElementById('admStatBlocked').textContent = blocked;
+      renderMembers(_allMembers);
+    }).catch(function(){ document.getElementById('membersList').innerHTML = '<div class="adm-empty">Error loading members.</div>'; });
+}
+function renderMembers(members) {
+  var el = document.getElementById('membersList');
+  if (!members.length) { el.innerHTML = '<div class="adm-empty">No members found.</div>'; return; }
+  el.innerHTML = members.map(function(m) {
+    var initL = ((m.first_name||'?')[0]).toUpperCase();
+    var av = m.avatar_url ? '<img src="'+m.avatar_url+'" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid rgba(193,68,14,.3);flex-shrink:0">' : '<div style="width:38px;height:38px;border-radius:50%;background:rgba(193,68,14,.2);display:flex;align-items:center;justify-content:center;font-family:var(--headline);font-size:16px;color:var(--rust);flex-shrink:0">'+initL+'</div>';
+    var sb = m.is_suspended ? '<span class="adm-badge badge-rejected">Blocked</span>' : '<span class="adm-badge badge-approved">Active</span>';
+    var rb = '<span style="font-size:10px;padding:2px 8px;border-radius:2px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1)">'+m.role+'</span>';
+    var bb = m.is_suspended ? '<button class="adm-btn btn-approve" onclick="toggleBlock(''+m.id+'',false)">Unblock</button>' : '<button class="adm-btn btn-reject" onclick="toggleBlock(''+m.id+'',true)">Block</button>';
+    var rs = '<select onchange="changeMemberRole(''+m.id+'',this.value)" style="padding:5px 8px;background:#0f0d0b;border:1px solid rgba(255,255,255,.12);color:#fff;font-size:11px;border-radius:2px;cursor:pointer"><option value="">Change role...</option><option value="member">Member</option><option value="moderator">Moderator</option><option value="super_admin">Super Admin</option></select>';
+    return '<div class="adm-card" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">'+av+'<div style="flex:1;min-width:160px"><div style="font-size:14px;color:#fff">'+(m.first_name||'')+' '+(m.last_name||'')+'</div><div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">'+m.email+'</div><div style="font-size:11px;color:rgba(255,255,255,.3)">'+(m.phone||'')+(m.city?' - '+m.city:'')+'</div></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+sb+rb+rs+bb+'</div></div>';
+  }).join('');
+}
+function filterMembers(q) {
+  if (!q) { renderMembers(_allMembers); return; }
+  q = q.toLowerCase();
+  renderMembers(_allMembers.filter(function(m){ return (m.email||'').toLowerCase().includes(q)||(m.first_name||'').toLowerCase().includes(q)||(m.last_name||'').toLowerCase().includes(q)||(m.phone||'').toLowerCase().includes(q); }));
+}
+function filterMembersByStatus(s) {
+  if (s==='all') { renderMembers(_allMembers); return; }
+  renderMembers(_allMembers.filter(function(m){ return s==='blocked'?m.is_suspended:!m.is_suspended; }));
+}
+async function changeMemberRole(uid, role) {
+  if (!role||!confirm('Change role to "'+role+'"?')) return;
+  var r=await fetch(_admRest+'/admin/update-member',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},h()),body:JSON.stringify({user_id:uid,role:role})});
+  var d=await r.json(); if(d.success) loadMembers(); else alert(d.message||'Failed.');
+}
+async function toggleBlock(uid, block) {
+  if (!confirm('Are you sure?')) return;
+  var r=await fetch(_admRest+'/admin/update-member',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},h()),body:JSON.stringify({user_id:uid,is_suspended:block})});
+  var d=await r.json(); if(d.success) loadMembers(); else alert(d.message||'Failed.');
+}
+/* ---- Site stats ---- */
+function loadStats() {
+  fetch(_admRest+'/admin/site-stats',{headers:h()}).then(function(r){return r.json();}).then(function(d){
+    if(!d.success) return; var s=d.stats;
+    function ss(id,v){var el=document.getElementById(id);if(el)el.textContent=v||0;}
+    ss('statTotalMembers',s.total_members); ss('statActiveMembers',s.active_members); ss('statBlockedMembers',s.blocked_members);
+    ss('statTotalBookings',s.total_bookings); ss('statTotalOrders',s.total_orders);
+    ss('statTotalBlogs',s.published_blogs); ss('statTotalAlbums',s.published_albums); ss('statTotalTestis',s.approved_testimonials);
+    var merch=s.merchandise||[];
+    document.getElementById('statMerchandise').innerHTML=merch.length?'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">'+merch.map(function(m){return '<div class="adm-stat-box"><div class="adm-stat-n" style="font-size:26px">'+m.count+'</div><div class="adm-stat-l">'+m.product_name+'</div></div>';}).join('')+'</div>':'<div class="adm-empty">No orders yet.</div>';
+    var exps=s.expeditions||[];
+    document.getElementById('statExpeditions').innerHTML=exps.length?'<div style="display:flex;flex-direction:column;gap:8px">'+exps.map(function(e){return '<div class="adm-card" style="display:flex;justify-content:space-between;align-items:center"><span style="color:rgba(255,255,255,.8);font-size:13px">'+e.trip_name+'</span><span style="font-family:var(--headline);font-size:22px;color:var(--amber)">'+e.count+'</span></div>';}).join('')+'</div>':'<div class="adm-empty">No bookings yet.</div>';
+    var roles=s.roles||[];
+    document.getElementById('statRoles').innerHTML=roles.map(function(r){return '<div class="adm-stat-box" style="min-width:120px"><div class="adm-stat-n" style="font-size:26px">'+r.count+'</div><div class="adm-stat-l">'+r.role+'</div></div>';}).join('');
+  }).catch(function(){});
+}
+
 </script>
 
 <?php get_footer(); ?>
