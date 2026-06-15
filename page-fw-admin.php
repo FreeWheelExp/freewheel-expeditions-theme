@@ -263,23 +263,44 @@ window.addEventListener('load', function() {
   var session = null;
   try { session = JSON.parse(localStorage.getItem('fw_session')||'null'); } catch(e){}
 
-  if (!isWPAdmin && (!session || !session.access_token || session.expires_at < Date.now())) {
-    return; /* gate stays visible */
+  if (!isWPAdmin && (!session || !session.access_token)) {
+    return; /* no session at all - gate stays */
   }
 
   if (session) _admToken = session.access_token;
 
-  /* Verify admin access via API */
-  console.log('[FW Admin] Checking access with token:', _admToken ? _admToken.slice(0,20)+'...' : 'NONE');
-  fetch(_admRest + '/admin/check', { headers: _admToken ? {'Authorization':'Bearer '+_admToken} : {} })
+  /* Check session role immediately - no API needed */
+  var adminRoles = ['admin', 'super_admin', 'moderator'];
+  if (isWPAdmin || (session && adminRoles.indexOf(session.role) !== -1)) {
+    document.getElementById('admGate').style.display = 'none';
+    document.getElementById('admDash').style.display = 'block';
+    loadAll();
+    /* Still verify in background to refresh role if changed */
+    fetch(_admRest + '/admin/check', { headers: {'Authorization':'Bearer '+_admToken} })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        console.log('[FW Admin] BG check:', JSON.stringify(d));
+        if (!d.success || !d.is_admin) {
+          /* Role was revoked - force logout */
+          localStorage.removeItem('fw_session');
+          window.location.href = '/login/';
+        }
+      }).catch(function(){});
+    return;
+  }
+
+  /* Session exists but role not in session - verify via API */
+  console.log('[FW Admin] Checking access via API...');
+  fetch(_admRest + '/admin/check', { headers: {'Authorization':'Bearer '+_admToken} })
     .then(function(r){ return r.json(); })
     .then(function(d){
       console.log('[FW Admin] Check result:', JSON.stringify(d));
       if (d.success && d.is_admin) {
+        /* Update session with role */
+        try { session.role = d.role || 'admin'; localStorage.setItem('fw_session', JSON.stringify(session)); } catch(e){}
         document.getElementById('admGate').style.display = 'none';
         document.getElementById('admDash').style.display = 'block';
-        loadAll();
-      } else {
+        loadAll();      } else {
         console.log('[FW Admin] Access denied. Reason:', d.reason || 'unknown');
       }
     })
