@@ -728,7 +728,7 @@ function fw_upload_avatar( $request ) {
         array(
             'method'  => 'PATCH',
             'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE, 'Content-Type' => 'application/json', 'Prefer' => 'return=minimal' ),
-            'body'    => wp_json_encode( array( 'profile_photo' => $url, 'updated_at' => date('c') ) ),
+            'body'    => wp_json_encode( array( 'avatar_url' => $url, 'updated_at' => date('c') ) ),
             'timeout' => 10,
         )
     );
