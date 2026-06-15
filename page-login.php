@@ -167,21 +167,14 @@ async function doLogin() {
       expires_at:    Date.now() + (session.expires_in * 1000),
     }));
 
-    /* Redirect */
+    /* Redirect based on role from profile */
     var urlRedirect = new URLSearchParams(window.location.search).get('redirect');
     if (urlRedirect) { window.location.href = urlRedirect; return; }
 
-    try {
-      var adminCheck = await fetch(FW_AUTH.rest_url + '/admin/check', {
-        headers: { 'Authorization': 'Bearer ' + session.access_token }
-      });
-      var adminData = await adminCheck.json();
-      if (adminData.success && adminData.is_admin) {
-        window.location.href = '<?php echo esc_js(home_url('/admin-dashboard/')); ?>';
-      } else {
-        window.location.href = FW_AUTH.dashboard_url;
-      }
-    } catch(e) {
+    var adminRoles = ['admin', 'super_admin', 'moderator'];
+    if (adminRoles.indexOf(role) !== -1) {
+      window.location.href = '<?php echo esc_js(home_url('/admin-dashboard/')); ?>';
+    } else {
       window.location.href = FW_AUTH.dashboard_url;
     }
 
