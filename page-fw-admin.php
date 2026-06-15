@@ -83,13 +83,15 @@ get_header();
 
     <div class="adm-header">
       <div style="display:flex;align-items:center;gap:14px">
-        <img src="<?php echo esc_url(get_template_directory_uri()); ?>/images/logo.png" alt="FreeWheel" style="height:38px;width:auto;border-radius:50%;border:2px solid rgba(193,68,14,.4)">
+        <div id="admAvatarWrap" style="width:42px;height:42px;border-radius:50%;border:2px solid rgba(193,68,14,.4);background:rgba(193,68,14,.15);display:flex;align-items:center;justify-content:center;font-family:var(--headline);font-size:18px;color:var(--rust);overflow:hidden;flex-shrink:0">
+          <span id="admAvatarInitial">M</span>
+        </div>
         <div>
           <div class="adm-title" style="margin:0">FW <span>Admin</span></div>
           <div id="admWelcome" style="font-size:11px;color:rgba(255,255,255,.35);margin-top:2px;letter-spacing:1px"></div>
         </div>
       </div>
-      <a href="<?php echo esc_url(home_url('/')); ?>" style="font-size:11px;letter-spacing:1px;color:rgba(255,255,255,.4);text-decoration:none;text-transform:uppercase">← View Site</a>
+
     </div>
 
     <!-- Stats -->
@@ -806,12 +808,19 @@ function admLogout() {
 (function(){
   try {
     var s = JSON.parse(localStorage.getItem('fw_session')||'null');
-    if (s && s.first_name) {
-      var n = s.first_name;
-      var el = document.getElementById('admNavName');
+    if (s) {
+      var n = s.first_name || 'Admin';
       var wel = document.getElementById('admWelcome');
-      if (el) el.textContent = n;
       if (wel) wel.textContent = 'Welcome back, ' + n;
+      var wrap = document.getElementById('admAvatarWrap');
+      if (wrap) {
+        if (s.avatar_url) {
+          wrap.innerHTML = '<img src="'+s.avatar_url+'" style="width:100%;height:100%;object-fit:cover">';
+        } else {
+          var init = document.getElementById('admAvatarInitial');
+          if (init) init.textContent = n[0].toUpperCase();
+        }
+      }
     }
   } catch(e){}
 })();
