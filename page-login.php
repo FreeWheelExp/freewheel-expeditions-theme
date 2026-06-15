@@ -127,18 +127,34 @@ async function doLogin() {
     var avatarUrl = '';
     var role = '';
 
-    /* Single profile fetch */
+    /* Fetch profile and admin check in parallel */
+    var profileData = null;
+    var isAdmin = false;
+
     try {
-      var profR = await fetch(FW_AUTH.rest_url + '/fw-get-profile', {
-        headers: { 'Authorization': 'Bearer ' + session.access_token }
-      });
-      if (profR.ok) {
-        var profD = await profR.json();
+      var [profResp, adminResp] = await Promise.all([
+        fetch(FW_AUTH.rest_url + '/fw-get-profile', {
+          headers: { 'Authorization': 'Bearer ' + session.access_token }
+        }),
+        fetch(FW_AUTH.rest_url + '/admin/check', {
+          headers: { 'Authorization': 'Bearer ' + session.access_token }
+        })
+      ]);
+
+      if (profResp.ok) {
+        var profD = await profResp.json();
         if (profD.profile) {
+          profileData = profD.profile;
           firstName = profD.profile.first_name || firstName;
           avatarUrl = profD.profile.avatar_url || '';
           role      = profD.profile.role || '';
         }
+      }
+
+      if (adminResp.ok) {
+        var adminD = await adminResp.json();
+        isAdmin = adminD.success && adminD.is_admin;
+        if (adminD.role && !role) role = adminD.role;
       }
     } catch(e) {}
 
@@ -153,12 +169,11 @@ async function doLogin() {
       expires_at:    Date.now() + (session.expires_in * 1000),
     }));
 
-    /* Redirect based on role */
+    /* Redirect — admin/check is authoritative */
     var urlRedirect = new URLSearchParams(window.location.search).get('redirect');
     if (urlRedirect) { window.location.href = urlRedirect; return; }
 
-    var adminRoles = ['admin', 'super_admin', 'moderator'];
-    if (adminRoles.indexOf(role) !== -1) {
+    if (isAdmin) {
       window.location.href = '<?php echo esc_js(home_url('/admin-dashboard/')); ?>';
     } else {
       window.location.href = FW_AUTH.dashboard_url;
