@@ -1146,7 +1146,10 @@ function fw_is_admin( $request ) {
 
     // Check Supabase JWT
     $auth = $request->get_header( 'authorization' );
-    if ( ! $auth || strpos( $auth, 'Bearer ' ) !== 0 ) return false;
+    if ( ! $auth || strpos( $auth, 'Bearer ' ) !== 0 ) {
+        error_log('[FW_ADMIN] No auth header');
+        return false;
+    }
     $token = substr( $auth, 7 );
 
     // Verify token with Supabase Auth
@@ -1157,13 +1160,22 @@ function fw_is_admin( $request ) {
         ),
         'timeout' => 10,
     ));
-    if ( is_wp_error( $resp ) ) return false;
+    if ( is_wp_error( $resp ) ) {
+        error_log('[FW_ADMIN] Token verify WP error: ' . $resp->get_error_message());
+        return false;
+    }
 
     $code = wp_remote_retrieve_response_code( $resp );
-    if ( $code !== 200 ) return false;
+    if ( $code !== 200 ) {
+        error_log('[FW_ADMIN] Token verify failed, code: ' . $code . ' body: ' . wp_remote_retrieve_body($resp));
+        return false;
+    }
 
     $user = json_decode( wp_remote_retrieve_body( $resp ), true );
-    if ( empty( $user['id'] ) ) return false;
+    if ( empty( $user['id'] ) ) {
+        error_log('[FW_ADMIN] No user id in token response');
+        return false;
+    }
 
     // Check fw_members role using service role (bypasses RLS)
     $member_resp = wp_remote_get(
@@ -1177,11 +1189,18 @@ function fw_is_admin( $request ) {
             'timeout' => 10,
         )
     );
-    if ( is_wp_error( $member_resp ) ) return false;
+    if ( is_wp_error( $member_resp ) ) {
+        error_log('[FW_ADMIN] Member role check WP error: ' . $member_resp->get_error_message());
+        return false;
+    }
 
     $rows = json_decode( wp_remote_retrieve_body( $member_resp ), true );
-    if ( ! is_array( $rows ) || empty( $rows[0]['role'] ) ) return false;
+    if ( ! is_array( $rows ) || empty( $rows[0]['role'] ) ) {
+        error_log('[FW_ADMIN] No role found for user ' . $user['id'] . ' rows: ' . json_encode($rows));
+        return false;
+    }
 
+    error_log('[FW_ADMIN] User ' . $user['id'] . ' role: ' . $rows[0]['role']);
     return $rows[0]['role'] === 'admin';
 }
 
