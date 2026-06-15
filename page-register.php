@@ -279,6 +279,46 @@ function acSearch(type,query){
   _acTimers[type]=setTimeout(function(){_acFetch(type,query,listEl);},300);
 }
 
+/* ── India states + major cities (bundled) ── */
+var IN_STATES=['Andaman and Nicobar Islands','Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chandigarh','Chhattisgarh','Dadra and Nagar Haveli and Daman and Diu','Delhi','Goa','Gujarat','Haryana','Himachal Pradesh','Jammu and Kashmir','Jharkhand','Karnataka','Kerala','Ladakh','Lakshadweep','Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Puducherry','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand','West Bengal'];
+var IN_CITIES={
+  'Uttarakhand':['Dehradun','Haridwar','Rishikesh','Nainital','Mussoorie','Haldwani','Roorkee','Kashipur','Rudrapur','Kotdwar','Ramnagar','Almora','Pithoragarh','Bageshwar','Champawat','Pauri','Tehri','Uttarkashi','Chamoli','Rudraprayag'],
+  'Delhi':['New Delhi','Delhi','Dwarka','Rohini','Janakpuri','Laxmi Nagar','Saket','Vasant Kunj','Karol Bagh','Connaught Place'],
+  'Maharashtra':['Mumbai','Pune','Nagpur','Nashik','Aurangabad','Solapur','Kolhapur','Amravati','Navi Mumbai','Thane'],
+  'Karnataka':['Bangalore','Mysore','Hubli','Mangalore','Belgaum','Gulbarga','Davangere','Bellary','Bijapur','Shimoga'],
+  'Tamil Nadu':['Chennai','Coimbatore','Madurai','Tiruchirappalli','Salem','Tirunelveli','Erode','Vellore','Thoothukudi','Dindigul'],
+  'Gujarat':['Ahmedabad','Surat','Vadodara','Rajkot','Bhavnagar','Jamnagar','Gandhinagar','Junagadh','Anand','Bharuch'],
+  'Rajasthan':['Jaipur','Jodhpur','Udaipur','Kota','Bikaner','Ajmer','Bharatpur','Alwar','Bhilwara','Sikar'],
+  'Uttar Pradesh':['Lucknow','Kanpur','Varanasi','Agra','Meerut','Allahabad','Ghaziabad','Noida','Bareilly','Aligarh'],
+  'West Bengal':['Kolkata','Howrah','Durgapur','Asansol','Siliguri','Bardhaman','Malda','Baharampur','Habra','Kharagpur'],
+  'Himachal Pradesh':['Shimla','Manali','Dharamshala','Kullu','Mandi','Solan','Una','Hamirpur','Bilaspur','Chamba'],
+  'Punjab':['Chandigarh','Ludhiana','Amritsar','Jalandhar','Patiala','Bathinda','Mohali','Firozpur','Hoshiarpur','Gurdaspur'],
+  'Haryana':['Gurugram','Faridabad','Panipat','Ambala','Hisar','Rohtak','Karnal','Sonipat','Yamunanagar','Bhiwani'],
+  'Madhya Pradesh':['Bhopal','Indore','Jabalpur','Gwalior','Ujjain','Sagar','Dewas','Satna','Ratlam','Rewa'],
+  'Bihar':['Patna','Gaya','Bhagalpur','Muzaffarpur','Darbhanga','Arrah','Begusarai','Katihar','Munger','Chhapra'],
+  'Assam':['Guwahati','Silchar','Dibrugarh','Jorhat','Nagaon','Tinsukia','Tezpur','Bongaigaon','Dhubri','Lakhimpur'],
+  'Kerala':['Thiruvananthapuram','Kochi','Kozhikode','Thrissur','Kollam','Palakkad','Alappuzha','Kannur','Kasaragod','Kottayam'],
+  'Andhra Pradesh':['Visakhapatnam','Vijayawada','Guntur','Nellore','Kurnool','Rajahmundry','Tirupati','Kadapa','Kakinada','Anantapur'],
+  'Telangana':['Hyderabad','Warangal','Nizamabad','Karimnagar','Khammam','Ramagundam','Mahbubnagar','Nalgonda','Adilabad','Suryapet'],
+  'Odisha':['Bhubaneswar','Cuttack','Rourkela','Berhampur','Sambalpur','Puri','Balasore','Bhadrak','Baripada','Jharsuguda'],
+  'Goa':['Panaji','Margao','Vasco da Gama','Mapusa','Ponda','Bicholim','Curchorem','Sanquelim'],
+  'Jharkhand':['Ranchi','Jamshedpur','Dhanbad','Bokaro','Deoghar','Phusro','Hazaribagh','Giridih','Ramgarh','Medininagar'],
+  'Chhattisgarh':['Raipur','Bhilai','Korba','Bilaspur','Durg','Rajnandgaon','Jagdalpur','Raigarh','Ambikapur','Chirmiri'],
+  'Jammu and Kashmir':['Srinagar','Jammu','Anantnag','Sopore','Baramulla','Kathua','Udhampur','Punch','Rajouri','Kupwara'],
+  'Ladakh':['Leh','Kargil'],
+  'Arunachal Pradesh':['Itanagar','Naharlagun','Pasighat','Tezpur','Bomdila','Ziro','Along','Tezu'],
+  'Manipur':['Imphal','Thoubal','Bishnupur','Churachandpur','Senapati'],
+  'Meghalaya':['Shillong','Tura','Nongstoin','Jowai','Baghmara'],
+  'Mizoram':['Aizawl','Lunglei','Saiha','Champhai','Kolasib'],
+  'Nagaland':['Kohima','Dimapur','Mokokchung','Tuensang','Wokha'],
+  'Sikkim':['Gangtok','Namchi','Mangan','Gyalshing'],
+  'Tripura':['Agartala','Udaipur','Dharmanagar','Kailasahar','Belonia'],
+};
+
+/* Nepal states */
+var NP_STATES=['Koshi','Madhesh','Bagmati','Gandaki','Lumbini','Karnali','Sudurpashchim'];
+var NP_CITIES={'Bagmati':['Kathmandu','Lalitpur','Bhaktapur','Kirtipur','Hetauda'],'Koshi':['Biratnagar','Dharan','Itahari','Damak','Birtamod'],'Gandaki':['Pokhara','Baglung','Gorkha','Syangja'],'Lumbini':['Butwal','Bhairahawa','Tansen','Nepalgunj'],'Madhesh':['Birgunj','Janakpur','Rajbiraj','Lahan'],'Karnali':['Surkhet','Jumla','Dailekh'],'Sudurpashchim':['Dhangadhi','Mahendranagar','Dadeldhura']};
+
 function _acFetch(type,query,listEl){
   var country=document.getElementById('regCountry').value||'India';
   var state=document.getElementById('regState').value||'';
@@ -288,49 +328,43 @@ function _acFetch(type,query,listEl){
   listEl.innerHTML='<div class="ac-loading">Searching…</div>';
   listEl.classList.add('open');
 
-  var url='';
   if(type==='country'){
-    /* Filter from local list */
     var results=COUNTRIES.filter(function(c){return c.name.toLowerCase().includes(query.toLowerCase());}).map(function(c){return c.name;});
     _acCache[cacheKey]=results;
     _acRender(type,results,listEl);
     return;
-  } else if(type==='state'){
-    fetch('https://countriesnow.space/api/v0.1/countries/states',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({country:country})
-    }).then(function(r){return r.json();})
-    .then(function(d){
-      if(d.error) throw new Error('not found');
-      var states=(d.data&&d.data.states)||[];
-      var results=states.map(function(s){return s.name;}).filter(function(n){return n.toLowerCase().includes(query.toLowerCase());});
+  }
+
+  /* Use bundled data for India and Nepal */
+  if(type==='state'){
+    var stateList=country==='India'?IN_STATES:country==='Nepal'?NP_STATES:null;
+    if(stateList){
+      var results=stateList.filter(function(s){return s.toLowerCase().includes(query.toLowerCase());});
       _acCache[cacheKey]=results;
       _acRender(type,results,listEl);
-    }).catch(function(){
-      listEl.innerHTML='<div class="ac-loading">Type your state name manually.</div>';
-      document.getElementById('regState').value=query;
-      document.getElementById('regStateInput').value=query;
-    });
-  } else if(type==='city'){
-    var cityUrl=state
-      ?'https://countriesnow.space/api/v0.1/countries/state/cities'
-      :'https://countriesnow.space/api/v0.1/countries/cities';
-    var cityBody=state
-      ?JSON.stringify({country:country,state:state})
-      :JSON.stringify({country:country});
-    fetch(cityUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:cityBody})
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(d.error) throw new Error('not found');
-      var cities=d.data||[];
-      var results=cities.filter(function(c){return c.toLowerCase().includes(query.toLowerCase());}).slice(0,30);
+      return;
+    }
+    /* Other countries: allow free text */
+    listEl.innerHTML='<div class="ac-loading">Type your state/province name.</div>';
+    document.getElementById('regState').value=query;
+    document.getElementById('regStateInput').value=query;
+    return;
+  }
+
+  if(type==='city'){
+    var cityMap=country==='India'?IN_CITIES:country==='Nepal'?NP_CITIES:null;
+    if(cityMap){
+      var pool=state&&cityMap[state]?cityMap[state]:Object.values(cityMap).reduce(function(a,b){return a.concat(b);},[]);
+      var results=pool.filter(function(c){return c.toLowerCase().includes(query.toLowerCase());}).slice(0,20);
       _acCache[cacheKey]=results;
       _acRender(type,results,listEl);
-    }).catch(function(){
-      listEl.innerHTML='<div class="ac-loading">Type your city name manually.</div>';
-      document.getElementById('regCity').value=query;
-      document.getElementById('regCityInput').value=query;
-    });
+      return;
+    }
+    /* Other countries: allow free text */
+    listEl.innerHTML='<div class="ac-loading">Type your city name.</div>';
+    document.getElementById('regCity').value=query;
+    document.getElementById('regCityInput').value=query;
+    return;
   }
 }
 
