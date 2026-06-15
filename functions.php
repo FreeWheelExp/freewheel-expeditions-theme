@@ -1184,7 +1184,7 @@ function fw_is_admin( $request ) {
     $rows = json_decode( wp_remote_retrieve_body( $member_resp ), true );
     if ( ! is_array( $rows ) || empty( $rows[0]['role'] ) ) return false;
 
-    return $rows[0]['role'] === 'admin';
+    return in_array($rows[0]['role'], array('admin', 'super_admin', 'moderator'));
 }
 
 function fw_admin_deny() {
