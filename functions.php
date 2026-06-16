@@ -559,12 +559,48 @@ function fw_register_member( $request ) {
     // Award 50 registration credits
     fw_give_credits( $user_id, 50, 'registration', $user_id, 'member', 'Welcome bonus — registration' );
 
+    // Send welcome email via Brevo
+    fw_send_welcome_email( $email, $first_name );
+
     return rest_ensure_response( array(
         'success'         => true,
         'existing'        => false,
         'credits_awarded' => 50,
         'name'            => $first_name,
     ));
+}
+
+/* ── fw_send_welcome_email — Send branded welcome email via Brevo API ── */
+function fw_send_welcome_email( $email, $first_name ) {
+    $brevo_api_key = defined('FW_BREVO_API_KEY') ? FW_BREVO_API_KEY : '';
+    if ( ! $brevo_api_key ) {
+        error_log('[FW] Welcome email skipped: FW_BREVO_API_KEY not defined.');
+        return;
+    }
+
+    $html_content = '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;padding:0;background:#0a0806;font-family:Georgia,serif;"><table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0a0806;min-height:100vh;"><tr><td align="center" style="padding:40px 20px;"><table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;"><tr><td style="background:#c1440e;padding:36px 48px;text-align:center;"><h1 style="margin:0 0 6px;font-size:22px;color:#ffffff;font-family:Arial,sans-serif;font-weight:bold;letter-spacing:4px;text-transform:uppercase;">FREEWHEEL EXPEDITIONS</h1><p style="margin:0;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,0.7);font-family:Arial,sans-serif;">THE ROAD AWAITS</p></td></tr><tr><td style="background:#0f0d0b;padding:48px 48px 16px;text-align:center;"><p style="margin:0 0 24px;font-size:32px;">&#9968;&#65039;</p><h2 style="margin:0 0 8px;font-size:28px;color:#ffffff;font-family:Arial,sans-serif;font-weight:bold;letter-spacing:2px;text-transform:uppercase;">HEY ' . esc_html( strtoupper($first_name) ) . ',</h2><p style="margin:0 0 32px;font-size:16px;color:#c1440e;font-family:Arial,sans-serif;font-weight:bold;letter-spacing:2px;text-transform:uppercase;">YOU\'RE IN.</p><p style="margin:0 0 20px;font-size:14px;color:rgba(255,255,255,0.6);line-height:1.8;font-family:Arial,sans-serif;text-align:left;">FreeWheel Expeditions is where the restless find their tribe. We don\'t do tours. We do raw, unfiltered road journeys across India.</p><p style="margin:0 0 32px;font-size:14px;color:rgba(255,255,255,0.6);line-height:1.8;font-family:Arial,sans-serif;text-align:left;">Mountain passes. Desert highways. Coastal runs. Jungle tracks. If it demands grit and rewards with something unforgettable — <a href="https://freewheelexpeditions.in/expeditions/" style="color:#c1440e;text-decoration:none;font-weight:bold;">we\'re already planning it.</a></p><p style="margin:0 0 40px;font-size:14px;color:rgba(255,255,255,0.6);line-height:1.8;font-family:Arial,sans-serif;text-align:left;">You\'ll hear from us when the next ride drops. Keep your bags half-packed.</p><table cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 40px;"><tr><td style="background:#c1440e;border-radius:2px;"><a href="https://freewheelexpeditions.in/expeditions/" style="display:inline-block;padding:16px 36px;font-size:13px;font-weight:bold;letter-spacing:3px;text-transform:uppercase;color:#ffffff;text-decoration:none;font-family:Arial,sans-serif;">BLAZE THE TRAIL &#8594;</a></td></tr></table></td></tr><tr><td style="background:#0a0806;border-top:1px solid rgba(255,255,255,0.06);padding:24px 48px;text-align:center;"><p style="margin:0;font-size:12px;color:rgba(255,255,255,0.25);font-family:Arial,sans-serif;line-height:1.8;">Stay Untamed &nbsp;&middot;&nbsp; FreeWheel Expeditions &nbsp;&middot;&nbsp; <a href="https://freewheelexpeditions.in" style="color:#c1440e;text-decoration:none;">freewheelexpeditions.in</a></p></td></tr></table></td></tr></table></body></html>';
+
+    $response = wp_remote_post( 'https://api.brevo.com/v3/smtp/email', array(
+        'headers' => array(
+            'api-key'      => $brevo_api_key,
+            'Content-Type' => 'application/json',
+            'Accept'       => 'application/json',
+        ),
+        'body' => wp_json_encode( array(
+            'sender'      => array( 'name' => 'FreeWheel Expeditions', 'email' => 'hello@freewheelexpeditions.in' ),
+            'to'          => array( array( 'email' => $email, 'name' => $first_name ) ),
+            'subject'     => 'Hey ' . $first_name . ', You\'re In. 🏔️',
+            'htmlContent' => $html_content,
+        )),
+        'timeout'     => 15,
+        'data_format' => 'body',
+    ));
+
+    if ( is_wp_error( $response ) ) {
+        error_log( '[FW] Welcome email failed: ' . $response->get_error_message() );
+    } elseif ( wp_remote_retrieve_response_code( $response ) >= 300 ) {
+        error_log( '[FW] Welcome email error: ' . wp_remote_retrieve_body( $response ) );
+    }
 }
 
 /* ── fw_get_member_profile — GET /fw-get-profile ── */
@@ -2933,3 +2969,4 @@ function fw_admin_site_stats( $request ) {
         ),
     ));
 }
+
