@@ -2570,10 +2570,11 @@ function fw_get_payment_details() {
         exit;
     }
     wp_send_json_success(array(
-        'upi'     => 'freewheelexpeditions@okicici',
-        'acc_num' => '0501001000000499',
-        'ifsc'    => 'NTBL0HAL050',
-        'bank'    => 'Nainital Bank, Haldwani',
+        'upi'      => 'freewheelexpeditions@okicici',
+        'acc_num'  => '0501001000000499',
+        'ifsc'     => 'NTBL0HAL050',
+        'bank'     => 'Nainital Bank, Haldwani',
+        'qr_image' => get_option('fw_upi_qr_image', ''),
     ));
     exit;
 }
