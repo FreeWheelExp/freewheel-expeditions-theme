@@ -1009,7 +1009,7 @@ function openBuy(id, name, price){
   var rzpBtn = document.getElementById('rzpMerchBtn');
   if(rzpBtn){ rzpBtn.disabled=false; rzpBtn.textContent='PAY NOW — ₹'+price.toLocaleString('en-IN'); }
 }
-function closeBuy(){document.getElementById('buyOverlay').classList.remove('open');document.body.style.overflow='';}
+function closeBuy(){var o=document.getElementById('buyOverlay');if(o)o.classList.remove('open');document.body.style.overflow='';}
 function closeBuyIfOutside(e){if(e.target===document.getElementById('buyOverlay'))closeBuy();}
 function switchPay2(btn, id){
   document.querySelectorAll('.ptab2').forEach(function(t){t.classList.remove('active')});
@@ -1139,3 +1139,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 150);
   }
 });
+
