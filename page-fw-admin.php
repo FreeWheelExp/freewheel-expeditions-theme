@@ -250,18 +250,14 @@ get_header();
 
 
 <script>
-/* ── Pre-boot: check session role immediately before any other JS ── */
+/* ── Pre-boot: check session role immediately ── */
 try {
   var _preSession = JSON.parse(localStorage.getItem('fw_session')||'null');
   if (_preSession && _preSession.role) {
     var _preRoles = ['admin','super_admin','moderator'];
     if (_preRoles.indexOf(_preSession.role) !== -1) {
-      document.addEventListener('DOMContentLoaded', function() {
-        var g = document.getElementById('admGate');
-        var d = document.getElementById('admDash');
-        if (g) g.style.display = 'none';
-        if (d) d.style.display = 'block';
-      });
+      /* Hide gate immediately via CSS injection */
+      document.write('<style>#admGate{display:none!important}#admDash{display:block!important}</style>');
     }
   }
 } catch(e) {}
