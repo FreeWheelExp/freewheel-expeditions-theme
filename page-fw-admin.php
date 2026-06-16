@@ -87,7 +87,7 @@ get_header();
           <span id="admAvatarInitial">M</span>
         </div>
         <div>
-          <div class="adm-title" style="margin:0">FW <span>Admin</span></div>
+          <div class="adm-title" style="margin:0">FW <span id="admRoleLabel">Admin</span></div>
           <div id="admWelcome" style="font-size:11px;color:rgba(255,255,255,.35);margin-top:2px;letter-spacing:1px"></div>
         </div>
       </div>
