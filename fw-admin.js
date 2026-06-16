@@ -812,26 +812,74 @@ function adminSaveBlog() {
 }
 
 /* ---- Album ---- */
+function adminDoUpload(aid, gridEl) {
+  var fi = document.createElement('input');
+  fi.type = 'file'; fi.accept = 'image/*'; fi.multiple = true;
+  fi.onchange = function(){
+    var files = Array.from(fi.files);
+    if (!files.length) return;
+    var done = 0, succeeded = 0;
+    files.forEach(function(file){
+      var fd = new FormData();
+      fd.append('photo', file);
+      fd.append('album_id', aid);
+      fetch(_admRest + '/admin/upload-album-photo', { method: 'POST', headers: { 'Authorization': 'Bearer ' + _admToken }, body: fd })
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+          done++;
+          if (res.success) {
+            succeeded++;
+            var slot = document.createElement('div');
+            slot.style.cssText = 'aspect-ratio:1;border-radius:3px;overflow:hidden;position:relative';
+            slot.innerHTML = '<img src="' + res.url + '" style="width:100%;height:100%;object-fit:cover">';
+            var ep = gridEl ? gridEl.querySelector('.album-empty-note') : null;
+            if (ep) ep.remove();
+            if (gridEl) gridEl.appendChild(slot);
+          }
+          if (done === files.length) toast(succeeded + ' photo(s) uploaded' + (done-succeeded ? ', ' + (done-succeeded) + ' failed' : ''), done===succeeded ? false : true);
+        })
+        .catch(function(){ done++; toast('Upload failed', true); });
+    });
+  };
+  fi.click();
+}
+
 function adminLoadAlbums() {
   var el = document.getElementById('adminAlbumList');
   el.innerHTML = '<div class="adm-spinner">Loading...</div>';
   fetch(_admRest + '/admin/get-albums', { headers: { 'Authorization': 'Bearer ' + _admToken } })
-    .then(function(r){ return r.json(); })
+    .then(function(r){
+      if (!r.ok) return r.text().then(function(t){ throw new Error(r.status + ': ' + t); });
+      return r.json();
+    })
     .then(function(d){
-      if (!d.success || !d.albums || !d.albums.length) { el.innerHTML = '<div class="adm-empty">No albums yet.</div>'; return; }
+      if (!d.success || !d.albums || !d.albums.length) {
+        el.innerHTML = '<div class="adm-empty">No albums yet. Create one above.</div>';
+        return;
+      }
       el.innerHTML = '';
       d.albums.forEach(function(a) {
         var card = document.createElement('div');
         card.style.cssText = 'background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:2px;margin-bottom:14px;overflow:hidden';
 
         var header = document.createElement('div');
-        header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 16px;gap:12px';
-        header.innerHTML = '<div><div style="font-size:14px;color:#fff">' + (a.title||'Untitled') + '</div>'
-          + '<div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:2px">' + (a.trip_name||'') + (a.trip_name ? ' · ' : '') + fmtDate(a.created_at) + ' · ' + statusBadge(a.status) + '</div></div>'
-          + '<button style="padding:6px 14px;font-size:11px;letter-spacing:1px;text-transform:uppercase;font-family:var(--body);cursor:pointer;background:rgba(193,68,14,.2);border:1px solid rgba(193,68,14,.4);color:var(--rust);border-radius:2px">+ Add Photos</button>';
+        header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 16px;gap:12px;flex-wrap:wrap';
+
+        var meta = document.createElement('div');
+        meta.innerHTML = '<div style="font-size:14px;color:#fff;font-weight:500">' + (a.title||'Untitled') + '</div>'
+          + '<div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:3px">'
+          + (a.trip_name ? a.trip_name + ' &middot; ' : '') + fmtDate(a.created_at)
+          + ' &middot; ' + (a.photos ? a.photos.length : 0) + ' photos &middot; ' + statusBadge(a.status) + '</div>';
+
+        var addBtn = document.createElement('button');
+        addBtn.textContent = '+ Add Photos';
+        addBtn.style.cssText = 'padding:6px 16px;font-size:11px;letter-spacing:1px;text-transform:uppercase;font-family:var(--body);cursor:pointer;background:rgba(193,68,14,.2);border:1px solid rgba(193,68,14,.4);color:var(--rust);border-radius:2px;white-space:nowrap;flex-shrink:0';
+
+        header.appendChild(meta);
+        header.appendChild(addBtn);
 
         var grid = document.createElement('div');
-        grid.style.cssText = 'display:grid;grid-template-columns:repeat(6,1fr);gap:6px;padding:0 16px 16px';
+        grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:6px;padding:0 16px 16px';
 
         (a.photos || []).forEach(function(p){
           var slot = document.createElement('div');
@@ -841,50 +889,23 @@ function adminLoadAlbums() {
         });
         if (!(a.photos||[]).length) {
           var empty = document.createElement('div');
-          empty.style.cssText = 'color:rgba(255,255,255,.25);font-size:12px;grid-column:1/-1;padding:8px 0';
-          empty.textContent = 'No photos yet — click "+ Add Photos" to upload.';
+          empty.className = 'album-empty-note';
+          empty.style.cssText = 'color:rgba(255,255,255,.3);font-size:12px;grid-column:1/-1;padding:10px 0';
+          empty.textContent = 'No photos yet.';
           grid.appendChild(empty);
         }
 
-        header.querySelector('button').addEventListener('click', (function(aid, gridEl, cardEl){
-          return function(){
-            var fi = document.createElement('input');
-            fi.type = 'file'; fi.accept = 'image/*'; fi.multiple = true;
-            fi.onchange = function(){
-              var files = Array.from(fi.files);
-              var done = 0;
-              files.forEach(function(file){
-                var fd = new FormData();
-                fd.append('photo', file);
-                fd.append('album_id', aid);
-                fetch(_admRest + '/admin/upload-album-photo', { method: 'POST', headers: { 'Authorization': 'Bearer ' + _admToken }, body: fd })
-                  .then(function(r){ return r.json(); })
-                  .then(function(res){
-                    done++;
-                    if (res.success) {
-                      var slot = document.createElement('div');
-                      slot.style.cssText = 'aspect-ratio:1;border-radius:3px;overflow:hidden';
-                      slot.innerHTML = '<img src="' + res.url + '" style="width:100%;height:100%;object-fit:cover">';
-                      // Remove empty placeholder if present
-                      var ep = gridEl.querySelector('[style*="grid-column"]');
-                      if (ep) ep.remove();
-                      gridEl.appendChild(slot);
-                    }
-                    if (done === files.length) toast(done + ' photo(s) uploaded');
-                  })
-                  .catch(function(){ toast('Upload failed', true); });
-              });
-            };
-            fi.click();
-          };
-        })(a.id, grid, card));
+        addBtn.addEventListener('click', (function(aid, g){ return function(){ adminDoUpload(aid, g); }; })(a.id, grid));
 
         card.appendChild(header);
         card.appendChild(grid);
         el.appendChild(card);
       });
     })
-    .catch(function(e){ console.error('[FW Admin] get-albums:', e); el.innerHTML = '<div class="adm-empty">Failed to load.</div>'; });
+    .catch(function(e){
+      console.error('[FW Admin] get-albums error:', e);
+      el.innerHTML = '<div class="adm-empty" style="color:#f87171">Load error: ' + e.message + '</div>';
+    });
 }
 
 function adminCreateAlbum() {
@@ -899,15 +920,19 @@ function adminCreateAlbum() {
     headers: { 'Authorization': 'Bearer ' + _admToken, 'Content-Type': 'application/json' },
     body: JSON.stringify({ title: title, trip_name: tripName, is_public: isPublic })
   })
-    .then(function(r){ return r.json(); })
+    .then(function(r){
+      if (!r.ok) return r.text().then(function(t){ throw new Error(r.status + ': ' + t); });
+      return r.json();
+    })
     .then(function(d){
       if (d.success) {
-        msg.textContent = 'Album created!'; msg.style.color = '#4ade80';
+        msg.textContent = 'Album created! Loading...'; msg.style.color = '#4ade80';
         document.getElementById('adminAlbumTitle').value = '';
         document.getElementById('adminAlbumTripName').value = '';
         document.getElementById('adminAlbumIsPublic').checked = false;
-        setTimeout(function(){ document.getElementById('adminAlbumForm').style.display = 'none'; adminLoadAlbums(); }, 1000);
+        document.getElementById('adminAlbumForm').style.display = 'none';
+        adminLoadAlbums();
       } else { msg.textContent = d.message || 'Error creating album.'; msg.style.color = '#f87171'; }
     })
-    .catch(function(){ msg.textContent = 'Network error.'; msg.style.color = '#f87171'; });
+    .catch(function(e){ msg.textContent = 'Error: ' + e.message; msg.style.color = '#f87171'; });
 }
