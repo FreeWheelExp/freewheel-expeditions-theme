@@ -3066,10 +3066,28 @@ function fw_admin_get_user( $request ) {
     return $user;
 }
 
+/* Combined: validate token AND check admin role in 2 calls (auth + member lookup) instead of 4 */
+function fw_admin_auth( $request ) {
+    $user = fw_admin_get_user( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $member_resp = wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_members?id=eq.' . rawurlencode( $user['id'] ) . '&select=role',
+        array( 'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE ), 'timeout' => 10 )
+    );
+    if ( is_wp_error( $member_resp ) ) return new WP_Error( 'auth_fail', 'Auth service error.', array( 'status' => 503 ) );
+
+    $rows = json_decode( wp_remote_retrieve_body( $member_resp ), true );
+    if ( empty( $rows[0]['role'] ) || ! in_array( $rows[0]['role'], array( 'admin', 'super_admin', 'moderator' ) ) ) {
+        return new WP_Error( 'forbidden', 'Admin access required.', array( 'status' => 403 ) );
+    }
+    $user['role'] = $rows[0]['role'];
+    return $user;
+}
+
 /* /admin/get-blogs — list blogs created by this admin user */
 function fw_admin_get_blogs( $request ) {
-    if ( ! fw_is_admin( $request ) ) return fw_admin_deny();
-    $user = fw_admin_get_user( $request );
+    $user = fw_admin_auth( $request );
     if ( is_wp_error( $user ) ) return $user;
 
     $resp  = wp_remote_get(
@@ -3082,8 +3100,7 @@ function fw_admin_get_blogs( $request ) {
 
 /* /admin/get-albums — list albums created by this admin user */
 function fw_admin_get_albums( $request ) {
-    if ( ! fw_is_admin( $request ) ) return fw_admin_deny();
-    $user = fw_admin_get_user( $request );
+    $user = fw_admin_auth( $request );
     if ( is_wp_error( $user ) ) return $user;
 
     $resp   = wp_remote_get(
@@ -3107,8 +3124,7 @@ function fw_admin_get_albums( $request ) {
 
 /* /admin/save-blog — create or update blog, auto-published */
 function fw_admin_save_blog( $request ) {
-    if ( ! fw_is_admin( $request ) ) return fw_admin_deny();
-    $user = fw_admin_get_user( $request );
+    $user = fw_admin_auth( $request );
     if ( is_wp_error( $user ) ) return $user;
 
     $p      = $request->get_json_params() ?: array();
@@ -3138,8 +3154,7 @@ function fw_admin_save_blog( $request ) {
 
 /* /admin/upload-blog-cover */
 function fw_admin_upload_blog_cover( $request ) {
-    if ( ! fw_is_admin( $request ) ) return fw_admin_deny();
-    $user = fw_admin_get_user( $request );
+    $user = fw_admin_auth( $request );
     if ( is_wp_error( $user ) ) return $user;
 
     if ( empty( $_FILES['photo'] ) || $_FILES['photo']['error'] !== UPLOAD_ERR_OK ) {
@@ -3153,8 +3168,7 @@ function fw_admin_upload_blog_cover( $request ) {
 
 /* /admin/create-album — auto-published */
 function fw_admin_create_album( $request ) {
-    if ( ! fw_is_admin( $request ) ) return fw_admin_deny();
-    $user = fw_admin_get_user( $request );
+    $user = fw_admin_auth( $request );
     if ( is_wp_error( $user ) ) return $user;
 
     $p         = $request->get_json_params() ?: array();
@@ -3176,8 +3190,7 @@ function fw_admin_create_album( $request ) {
 
 /* /admin/upload-album-photo — no ownership check, no 6-photo cap enforced (admins can exceed) */
 function fw_admin_upload_album_photo( $request ) {
-    if ( ! fw_is_admin( $request ) ) return fw_admin_deny();
-    $user = fw_admin_get_user( $request );
+    $user = fw_admin_auth( $request );
     if ( is_wp_error( $user ) ) return $user;
 
     if ( empty( $_FILES['photo'] ) || $_FILES['photo']['error'] !== UPLOAD_ERR_OK ) {
