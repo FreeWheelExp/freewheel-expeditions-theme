@@ -261,7 +261,7 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
           /* Build dropdown */
           var dropEl = document.createElement('div');
           dropEl.id = dropId;
-          dropEl.style.cssText = 'display:none;position:absolute;right:0;top:calc(100% + 8px);background:#1a1410;border:1px solid rgba(193,68,14,.3);border-radius:2px;min-width:180px;z-index:999';
+          dropEl.style.cssText = 'display:none;position:fixed;top:56px;right:16px;background:#1a1410;border:1px solid rgba(193,68,14,.3);border-radius:2px;min-width:180px;z-index:9999';
           var linkStyle = 'display:block;padding:10px 16px;font-size:13px;color:rgba(255,255,255,.7);text-decoration:none;border-bottom:1px solid rgba(255,255,255,.06)';
           dropEl.innerHTML =
             (isAdmin ? '' : '<a href="' + dashUrl + '" style="' + linkStyle + '">My Dashboard</a>') +
@@ -550,6 +550,7 @@ function fwSuccessClose(){
   if(ov){ov.style.display='none';document.body.style.overflow='';}
 }
 </script>
+
 
 
 
