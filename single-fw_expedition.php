@@ -451,12 +451,43 @@ echo '<script type="application/ld+json">' . json_encode($schema_exp, JSON_UNESC
           <div style="margin-top:8px;font-size:13px;color:rgba(255,255,255,.6)">Total: <strong id="expTotalAmt" style="color:var(--amber)">₹<?php echo number_format($price); ?></strong></div>
         </div>
 
-        <button id="rzpExpBtn" onclick="fwExpRzpPay()"
-          style="width:100%;padding:16px;background:var(--rust);border:none;color:#fff;font-family:var(--headline);font-size:18px;letter-spacing:2px;cursor:pointer;border-radius:2px;transition:background .2s;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-          PAY &amp; BOOK NOW
-        </button>
-        <div id="rzpExpMsg" style="font-size:12px;text-align:center;min-height:16px;margin-bottom:8px"></div>
+        <!-- Payment Options - shown only when logged in -->
+        <div id="expPayGate" style="display:none;padding:12px;background:rgba(193,68,14,.1);border:1px solid rgba(193,68,14,.3);border-radius:2px;font-size:13px;color:rgba(255,255,255,.7);margin-bottom:12px;text-align:center">
+          Please <a id="expLoginLink" href="/login/" style="color:var(--rust)">log in</a> to book this expedition.
+        </div>
+
+        <div id="expPayOptions" style="display:none">
+          <!-- Pay tabs -->
+          <div style="display:flex;gap:6px;margin-bottom:14px">
+            <button onclick="expSelPay('online',this)" id="expTabOnline"
+              style="flex:1;padding:10px 6px;background:var(--rust);border:none;color:#fff;font-family:var(--headline);font-size:12px;letter-spacing:1px;cursor:pointer;border-radius:2px">PAY ONLINE</button>
+            <button onclick="expSelPay('bank',this)" id="expTabBank"
+              style="flex:1;padding:10px 6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.7);font-family:var(--headline);font-size:12px;letter-spacing:1px;cursor:pointer;border-radius:2px">BANK TRANSFER</button>
+          </div>
+
+          <!-- Pay Online Panel -->
+          <div id="expPanelOnline">
+            <button id="rzpExpBtn" onclick="fwExpRzpPay()"
+              style="width:100%;padding:14px;background:var(--rust);border:none;color:#fff;font-family:var(--headline);font-size:18px;letter-spacing:2px;cursor:pointer;border-radius:2px;margin-bottom:8px">
+              PAY &amp; BOOK NOW
+            </button>
+            <div id="rzpExpMsg" style="font-size:12px;text-align:center;min-height:16px;margin-bottom:8px"></div>
+          </div>
+
+          <!-- Bank Transfer Panel -->
+          <div id="expPanelBank" style="display:none">
+            <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-left:3px solid var(--teal);padding:14px;border-radius:2px;margin-bottom:12px">
+              <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px"><span style="color:rgba(255,255,255,.4);font-size:10px;text-transform:uppercase;letter-spacing:1px">Account Name</span><span style="color:#fff;font-weight:500">FreeWheel Expeditions</span></div>
+              <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px"><span style="color:rgba(255,255,255,.4);font-size:10px;text-transform:uppercase;letter-spacing:1px">Account No.</span><span id="expAccNum" style="color:var(--teal);font-family:monospace;font-weight:500">Loading...</span></div>
+              <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px"><span style="color:rgba(255,255,255,.4);font-size:10px;text-transform:uppercase;letter-spacing:1px">IFSC Code</span><span id="expAccIfsc" style="color:var(--teal);font-family:monospace;font-weight:500">Loading...</span></div>
+              <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px"><span style="color:rgba(255,255,255,.4);font-size:10px;text-transform:uppercase;letter-spacing:1px">Bank</span><span id="expAccBank" style="color:#fff;font-weight:500">Loading...</span></div>
+              <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px"><span style="color:rgba(255,255,255,.4);font-size:10px;text-transform:uppercase;letter-spacing:1px">Type</span><span style="color:#fff;font-weight:500">Current Account</span></div>
+            </div>
+            <div style="font-size:11px;color:rgba(255,255,255,.4);text-align:center;line-height:1.6">After transfer, WhatsApp your receipt to confirm booking.<br>
+              <strong style="color:rgba(255,255,255,.6)">+91 78178 38060</strong>
+            </div>
+          </div>
+        </div>
 
         <a href="https://wa.me/<?php echo $wa_num_book; ?>?text=<?php echo urlencode($wa_text_book); ?>"
            target="_blank"
@@ -473,9 +504,60 @@ echo '<script type="application/ld+json">' . json_encode($schema_exp, JSON_UNESC
       <script>
       var _expSeats=1, _expPrice=<?php echo intval($price); ?>, _expPostId='<?php echo esc_js(get_the_ID()); ?>', _expTitle='<?php echo esc_js($title); ?>', _expDates='<?php echo esc_js($dates); ?>';
       function fwExpSeatChange(d){_expSeats=Math.max(1,Math.min(10,_expSeats+d));document.getElementById('expSeatCount').textContent=_expSeats;document.getElementById('expTotalAmt').textContent='₹'+(_expSeats*_expPrice).toLocaleString('en-IN');}
-      async function fwExpRzpPay(){
+      async /* ── Expedition payment panel init ── */
+function expInitPayment(){
+  var session=null;
+  try{session=JSON.parse(localStorage.getItem('fw_session')||'null');}catch(e){}
+  var gate=document.getElementById('expPayGate');
+  var opts=document.getElementById('expPayOptions');
+  var link=document.getElementById('expLoginLink');
+  if(!session||!session.access_token||session.expires_at<Date.now()){
+    if(gate){gate.style.display='block';}
+    if(link){link.href=(window.FW_AUTH?window.FW_AUTH.login_url:'/login/')+'?redirect='+encodeURIComponent(window.location.href);}
+  } else {
+    if(opts){opts.style.display='block';}
+    expLoadBankDetails(session.access_token);
+  }
+}
+
+function expSelPay(mode,btn){
+  document.getElementById('expPanelOnline').style.display=mode==='online'?'block':'none';
+  document.getElementById('expPanelBank').style.display=mode==='bank'?'block':'none';
+  document.getElementById('expTabOnline').style.background=mode==='online'?'var(--rust)':'rgba(255,255,255,.06)';
+  document.getElementById('expTabOnline').style.color=mode==='online'?'#fff':'rgba(255,255,255,.7)';
+  document.getElementById('expTabBank').style.background=mode==='bank'?'var(--rust)':'rgba(255,255,255,.06)';
+  document.getElementById('expTabBank').style.color=mode==='bank'?'#fff':'rgba(255,255,255,.7)';
+}
+
+function expLoadBankDetails(token){
+  var nonce=document.getElementById('fw_pay_nonce');
+  if(!nonce)return;
+  fetch(window.FW_AJAX_URL,{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:new URLSearchParams({action:'fw_get_payment',nonce:nonce.value,has_items:'1'})
+  }).then(function(r){return r.json();})
+  .then(function(res){
+    if(!res.success)return;
+    var d=res.data;
+    var n=document.getElementById('expAccNum');
+    var i=document.getElementById('expAccIfsc');
+    var b=document.getElementById('expAccBank');
+    if(n)n.textContent=d.acc_num;
+    if(i)i.textContent=d.ifsc;
+    if(b)b.textContent=d.bank;
+  }).catch(function(){});
+}
+
+/* Run on page load */
+document.addEventListener('DOMContentLoaded', function(){
+  expInitPayment();
+});
+
+function fwExpRzpPay(){
         var btn=document.getElementById('rzpExpBtn'),msg=document.getElementById('rzpExpMsg');
         msg.textContent='';msg.style.color='#f87171';
+        if(typeof Razorpay==='undefined'){msg.textContent='Razorpay payment is being set up. Please use Bank Transfer for now.';msg.style.color='#f59e0b';return;}
         var session=null;try{session=JSON.parse(localStorage.getItem('fw_session')||'null');}catch(e){}
         if(!session||!session.access_token||session.expires_at<Date.now()){msg.textContent='Please log in to book.';setTimeout(function(){window.location.href=window.FW_AUTH.login_url+'?redirect='+encodeURIComponent(window.location.href);},1200);return;}
         if(!window.FW_RZP_KEY){msg.textContent='Payment gateway not configured.';return;}
