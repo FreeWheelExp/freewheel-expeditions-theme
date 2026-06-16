@@ -1,7 +1,7 @@
 /* FreeWheel Admin Dashboard JS */
 /* ── Boot ── */
 var _admToken = null;
-var _admRest  = window.FW_AUTH ? FW_AUTH.rest_url : '/wp-json/freewheel/v1';
+var _admRest  = '/wp-json/freewheel/v1'; /* will be set properly on load */
 var _allContent = {blogs:[], testis:[], albums:[], bookings:[], orders:[]};
 
 window.addEventListener('load', function() {
@@ -17,6 +17,7 @@ window.addEventListener('load', function() {
   }
 
   if (session) _admToken = session.access_token;
+  _admRest = (window.FW_AUTH && FW_AUTH.rest_url) ? FW_AUTH.rest_url : '/wp-json/freewheel/v1';
 
   /* Check session role immediately - no API needed */
   var adminRoles = ['admin', 'super_admin', 'moderator'];
