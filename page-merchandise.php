@@ -556,6 +556,17 @@ function fwOpenCart(){ document.getElementById('fw-cart-drawer').classList.add('
 function fwCloseCart(){ document.getElementById('fw-cart-drawer').classList.remove('open');document.getElementById('fw-cart-overlay').classList.remove('open');document.body.style.overflow=''; }
 
 function fwLoadPaymentDetails(){
+  /* Only load payment details for logged-in users */
+  var session=null;
+  try{session=JSON.parse(localStorage.getItem('fw_session')||'null');}catch(e){}
+  if(!session||!session.access_token||session.expires_at<Date.now()){
+    /* Show login prompt instead of bank details */
+    var panels=['fw-upi-id-txt','fw-acc-num','fw-acc-ifsc','fw-acc-bank'];
+    panels.forEach(function(id){var el=document.getElementById(id);if(el)el.textContent='Log in to view';});
+    var bankBlock=document.querySelector('#pay-panel-bank .pay-bank-block');
+    if(bankBlock){bankBlock.insertAdjacentHTML('beforebegin','<div style="padding:12px;background:rgba(193,68,14,.1);border:1px solid rgba(193,68,14,.3);border-radius:2px;font-size:13px;color:rgba(255,255,255,.7);margin-bottom:12px;text-align:center">Please <a href="'+(window.FW_AUTH?window.FW_AUTH.login_url:'/login/')+'?redirect='+encodeURIComponent(window.location.href)+'" style="color:var(--rust)">log in</a> to view payment details.</div>');}
+    return;
+  }
   var nonce=document.getElementById('fw_pay_nonce');
   if(!nonce)return;
   fetch(window.FW_AJAX_URL,{
@@ -602,6 +613,11 @@ function fwPayTab(btn,id){
 }
 
 async function fwCartRzpPay(){
+  if(typeof Razorpay === 'undefined'){
+    var msg=document.getElementById('rzpMerchMsg');
+    if(msg){msg.textContent='Razorpay payment is being integrated. Please use Bank Transfer or UPI for now.';msg.style.color='#f59e0b';}
+    return;
+  }
   var btn=document.getElementById('rzpMerchBtn');
   var msg=document.getElementById('rzpMerchMsg');
   msg.textContent=''; msg.style.color='#f87171';
