@@ -590,6 +590,12 @@ async function verifySignupOtp(){
       expires_at:Date.now()+(session.expires_in*1000)
     }));
 
+    /* Send welcome email immediately after OTP verify */
+    fetch(FW_AUTH.rest_url+'/fw-send-welcome',{
+      method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+      body:JSON.stringify({email:_pendingEmail||session.user.email,first_name:profile.first_name||''})
+    });
+
     /* Save profile to fw_members — always call, endpoint handles duplicates */
     var regResp=await fetch(FW_AUTH.rest_url+'/fw-register',{
       method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
