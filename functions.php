@@ -392,6 +392,9 @@ remove_action('wp_head', 'wp_generator');
 ═══════════════════════════════════════════════════════════ */
 
 add_action( 'rest_api_init', function() {
+    register_rest_route( 'freewheel/v1', '/fw-test-brevo', array(
+        'methods' => 'GET', 'callback' => 'fw_test_brevo_connection', 'permission_callback' => '__return_true',
+    ));
     register_rest_route( 'freewheel/v1', '/fw-register', array(
         'methods' => 'POST', 'callback' => 'fw_register_member', 'permission_callback' => '__return_true',
     ));
@@ -567,6 +570,44 @@ function fw_register_member( $request ) {
         'existing'        => false,
         'credits_awarded' => 50,
         'name'            => $first_name,
+    ));
+}
+
+/* ── fw_test_brevo_connection — GET /fw-test-brevo ── */
+function fw_test_brevo_connection() {
+    $api_key = defined('FW_BREVO_API_KEY') ? FW_BREVO_API_KEY : 'NOT DEFINED';
+    $key_defined = defined('FW_BREVO_API_KEY');
+
+    $response = wp_remote_post( 'https://api.brevo.com/v3/smtp/email', array(
+        'headers' => array(
+            'api-key'      => $api_key,
+            'Content-Type' => 'application/json',
+            'Accept'       => 'application/json',
+        ),
+        'body' => wp_json_encode( array(
+            'sender'      => array( 'name' => 'FreeWheel Test', 'email' => 'hello@freewheelexpeditions.in' ),
+            'to'          => array( array( 'email' => 'futurenxt88@gmail.com', 'name' => 'Test' ) ),
+            'subject'     => 'FreeWheel Brevo API Test',
+            'htmlContent' => '<p>Brevo API test from WordPress.</p>',
+        )),
+        'timeout'     => 15,
+        'data_format' => 'body',
+    ));
+
+    if ( is_wp_error( $response ) ) {
+        return rest_ensure_response( array(
+            'key_defined' => $key_defined,
+            'key_preview' => substr($api_key, 0, 20) . '...',
+            'error'       => $response->get_error_message(),
+            'error_code'  => $response->get_error_code(),
+        ));
+    }
+
+    return rest_ensure_response( array(
+        'key_defined'   => $key_defined,
+        'key_preview'   => substr($api_key, 0, 20) . '...',
+        'http_code'     => wp_remote_retrieve_response_code( $response ),
+        'body'          => wp_remote_retrieve_body( $response ),
     ));
 }
 
