@@ -358,17 +358,22 @@ async function savePhone() {
 }
 
 /* ── Email change ── */
+var _pendingNewEmail = '';
+
 async function requestEmailChange() {
   var btn = document.getElementById('epEmailBtn');
   var msg = document.getElementById('epEmailMsg');
   msg.textContent = ''; msg.className = 'ep-msg';
   var newEmail = document.getElementById('epNewEmail').value.trim().toLowerCase();
   if (!newEmail || !newEmail.includes('@')) { msg.textContent = 'Enter a valid email.'; msg.className = 'ep-msg error'; return; }
+  var currentEmail = document.getElementById('epCurrentEmail').value.trim().toLowerCase();
+  if (newEmail === currentEmail) { msg.textContent = 'New email is the same as current email.'; msg.className = 'ep-msg error'; return; }
   if (!_sb) { msg.textContent = 'Connection error.'; msg.className = 'ep-msg error'; return; }
   btn.disabled = true; btn.textContent = 'Sending…';
   try {
     var result = await _sb.auth.updateUser({ email: newEmail });
     if (result.error) throw result.error;
+    _pendingNewEmail = newEmail;
     document.getElementById('epEmailOtpWrap').style.display = 'block';
     document.getElementById('epEmailBtn').style.display = 'none';
     msg.textContent = 'Verification code sent to ' + newEmail + '. Check your inbox.';
@@ -383,23 +388,32 @@ async function verifyEmailOtp() {
   var btn = document.getElementById('epEmailVerifyBtn');
   var msg = document.getElementById('epEmailMsg');
   var otp = document.getElementById('epEmailOtp').value.trim();
-  var newEmail = document.getElementById('epNewEmail').value.trim().toLowerCase();
+  var newEmail = _pendingNewEmail || document.getElementById('epNewEmail').value.trim().toLowerCase();
   if (!otp || otp.length < 6) { msg.textContent = 'Enter the 6-digit code.'; msg.className = 'ep-msg error'; return; }
+  if (!newEmail) { msg.textContent = 'Email not found. Please start over.'; msg.className = 'ep-msg error'; return; }
   if (!_sb) return;
   btn.disabled = true; btn.textContent = 'Verifying…';
   try {
     var result = await _sb.auth.verifyOtp({ email: newEmail, token: otp, type: 'email_change' });
     if (result.error) throw result.error;
+    /* Update fw_members email via REST */
+    await fetch(FW_AUTH.rest_url + '/fw-update-profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _token },
+      body: JSON.stringify({ email: newEmail })
+    });
     document.getElementById('epCurrentEmail').value = newEmail;
     document.getElementById('epNewEmail').value = '';
     document.getElementById('epEmailOtpWrap').style.display = 'none';
     document.getElementById('epEmailBtn').style.display = 'inline-block';
+    document.getElementById('epEmailBtn').disabled = false;
+    document.getElementById('epEmailBtn').textContent = 'SEND VERIFICATION CODE';
     msg.textContent = 'Email updated successfully!'; msg.className = 'ep-msg success';
-    /* Update session */
     _session.email = newEmail;
     localStorage.setItem('fw_session', JSON.stringify(_session));
+    _pendingNewEmail = '';
   } catch(e) {
-    msg.textContent = e.message || 'Invalid code.'; msg.className = 'ep-msg error';
+    msg.textContent = e.message || 'Invalid or expired code.'; msg.className = 'ep-msg error';
     btn.disabled = false; btn.textContent = 'VERIFY & UPDATE';
   }
 }
@@ -448,3 +462,4 @@ function updatePwStrength(pw) {
 </script>
 
 <?php get_footer(); ?>
+
