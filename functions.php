@@ -395,6 +395,9 @@ add_action( 'rest_api_init', function() {
     register_rest_route( 'freewheel/v1', '/fw-test-brevo', array(
         'methods' => 'GET', 'callback' => 'fw_test_brevo_connection', 'permission_callback' => '__return_true',
     ));
+    register_rest_route( 'freewheel/v1', '/fw-send-welcome', array(
+        'methods' => 'POST', 'callback' => 'fw_send_welcome_endpoint', 'permission_callback' => '__return_true',
+    ));
     register_rest_route( 'freewheel/v1', '/fw-register', array(
         'methods' => 'POST', 'callback' => 'fw_register_member', 'permission_callback' => '__return_true',
     ));
@@ -571,6 +574,23 @@ function fw_register_member( $request ) {
         'credits_awarded' => 50,
         'name'            => $first_name,
     ));
+}
+
+/* ── fw_send_welcome_endpoint — POST /fw-send-welcome ── */
+function fw_send_welcome_endpoint( $request ) {
+    $user = fw_validate_token( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $p          = $request->get_json_params() ?: array();
+    $email      = sanitize_email( $p['email'] ?? $user['email'] );
+    $first_name = sanitize_text_field( $p['first_name'] ?? '' );
+
+    if ( ! $email || ! $first_name ) {
+        return new WP_Error( 'missing', 'Email and first_name required.', array( 'status' => 400 ) );
+    }
+
+    fw_send_welcome_email( $email, $first_name );
+    return rest_ensure_response( array( 'success' => true ) );
 }
 
 /* ── fw_test_brevo_connection — GET /fw-test-brevo ── */
