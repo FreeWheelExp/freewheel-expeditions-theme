@@ -343,10 +343,13 @@ function freewheel_enqueue_assets() {
     // call supabase.createClient() in inline <script> blocks within the page body.
     // Moving this to footer (true) would break auth — keep as false (head).
     wp_enqueue_script('supabase-js', 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', array(), null, false);
-    wp_enqueue_script('razorpay-checkout', get_template_directory_uri() . '/checkout.js', array(), null, false);
+    if ( is_page('merchandise') ) {
+        wp_enqueue_script('razorpay-checkout', get_template_directory_uri() . '/checkout.js', array(), null, false);
+    }
 
-/* Force Razorpay script in head as fallback */
+/* Force Razorpay script in head as fallback - merchandise page only */
 add_action( 'wp_head', function() {
+    if ( ! is_page('merchandise') ) return;
     echo '<script src="https://freewheelexpeditions.in/wp-content/themes/freewheel-expeditions-theme/checkout.js"></script>' . "\n";
     echo '<script>if(typeof Razorpay==="undefined"){document.write(\'<script src="https://checkout.razorpay.com/v1/checkout.js"><\/script>\');}</script>' . "\n";
 }, 2 );
