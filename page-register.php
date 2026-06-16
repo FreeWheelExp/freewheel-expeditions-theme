@@ -526,6 +526,8 @@ async function regSubmitDetails(){
     _pendingEmail=email;
     _pendingPassword=password;
     window._pendingProfile={first_name:firstName,last_name:lastName,phone:phone,city:city,state:state,country:country};
+    sessionStorage.setItem('fw_pending_profile',JSON.stringify(window._pendingProfile));
+    sessionStorage.setItem('fw_pending_email',email);
 
     document.getElementById('regVerifyMsg').textContent='We sent a 6-digit code to '+email+'. Enter it below to activate your account.';
     showStep(2);
@@ -566,26 +568,35 @@ async function verifySignupOtp(){
   btn.disabled=true;btn.textContent='Verifying…';
 
   try{
+    /* Restore profile from sessionStorage in case page reloaded */
+    if(!window._pendingProfile){
+      try{window._pendingProfile=JSON.parse(sessionStorage.getItem('fw_pending_profile')||'null');}catch(e){}
+    }
+    if(!_pendingEmail){
+      _pendingEmail=sessionStorage.getItem('fw_pending_email')||'';
+    }
+
     var result=await _sb.auth.verifyOtp({email:_pendingEmail,token:otp,type:'signup'});
     if(result.error) throw result.error;
 
     var session=result.data.session;
     if(!session) throw new Error('Verification succeeded but no session returned. Please log in.');
 
+    var profile=window._pendingProfile||{};
     localStorage.setItem('fw_session',JSON.stringify({
       access_token:session.access_token,refresh_token:session.refresh_token,
       user_id:session.user.id,email:session.user.email,
-      first_name:(window._pendingProfile||{}).first_name||'',
+      first_name:profile.first_name||'',
       expires_at:Date.now()+(session.expires_in*1000)
     }));
 
-    /* Save profile to fw_members */
-    if(window._pendingProfile){
-      await fetch(FW_AUTH.rest_url+'/fw-register',{
-        method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
-        body:JSON.stringify(window._pendingProfile)
-      });
-    }
+    /* Save profile to fw_members — always call, endpoint handles duplicates */
+    var regResp=await fetch(FW_AUTH.rest_url+'/fw-register',{
+      method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+      body:JSON.stringify(profile)
+    });
+    sessionStorage.removeItem('fw_pending_profile');
+    sessionStorage.removeItem('fw_pending_email');
 
     window.location.href='<?php echo esc_js(home_url('/dashboard/')); ?>';
 
