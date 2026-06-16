@@ -370,10 +370,23 @@ $wa_num = '917817838060';
 
     <!-- UPI -->
     <div class="pay-panel" id="pay-panel-upi">
-      <div style="background:rgba(255,193,14,.06);border:1px solid rgba(255,193,14,.2);border-left:3px solid var(--amber);border-radius:2px;padding:16px;margin-top:8px;text-align:center">
-        <div style="font-size:22px;margin-bottom:8px">🔧</div>
-        <div style="font-size:13px;font-weight:700;color:var(--amber);letter-spacing:1px;margin-bottom:6px">UPI INTEGRATION COMING SOON</div>
-        <div style="font-size:12px;color:rgba(255,255,255,.5);line-height:1.6">We're setting up seamless UPI payments.<br>Meanwhile, please use <strong style="color:#fff">Pay Online</strong> (cards / NetBanking) or <strong style="color:#fff">Bank Transfer</strong>.</div>
+      <!-- Login gate for UPI -->
+      <div id="fw-upi-login-notice" style="display:none;padding:12px;background:rgba(193,68,14,.1);border:1px solid rgba(193,68,14,.3);border-radius:2px;font-size:13px;color:rgba(255,255,255,.7);margin-bottom:12px;text-align:center">
+        Please <a id="fw-upi-login-link" href="/login/" style="color:var(--rust)">log in</a> to view UPI details.
+      </div>
+      <!-- UPI details - shown when logged in -->
+      <div id="fw-upi-details-wrap">
+        <div style="text-align:center;margin-bottom:16px">
+          <div id="fw-upi-qr-wrap" style="width:160px;height:160px;border:2px solid rgba(255,193,14,.3);border-radius:4px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.03);overflow:hidden">
+            <div id="fw-upi-qr-loading" style="font-size:11px;color:rgba(255,255,255,.3);letter-spacing:1px">LOADING QR...</div>
+          </div>
+          <div style="font-size:11px;color:rgba(255,255,255,.35);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px">UPI ID</div>
+          <div id="fw-upi-id-txt" class="upi-id" style="font-family:monospace;font-size:15px;font-weight:700;color:var(--amber);word-break:break-all">Loading...</div>
+          <button onclick="fwCopyUpi()" style="margin-top:10px;padding:6px 16px;background:rgba(255,193,14,.1);border:1px solid rgba(255,193,14,.3);color:var(--amber);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border-radius:2px">Copy UPI ID</button>
+        </div>
+        <div style="font-size:11px;color:rgba(255,255,255,.4);text-align:center;line-height:1.6">After payment, WhatsApp your screenshot to confirm order.<br>
+          <strong style="color:rgba(255,255,255,.6)">+91 78178 38060</strong>
+        </div>
       </div>
     </div>
 
@@ -572,6 +585,13 @@ function fwLoadPaymentDetails(){
     if(notice) notice.style.display='block';
     if(wrap) wrap.style.display='none';
     if(loginLink) loginLink.href=(window.FW_AUTH?window.FW_AUTH.login_url:'/login/')+'?redirect='+encodeURIComponent(window.location.href);
+    /* Also hide UPI details */
+    var upiNotice=document.getElementById('fw-upi-login-notice');
+    var upiWrap=document.getElementById('fw-upi-details-wrap');
+    var upiLink=document.getElementById('fw-upi-login-link');
+    if(upiNotice) upiNotice.style.display='block';
+    if(upiWrap) upiWrap.style.display='none';
+    if(upiLink) upiLink.href=(window.FW_AUTH?window.FW_AUTH.login_url:'/login/')+'?redirect='+encodeURIComponent(window.location.href);
     return;
   }
   var nonce=document.getElementById('fw_pay_nonce');
@@ -593,8 +613,26 @@ function fwLoadPaymentDetails(){
     if(accEl)accEl.textContent=d.acc_num;
     if(ifscEl)ifscEl.textContent=d.ifsc;
     if(bankEl)bankEl.textContent=d.bank;
+    /* Load QR image if available */
+    if(d.qr_image){
+      var qrWrap=document.getElementById('fw-upi-qr-wrap');
+      if(qrWrap){qrWrap.innerHTML='<img src="'+d.qr_image+'" style="width:100%;height:100%;object-fit:contain">';}
+    } else {
+      var qrLoad=document.getElementById('fw-upi-qr-loading');
+      if(qrLoad){qrLoad.textContent='Scan via any UPI app';}
+    }
   })
   .catch(function(e){console.warn('Payment load failed',e);});
+}
+
+function fwCopyUpi(){
+  var txt=document.getElementById('fw-upi-id-txt');
+  if(!txt||txt.textContent==='Loading...')return;
+  navigator.clipboard.writeText(txt.textContent).then(function(){
+    var btn=event.target;
+    btn.textContent='Copied!';
+    setTimeout(function(){btn.textContent='Copy UPI ID';},2000);
+  });
 }
 function fwCopyUPI(){
   var txt=document.getElementById('fw-upi-id-txt').textContent;
