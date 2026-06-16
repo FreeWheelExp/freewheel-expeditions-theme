@@ -591,7 +591,7 @@ if(document.readyState==='loading'){
   expInitPayment();
 }
 
-function fwExpRzpPay(){
+async function fwExpRzpPay(){
         var btn=document.getElementById('rzpExpBtn'),msg=document.getElementById('rzpExpMsg');
         msg.textContent='';msg.style.color='#f87171';
         if(typeof Razorpay==='undefined'){msg.textContent='Razorpay payment is being set up. Please use Bank Transfer for now.';msg.style.color='#f59e0b';return;}
