@@ -622,7 +622,11 @@ function loadMembers() {
     .then(function(d) {
       _allMembers = d.members || [];
       var blocked = _allMembers.filter(function(m){ return m.is_suspended; }).length;
-      document.getElementById('admStatBlocked').textContent = blocked;
+      var total = _allMembers.length;
+      var statUsers = document.getElementById('admStatUsers');
+      var statBlocked = document.getElementById('admStatBlocked');
+      if(statUsers) statUsers.textContent = total;
+      if(statBlocked) statBlocked.textContent = blocked;
       renderMembers(_allMembers);
     }).catch(function(){ document.getElementById('membersList').innerHTML = '<div class="adm-empty">Error loading members.</div>'; });
 }
