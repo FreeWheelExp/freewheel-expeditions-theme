@@ -520,7 +520,7 @@ echo '<script type="application/ld+json">' . json_encode($schema_exp, JSON_UNESC
       <script>
       var _expSeats=1, _expPrice=<?php echo intval($price); ?>, _expPostId='<?php echo esc_js(get_the_ID()); ?>', _expTitle='<?php echo esc_js($title); ?>', _expDates='<?php echo esc_js($dates); ?>';
       function fwExpSeatChange(d){_expSeats=Math.max(1,Math.min(10,_expSeats+d));document.getElementById('expSeatCount').textContent=_expSeats;document.getElementById('expTotalAmt').textContent='₹'+(_expSeats*_expPrice).toLocaleString('en-IN');}
-      async /* ── Expedition payment panel init ── */
+      /* ── Expedition payment panel init ── */
 function expInitPayment(){
   var session=null;
   try{session=JSON.parse(localStorage.getItem('fw_session')||'null');}catch(e){}
