@@ -232,6 +232,7 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
         title: album.title,
         trip: album.trip_name || '',
         member: album.member_name + (album.member_city ? ', ' + album.member_city : ''),
+        role: album.member_role || 'FW Explorer',
         instagram: album.member_instagram || '',
         photo: album.member_photo || '',
         photos: photos
@@ -240,13 +241,20 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
         '<div class="alb-photos">' + photoSlots + '</div>' +
         '<div class="alb-info">' +
           '<div class="alb-title">' + album.title + '</div>' +
-          '<div class="alb-meta" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px">' +
+          '<div class="alb-meta" style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:6px">' +
             (album.member_photo
-              ? '<img src="' + album.member_photo + '" style="width:22px;height:22px;border-radius:50%;object-fit:cover;border:1px solid rgba(193,68,14,.4);flex-shrink:0">'
-              : '<div style="width:22px;height:22px;border-radius:50%;background:rgba(193,68,14,.25);border:1px solid rgba(193,68,14,.4);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--rust);font-family:var(--headline);flex-shrink:0">' + (album.member_name||'?').charAt(0).toUpperCase() + '</div>') +
-            '<span style="font-size:12px;color:rgba(255,255,255,.7)">' + album.member_name + (album.member_city ? '<span style="color:rgba(255,255,255,.4)">, ' + album.member_city + '</span>' : '') + '</span>' +
-            (album.trip_name ? '<span style="color:rgba(255,255,255,.25);font-size:10px">&middot;</span><span style="color:var(--rust);font-size:11px">' + album.trip_name + '</span>' : '') +
-            (album.member_instagram ? '<a href="https://instagram.com/' + album.member_instagram.replace(/^@/,'') + '" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:#c13584;text-decoration:none;padding:2px 8px;background:rgba(193,53,132,.1);border:1px solid rgba(193,53,132,.25);border-radius:10px;white-space:nowrap;margin-left:2px">&#128247; ' + album.member_instagram + '</a>' : '') +
+              ? '<img src="' + album.member_photo + '" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(193,68,14,.5);flex-shrink:0">'
+              : '<div style="width:26px;height:26px;border-radius:50%;background:rgba(193,68,14,.2);border:1.5px solid rgba(193,68,14,.4);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--rust);font-family:var(--headline);flex-shrink:0;font-weight:700">' + (album.member_name||'?').charAt(0).toUpperCase() + '</div>') +
+            '<div style="display:flex;flex-direction:column;gap:2px;min-width:0">' +
+              '<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">' +
+                '<span style="font-size:12px;color:#fff;font-weight:500;white-space:nowrap">' + (album.member_name||'Explorer') + '</span>' +
+                '<span style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);opacity:.8;white-space:nowrap">' + (album.member_role||'FW Explorer') + '</span>' +
+              '</div>' +
+              '<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">' +
+                (album.trip_name ? '<span style="font-size:11px;color:var(--rust)">' + album.trip_name + '</span>' : '') +
+                (album.member_instagram ? '<a href="https://instagram.com/' + album.member_instagram.replace(/^@/,'') + '" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;color:#c13584;text-decoration:none;white-space:nowrap">&#128247; ' + album.member_instagram + '</a>' : '') +
+              '</div>' +
+            '</div>' +
           '</div>' +
         '</div>' +
       '</div>';
@@ -274,9 +282,12 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
           '<div style="max-width:900px;width:100%;text-align:center">' +
             '<div style="font-family:var(--headline);font-size:22px;color:#fff;margin-bottom:6px">' + data.title + '</div>' +
             '<div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">' +
-              (data.photo ? '<img src="' + data.photo + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid rgba(193,68,14,.4)">' : '') +
+              (data.photo ? '<img src="' + data.photo + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid rgba(193,68,14,.4)">' : '<div style="width:36px;height:36px;border-radius:50%;background:rgba(193,68,14,.2);border:2px solid rgba(193,68,14,.4);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--rust);font-family:var(--headline);font-weight:700">' + (data.member||'?').charAt(0).toUpperCase() + '</div>') +
               '<div>' +
-                '<div style="font-size:14px;color:rgba(255,255,255,.8)">' + data.member + '</div>' +
+                '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">' +
+                  '<span style="font-size:14px;color:#fff;font-weight:500">' + data.member + '</span>' +
+                  '<span style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);opacity:.85">' + (data.role||'FW Explorer') + '</span>' +
+                '</div>' +
                 '<div style="display:flex;align-items:center;gap:8px;margin-top:3px;flex-wrap:wrap">' +
                   (data.trip ? '<span style="font-size:12px;color:var(--rust)">' + data.trip + '</span>' : '') +
                   (data.instagram ? '<a href="https://instagram.com/' + data.instagram.replace(/^@/,'') + '" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#c13584;text-decoration:none;padding:2px 8px;background:rgba(193,53,132,.1);border:1px solid rgba(193,53,132,.25);border-radius:10px">&#128247; ' + data.instagram + '</a>' : '') +
