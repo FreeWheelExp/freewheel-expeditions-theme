@@ -1020,6 +1020,11 @@ function switchPay2(btn, id){
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeBuy();});
 
 async function fwMerchRzpPay(){
+  if(typeof Razorpay === 'undefined'){
+    var msg=document.getElementById('rzpMerchMsg');
+    if(msg){msg.textContent='Razorpay payment is being set up. Please use Bank Transfer or UPI in the meantime.';msg.style.color='#f59e0b';}
+    return;
+  }
   var btn=document.getElementById('rzpMerchBtn');
   var msg=document.getElementById('rzpMerchMsg');
   if(!btn||!msg) return;
