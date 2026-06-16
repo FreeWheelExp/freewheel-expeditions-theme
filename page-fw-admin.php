@@ -250,42 +250,14 @@ get_header();
 
 
 <script>
-/* ── Pre-boot: bypass gate and load all data ── */
+/* ── Pre-boot: bypass gate ── */
 (function() {
   try {
     var s = JSON.parse(localStorage.getItem('fw_session')||'null');
     if (!s || !s.role) return;
     var roles = ['admin','super_admin','moderator'];
     if (roles.indexOf(s.role) === -1) return;
-    /* Inject CSS to show dashboard immediately */
     document.write('<style>#admGate{display:none!important}#admDash{display:block!important}</style>');
-    /* Run loadAll once the page and main script are ready */
-    window.addEventListener('load', function() {
-      /* Set token for API calls */
-      window._admToken = s.access_token;
-      /* Fix admTab if broken by syntax error */
-      if (typeof admTab === 'undefined') {
-        window.admTab = function(name, btn) {
-          document.querySelectorAll('.adm-tab').forEach(function(t){ t.classList.remove('active'); });
-          document.querySelectorAll('.adm-panel').forEach(function(p){ p.style.display='none'; });
-          if (btn) btn.classList.add('active');
-          var panel = document.getElementById('panel-'+name);
-          if (panel) panel.style.display = 'block';
-        };
-      }
-      /* Trigger data load */
-      setTimeout(function() {
-        try {
-          if (typeof _admRest === 'undefined') window._admRest = (window.FW_AUTH ? FW_AUTH.rest_url : '/wp-json/freewheel/v1');
-          loadAll();
-        } catch(e) {
-          try { loadContent(); } catch(e2) {}
-          try { loadMembers(); } catch(e3) {}
-          try { loadBookings(''); } catch(e4) {}
-          try { loadOrders(); } catch(e5) {}
-        }
-      }, 300);
-    });
   } catch(e) {}
 })();
 </script>
