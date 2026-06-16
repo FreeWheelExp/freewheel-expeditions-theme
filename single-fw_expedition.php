@@ -526,7 +526,8 @@ function expInitPayment(){
   var gate=document.getElementById('expPayGate');
   var opts=document.getElementById('expPayOptions');
   var link=document.getElementById('expLoginLink');
-  if(!session||!session.access_token||session.expires_at<Date.now()){
+  var isLoggedIn = session && session.access_token && (!session.expires_at || session.expires_at > Date.now());
+  if(!isLoggedIn){
     if(gate){gate.style.display='block';}
     if(link){link.href=(window.FW_AUTH?window.FW_AUTH.login_url:'/login/')+'?redirect='+encodeURIComponent(window.location.href);}
   } else {
