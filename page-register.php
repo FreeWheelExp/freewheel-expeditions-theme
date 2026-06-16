@@ -147,15 +147,31 @@ get_header();
       <div class="reg-msg" style="margin-top:14px;color:rgba(255,255,255,.25)">By registering you agree to our <a href="<?php echo esc_url(home_url('/terms/')); ?>" style="color:rgba(193,68,14,.6)">terms of use</a></div>
     </div>
 
-    <!-- STEP 2: Email Verification -->
+    <!-- STEP 2: Email OTP Verification -->
     <div id="regStep2" class="reg-step">
-      <div class="reg-box" style="text-align:center">
-        <div style="font-size:48px;margin-bottom:16px">📧</div>
+      <div class="reg-box">
+        <div style="font-size:48px;margin-bottom:16px;text-align:center">📧</div>
         <div class="reg-tag" style="text-align:center">Almost There</div>
         <div class="reg-title" style="text-align:center">Verify Your Email</div>
-        <p class="reg-sub" style="text-align:center" id="regVerifyMsg">We've sent a confirmation link to your email.</p>
-        <a href="<?php echo esc_url(home_url('/login/')); ?>" class="reg-btn" style="display:block;text-decoration:none;text-align:center;line-height:1;margin-top:8px">GO TO LOGIN →</a>
-        <div style="margin-top:16px"><a href="<?php echo esc_url(home_url('/')); ?>" style="color:rgba(255,255,255,.3);font-size:12px;text-decoration:none">Back to home</a></div>
+        <p class="reg-sub" style="text-align:center" id="regVerifyMsg">We've sent a 6-digit code to your email. Enter it below to activate your account.</p>
+        <div class="reg-field" style="margin-top:8px">
+          <label style="text-align:center;display:block">Verification Code</label>
+          <input type="text" id="regOtpInput" placeholder="000000" maxlength="6" inputmode="numeric"
+            style="text-align:center;font-size:28px;letter-spacing:12px;padding:14px;"
+            oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+            onkeydown="if(event.key==='Enter')verifySignupOtp()">
+        </div>
+        <button class="reg-btn" id="regOtpBtn" onclick="verifySignupOtp()">VERIFY & CONTINUE →</button>
+        <div class="reg-msg" id="regOtpMsg"></div>
+        <div style="margin-top:16px;text-align:center">
+          <button onclick="resendSignupOtp()" id="regResendBtn"
+            style="background:none;border:none;color:rgba(255,255,255,.35);font-size:12px;cursor:pointer;text-decoration:underline">
+            Didn't receive the code? Resend
+          </button>
+        </div>
+        <div style="margin-top:12px;text-align:center">
+          <a href="<?php echo esc_url(home_url('/')); ?>" style="color:rgba(255,255,255,.2);font-size:12px;text-decoration:none">Back to home</a>
+        </div>
       </div>
     </div>
 
@@ -468,6 +484,9 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 
 /* ── Submit ── */
+var _pendingEmail = '';
+var _pendingPassword = '';
+
 async function regSubmitDetails(){
   var btn=document.getElementById('regBtn1');
   var msg=document.getElementById('regMsg1');
@@ -503,22 +522,12 @@ async function regSubmitDetails(){
     });
     if(result.error) throw result.error;
 
-    if(result.data.session){
-      var session=result.data.session;
-      localStorage.setItem('fw_session',JSON.stringify({
-        access_token:session.access_token,refresh_token:session.refresh_token,
-        user_id:session.user.id,email:session.user.email,first_name:firstName,
-        expires_at:Date.now()+(session.expires_in*1000)
-      }));
-      await fetch(FW_AUTH.rest_url+'/fw-register',{
-        method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
-        body:JSON.stringify({first_name:firstName,last_name:lastName,phone:phone,city:city,state:state,country:country})
-      });
-      window.location.href='<?php echo esc_js(home_url('/dashboard/')); ?>';
-      return;
-    }
+    /* Store for OTP verification and profile save after verify */
+    _pendingEmail=email;
+    _pendingPassword=password;
+    window._pendingProfile={first_name:firstName,last_name:lastName,phone:phone,city:city,state:state,country:country};
 
-    document.getElementById('regVerifyMsg').textContent='We sent a confirmation link to '+email+'. Click it to activate your account, then log in with your password.';
+    document.getElementById('regVerifyMsg').textContent='We sent a 6-digit code to '+email+'. Enter it below to activate your account.';
     showStep(2);
 
   }catch(err){
@@ -533,6 +542,64 @@ async function regSubmitDetails(){
   }
 }
 
+async function verifySignupOtp(){
+  var btn=document.getElementById('regOtpBtn');
+  var msg=document.getElementById('regOtpMsg');
+  var otp=document.getElementById('regOtpInput').value.trim();
+  msg.textContent='';msg.className='reg-msg';
+
+  if(!otp||otp.length<6){showMsg('regOtpMsg','Enter the 6-digit code from your email.','error');return;}
+  if(!_sb){showMsg('regOtpMsg','Connection error.','error');return;}
+
+  btn.disabled=true;btn.textContent='Verifying…';
+
+  try{
+    var result=await _sb.auth.verifyOtp({email:_pendingEmail,token:otp,type:'signup'});
+    if(result.error) throw result.error;
+
+    var session=result.data.session;
+    if(!session) throw new Error('Verification succeeded but no session returned. Please log in.');
+
+    localStorage.setItem('fw_session',JSON.stringify({
+      access_token:session.access_token,refresh_token:session.refresh_token,
+      user_id:session.user.id,email:session.user.email,
+      first_name:(window._pendingProfile||{}).first_name||'',
+      expires_at:Date.now()+(session.expires_in*1000)
+    }));
+
+    /* Save profile to fw_members */
+    if(window._pendingProfile){
+      await fetch(FW_AUTH.rest_url+'/fw-register',{
+        method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+        body:JSON.stringify(window._pendingProfile)
+      });
+    }
+
+    window.location.href='<?php echo esc_js(home_url('/dashboard/')); ?>';
+
+  }catch(err){
+    showMsg('regOtpMsg',err.message||'Invalid or expired code. Try again.','error');
+    btn.disabled=false;btn.textContent='VERIFY & CONTINUE →';
+  }
+}
+
+async function resendSignupOtp(){
+  var btn=document.getElementById('regResendBtn');
+  var msg=document.getElementById('regOtpMsg');
+  if(!_pendingEmail){showMsg('regOtpMsg','Please go back and register again.','error');return;}
+  btn.disabled=true;btn.textContent='Sending…';
+  try{
+    /* Re-calling signUp with same email resends the OTP */
+    var result=await _sb.auth.resend({email:_pendingEmail,type:'signup'});
+    if(result.error) throw result.error;
+    showMsg('regOtpMsg','Code resent to '+_pendingEmail,'success');
+  }catch(err){
+    showMsg('regOtpMsg',err.message||'Could not resend. Try again shortly.','error');
+  }finally{
+    setTimeout(function(){btn.disabled=false;btn.textContent='Didn\'t receive the code? Resend';},30000);
+  }
+}
+
 function showStep(n){
   document.getElementById('regStep1').classList.remove('active');
   document.getElementById('regStep2').classList.remove('active');
@@ -542,3 +609,4 @@ function showMsg(id,text,type){var el=document.getElementById(id);el.textContent
 </script>
 
 <?php get_footer(); ?>
+
