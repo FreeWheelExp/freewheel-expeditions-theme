@@ -532,7 +532,19 @@ async function regSubmitDetails(){
 
   }catch(err){
     var errMsg=err.message||'Registration failed. Please try again.';
-    if(errMsg.toLowerCase().includes('already registered')||errMsg.toLowerCase().includes('already exists')){
+    if(errMsg.toLowerCase().includes('already registered')||errMsg.toLowerCase().includes('already exists')||errMsg.toLowerCase().includes('user already registered')){
+      /* Try to resend OTP to existing unconfirmed account */
+      try{
+        var resendResult=await _sb.auth.resend({email:email,type:'signup'});
+        if(!resendResult.error){
+          _pendingEmail=email;
+          window._pendingProfile={first_name:firstName,last_name:lastName,phone:phone,city:city,state:state,country:country};
+          document.getElementById('regVerifyMsg').textContent='We sent a new 6-digit code to '+email+'. Enter it below to activate your account.';
+          showStep(2);
+          return;
+        }
+      }catch(e){}
+      /* Resend failed - account is fully confirmed, direct to login */
       msg.innerHTML='An account with this email already exists. <a href="<?php echo esc_js(home_url('/login/')); ?>" style="color:var(--rust)">Log in instead</a>';
       msg.className='reg-msg error';return;
     }
