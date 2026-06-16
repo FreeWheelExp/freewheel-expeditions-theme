@@ -681,3 +681,217 @@ function loadStats() {
   }).catch(function(){});
 }
 
+
+/* ── Admin Create Content ── */
+
+var _adminCreateTab = 'blog';
+var _adminAlbumUploadId = null;
+
+function adminCreateTab(tab) {
+  _adminCreateTab = tab;
+  var isBlog = tab === 'blog';
+  document.getElementById('createBlogSection').style.display  = isBlog ? '' : 'none';
+  document.getElementById('createAlbumSection').style.display = isBlog ? 'none' : '';
+  document.getElementById('createTabBlog').style.background  = isBlog ? 'var(--rust)' : 'rgba(255,255,255,.08)';
+  document.getElementById('createTabBlog').style.border      = isBlog ? 'none' : '1px solid rgba(255,255,255,.12)';
+  document.getElementById('createTabBlog').style.color       = isBlog ? '#fff' : 'rgba(255,255,255,.6)';
+  document.getElementById('createTabAlbum').style.background = isBlog ? 'rgba(255,255,255,.08)' : 'var(--rust)';
+  document.getElementById('createTabAlbum').style.border     = isBlog ? '1px solid rgba(255,255,255,.12)' : 'none';
+  document.getElementById('createTabAlbum').style.color      = isBlog ? 'rgba(255,255,255,.6)' : '#fff';
+
+  if (tab === 'blog') adminLoadBlogs();
+  else adminLoadAlbums();
+}
+
+/* Intercept admTab to load content panel data */
+var _origAdmTab = admTab;
+window.admTab = function(id, btn) {
+  _origAdmTab(id, btn);
+  if (id === 'create') adminCreateTab('blog');
+};
+
+/* ---- Blog ---- */
+function adminLoadBlogs() {
+  var el = document.getElementById('adminBlogList');
+  el.innerHTML = '<div class="adm-spinner">Loading...</div>';
+  fetch(h().rest + '/admin/get-blogs', { headers: { 'Authorization': 'Bearer ' + h().token } })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d.success || !d.blogs.length) { el.innerHTML = '<div class="adm-empty">No blogs yet.</div>'; return; }
+      el.innerHTML = '';
+      d.blogs.forEach(function(b) {
+        var row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:2px;margin-bottom:8px;gap:12px';
+        var badge = statusBadge(b.status);
+        row.innerHTML = '<div style="flex:1;min-width:0"><div style="font-size:14px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (b.title || 'Untitled') + '</div>'
+          + '<div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:2px">' + fmtDate(b.created_at) + ' ' + badge + '</div></div>'
+          + '<button style="padding:6px 14px;font-size:11px;letter-spacing:1px;text-transform:uppercase;font-family:var(--body);cursor:pointer;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.6);border-radius:2px">Edit</button>';
+        row.querySelector('button').addEventListener('click', (function(blog){ return function(){ adminEditBlog(blog); }; })(b));
+        el.appendChild(row);
+      });
+    })
+    .catch(function(){ el.innerHTML = '<div class="adm-empty">Failed to load.</div>'; });
+}
+
+function adminShowBlogEditor() {
+  document.getElementById('adminBlogEditId').value = '';
+  document.getElementById('adminBlogTitle').value = '';
+  document.getElementById('adminBlogBody').innerHTML = '';
+  document.getElementById('adminBlogCoverUrl').value = '';
+  document.getElementById('adminBlogCoverName').textContent = '';
+  document.getElementById('adminBlogStatus').value = 'published';
+  document.getElementById('adminBlogMsg').textContent = '';
+  document.getElementById('adminBlogEditor').style.display = 'block';
+  document.getElementById('adminBlogEditor').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function adminEditBlog(b) {
+  document.getElementById('adminBlogEditId').value = b.id;
+  document.getElementById('adminBlogTitle').value = b.title || '';
+  document.getElementById('adminBlogBody').innerHTML = b.body || '';
+  document.getElementById('adminBlogCoverUrl').value = b.cover_image || '';
+  document.getElementById('adminBlogCoverName').textContent = b.cover_image ? 'Cover set' : '';
+  document.getElementById('adminBlogStatus').value = b.status || 'published';
+  document.getElementById('adminBlogMsg').textContent = '';
+  document.getElementById('adminBlogEditor').style.display = 'block';
+  document.getElementById('adminBlogEditor').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function adminInsertInlinePhoto(input) {
+  if (!input.files[0]) return;
+  var fd = new FormData();
+  fd.append('photo', input.files[0]);
+  fetch(h().rest + '/admin/upload-blog-cover', { method: 'POST', headers: { 'Authorization': 'Bearer ' + h().token }, body: fd })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d.success) {
+        var img = document.createElement('img');
+        img.src = d.url; img.style.maxWidth = '100%';
+        document.getElementById('adminBlogBody').focus();
+        document.execCommand('insertHTML', false, img.outerHTML);
+      }
+    });
+  input.value = '';
+}
+
+function adminUploadBlogCover(input) {
+  if (!input.files[0]) return;
+  var fd = new FormData();
+  fd.append('photo', input.files[0]);
+  fetch(h().rest + '/admin/upload-blog-cover', { method: 'POST', headers: { 'Authorization': 'Bearer ' + h().token }, body: fd })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d.success) {
+        document.getElementById('adminBlogCoverUrl').value = d.url;
+        document.getElementById('adminBlogCoverName').textContent = '✓ Cover uploaded';
+        document.getElementById('adminBlogCoverName').style.color = 'var(--teal)';
+      }
+    });
+}
+
+function adminSaveBlog() {
+  var title  = document.getElementById('adminBlogTitle').value.trim();
+  var body   = document.getElementById('adminBlogBody').innerHTML.trim();
+  var cover  = document.getElementById('adminBlogCoverUrl').value;
+  var status = document.getElementById('adminBlogStatus').value;
+  var id     = document.getElementById('adminBlogEditId').value;
+  var msg    = document.getElementById('adminBlogMsg');
+
+  if (!title || !body) { msg.textContent = 'Title and body are required.'; msg.style.color = '#f87171'; return; }
+  msg.textContent = 'Saving...'; msg.style.color = 'rgba(255,255,255,.4)';
+
+  fetch(h().rest + '/admin/save-blog', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + h().token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: id, title: title, body: body, cover_image: cover, status: status })
+  })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d.success) {
+        msg.textContent = 'Blog saved!'; msg.style.color = '#4ade80';
+        setTimeout(function(){ document.getElementById('adminBlogEditor').style.display = 'none'; adminLoadBlogs(); }, 1200);
+      } else {
+        msg.textContent = d.message || 'Error saving blog.'; msg.style.color = '#f87171';
+      }
+    })
+    .catch(function(){ msg.textContent = 'Network error.'; msg.style.color = '#f87171'; });
+}
+
+/* ---- Album ---- */
+function adminLoadAlbums() {
+  var el = document.getElementById('adminAlbumList');
+  el.innerHTML = '<div class="adm-spinner">Loading...</div>';
+  fetch(h().rest + '/admin/get-albums', { headers: { 'Authorization': 'Bearer ' + h().token } })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d.success || !d.albums.length) { el.innerHTML = '<div class="adm-empty">No albums yet.</div>'; return; }
+      el.innerHTML = '';
+      d.albums.forEach(function(a) {
+        var card = document.createElement('div');
+        card.style.cssText = 'background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:2px;margin-bottom:14px;overflow:hidden';
+        var header = '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;">'
+          + '<div><div style="font-size:14px;color:#fff">' + (a.title||'Untitled') + '</div>'
+          + '<div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:2px">' + (a.trip_name||'') + ' · ' + fmtDate(a.created_at) + ' · ' + statusBadge(a.status) + '</div></div>'
+          + '<button data-aid="' + a.id + '" style="padding:6px 14px;font-size:11px;letter-spacing:1px;text-transform:uppercase;font-family:var(--body);cursor:pointer;background:rgba(193,68,14,.2);border:1px solid rgba(193,68,14,.4);color:var(--rust);border-radius:2px">+ Add Photo</button>'
+          + '</div>';
+
+        var photoGrid = '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;padding:0 16px 16px">';
+        (a.photos || []).forEach(function(p){
+          photoGrid += '<div style="aspect-ratio:1;border-radius:3px;overflow:hidden"><img src="' + p.photo_url + '" style="width:100%;height:100%;object-fit:cover"></div>';
+        });
+        if (!(a.photos||[]).length) photoGrid += '<div style="color:rgba(255,255,255,.25);font-size:12px;grid-column:1/-1;padding:8px 0">No photos yet.</div>';
+        photoGrid += '</div>';
+
+        card.innerHTML = header + photoGrid;
+
+        var addBtn = card.querySelector('[data-aid]');
+        addBtn.addEventListener('click', (function(aid){ return function(){
+          var fi = document.createElement('input');
+          fi.type = 'file'; fi.accept = 'image/*'; fi.multiple = true;
+          fi.onchange = function(){
+            Array.from(fi.files).forEach(function(file){
+              var fd = new FormData();
+              fd.append('photo', file);
+              fd.append('album_id', aid);
+              fetch(h().rest + '/admin/upload-album-photo', { method: 'POST', headers: { 'Authorization': 'Bearer ' + h().token }, body: fd })
+                .then(function(r){ return r.json(); })
+                .then(function(res){ if (res.success) { toast('Photo added'); setTimeout(adminLoadAlbums, 800); } else toast('Upload failed', true); });
+            });
+          };
+          fi.click();
+        }; })(a.id));
+
+        el.appendChild(card);
+      });
+    })
+    .catch(function(){ el.innerHTML = '<div class="adm-empty">Failed to load.</div>'; });
+}
+
+function adminCreateAlbum() {
+  var title    = document.getElementById('adminAlbumTitle').value.trim();
+  var tripName = document.getElementById('adminAlbumTripName').value.trim();
+  var isPublic = document.getElementById('adminAlbumIsPublic').checked;
+  var msg      = document.getElementById('adminAlbumFormMsg');
+
+  if (!title) { msg.textContent = 'Album title is required.'; return; }
+  msg.textContent = 'Creating...'; msg.style.color = 'rgba(255,255,255,.4)';
+
+  fetch(h().rest + '/admin/create-album', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + h().token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title: title, trip_name: tripName, is_public: isPublic })
+  })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d.success) {
+        msg.textContent = 'Album created!'; msg.style.color = '#4ade80';
+        document.getElementById('adminAlbumTitle').value = '';
+        document.getElementById('adminAlbumTripName').value = '';
+        document.getElementById('adminAlbumIsPublic').checked = false;
+        setTimeout(function(){ document.getElementById('adminAlbumForm').style.display = 'none'; adminLoadAlbums(); }, 1000);
+      } else {
+        msg.textContent = d.message || 'Error creating album.'; msg.style.color = '#f87171';
+      }
+    })
+    .catch(function(){ msg.textContent = 'Network error.'; msg.style.color = '#f87171'; });
+}
