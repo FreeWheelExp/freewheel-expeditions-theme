@@ -461,6 +461,8 @@ echo '<script type="application/ld+json">' . json_encode($schema_exp, JSON_UNESC
           <div style="display:flex;gap:6px;margin-bottom:14px">
             <button onclick="expSelPay('online',this)" id="expTabOnline"
               style="flex:1;padding:10px 6px;background:var(--rust);border:none;color:#fff;font-family:var(--headline);font-size:12px;letter-spacing:1px;cursor:pointer;border-radius:2px">PAY ONLINE</button>
+            <button onclick="expSelPay('upi',this)" id="expTabUpi"
+              style="flex:1;padding:10px 6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.7);font-family:var(--headline);font-size:12px;letter-spacing:1px;cursor:pointer;border-radius:2px">UPI</button>
             <button onclick="expSelPay('bank',this)" id="expTabBank"
               style="flex:1;padding:10px 6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.7);font-family:var(--headline);font-size:12px;letter-spacing:1px;cursor:pointer;border-radius:2px">BANK TRANSFER</button>
           </div>
@@ -472,6 +474,19 @@ echo '<script type="application/ld+json">' . json_encode($schema_exp, JSON_UNESC
               PAY &amp; BOOK NOW
             </button>
             <div id="rzpExpMsg" style="font-size:12px;text-align:center;min-height:16px;margin-bottom:8px"></div>
+          </div>
+
+          <!-- UPI Panel -->
+          <div id="expPanelUpi" style="display:none">
+            <div style="text-align:center;padding:16px 0">
+              <div id="expUpiQrWrap" style="width:160px;height:160px;border:2px solid rgba(255,193,14,.3);border-radius:4px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.03);overflow:hidden">
+                <div style="font-size:11px;color:rgba(255,255,255,.3);letter-spacing:1px">LOADING QR...</div>
+              </div>
+              <div style="font-size:11px;color:rgba(255,255,255,.35);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px">UPI ID</div>
+              <div id="expUpiId" style="font-family:monospace;font-size:15px;font-weight:700;color:var(--amber)">Loading...</div>
+              <button onclick="expCopyUpi()" style="margin-top:10px;padding:6px 16px;background:rgba(255,193,14,.1);border:1px solid rgba(255,193,14,.3);color:var(--amber);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border-radius:2px">Copy UPI ID</button>
+            </div>
+            <div style="font-size:11px;color:rgba(255,255,255,.4);text-align:center">After payment, WhatsApp your screenshot to confirm booking.<br><strong style="color:rgba(255,255,255,.6)">+91 78178 38060</strong></div>
           </div>
 
           <!-- Bank Transfer Panel -->
@@ -521,12 +536,21 @@ function expInitPayment(){
 }
 
 function expSelPay(mode,btn){
-  document.getElementById('expPanelOnline').style.display=mode==='online'?'block':'none';
-  document.getElementById('expPanelBank').style.display=mode==='bank'?'block':'none';
-  document.getElementById('expTabOnline').style.background=mode==='online'?'var(--rust)':'rgba(255,255,255,.06)';
-  document.getElementById('expTabOnline').style.color=mode==='online'?'#fff':'rgba(255,255,255,.7)';
-  document.getElementById('expTabBank').style.background=mode==='bank'?'var(--rust)':'rgba(255,255,255,.06)';
-  document.getElementById('expTabBank').style.color=mode==='bank'?'#fff':'rgba(255,255,255,.7)';
+  ['online','upi','bank'].forEach(function(m){
+    var panel=document.getElementById('expPanel'+m.charAt(0).toUpperCase()+m.slice(1));
+    var tab=document.getElementById('expTab'+m.charAt(0).toUpperCase()+m.slice(1));
+    if(panel) panel.style.display=m===mode?'block':'none';
+    if(tab){ tab.style.background=m===mode?'var(--rust)':'rgba(255,255,255,.06)'; tab.style.color=m===mode?'#fff':'rgba(255,255,255,.7)'; }
+  });
+}
+
+function expCopyUpi(){
+  var el=document.getElementById('expUpiId');
+  if(!el||el.textContent==='Loading...')return;
+  navigator.clipboard.writeText(el.textContent).then(function(){
+    var btn=event.target; btn.textContent='Copied!';
+    setTimeout(function(){btn.textContent='Copy UPI ID';},2000);
+  });
 }
 
 function expLoadBankDetails(token){
@@ -543,9 +567,18 @@ function expLoadBankDetails(token){
     var n=document.getElementById('expAccNum');
     var i=document.getElementById('expAccIfsc');
     var b=document.getElementById('expAccBank');
+    var u=document.getElementById('expUpiId');
     if(n)n.textContent=d.acc_num;
     if(i)i.textContent=d.ifsc;
     if(b)b.textContent=d.bank;
+    if(u)u.textContent=d.upi;
+    if(d.qr_image){
+      var qrWrap=document.getElementById('expUpiQrWrap');
+      if(qrWrap)qrWrap.innerHTML='<img src="'+d.qr_image+'" style="width:100%;height:100%;object-fit:contain">';
+    } else {
+      var qrLoad=document.querySelector('#expUpiQrWrap div');
+      if(qrLoad)qrLoad.textContent='Scan via any UPI app';
+    }
   }).catch(function(){});
 }
 
