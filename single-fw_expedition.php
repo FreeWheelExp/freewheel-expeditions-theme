@@ -452,6 +452,7 @@ echo '<script type="application/ld+json">' . json_encode($schema_exp, JSON_UNESC
         </div>
 
         <!-- Payment Options - shown only when logged in -->
+        <?php wp_nonce_field('fw_payment_nonce', 'fw_pay_nonce'); ?>
         <div id="expPayGate" style="display:none;padding:12px;background:rgba(193,68,14,.1);border:1px solid rgba(193,68,14,.3);border-radius:2px;font-size:13px;color:rgba(255,255,255,.7);margin-bottom:12px;text-align:center">
           Please <a id="expLoginLink" href="/login/" style="color:var(--rust)">log in</a> to book this expedition.
         </div>
@@ -584,9 +585,11 @@ function expLoadBankDetails(token){
 }
 
 /* Run on page load */
-document.addEventListener('DOMContentLoaded', function(){
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded', expInitPayment);
+} else {
   expInitPayment();
-});
+}
 
 function fwExpRzpPay(){
         var btn=document.getElementById('rzpExpBtn'),msg=document.getElementById('rzpExpMsg');
