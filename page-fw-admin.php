@@ -270,7 +270,7 @@ var _admUrls = {
   'dashboard': '<?php echo esc_js(home_url("/dashboard/")); ?>'
 };
 </script>
-<script src="<?php echo esc_url(get_template_directory_uri()); ?>/fw-admin.js?v=<?php echo filemtime(get_template_directory().'/fw-admin.js'); ?>"></script>
+<script src="<?php echo esc_url(get_template_directory_uri()); ?>/fw-admin.js?v=<?php echo time(); ?>"></script>
 
 <?php get_footer(); ?>
 
