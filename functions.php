@@ -596,10 +596,14 @@ function fw_send_welcome_email( $email, $first_name ) {
         'data_format' => 'body',
     ));
 
+    $code = wp_remote_retrieve_response_code( $response );
+    $body = wp_remote_retrieve_body( $response );
     if ( is_wp_error( $response ) ) {
-        error_log( '[FW] Welcome email failed: ' . $response->get_error_message() );
-    } elseif ( wp_remote_retrieve_response_code( $response ) >= 300 ) {
-        error_log( '[FW] Welcome email error: ' . wp_remote_retrieve_body( $response ) );
+        error_log( '[FW] Welcome email WP_Error: ' . $response->get_error_message() );
+    } elseif ( $code >= 300 ) {
+        error_log( '[FW] Welcome email HTTP ' . $code . ': ' . $body );
+    } else {
+        error_log( '[FW] Welcome email sent OK to ' . $email . ' HTTP ' . $code );
     }
 }
 
