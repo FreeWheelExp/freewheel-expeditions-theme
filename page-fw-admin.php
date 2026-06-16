@@ -109,6 +109,7 @@ get_header();
       <button class="adm-tab" onclick="admTab('bookings',this)">Bookings</button>
       <button class="adm-tab" onclick="admTab('orders',this)">Orders</button>
       <button class="adm-tab" onclick="admTab('users',this)">Members</button>
+      <button class="adm-tab" onclick="admTab('create',this)">Create Content</button>
       <button class="adm-tab" id="tabStats" style="display:none" onclick="admTab('stats',this)">Site Stats</button>
     </div>
 
@@ -243,6 +244,89 @@ get_header();
       <div id="statExpeditions"><div class="adm-empty">Loading...</div></div>
       <div class="adm-section-title" style="margin-top:24px">Role Distribution</div>
       <div id="statRoles" style="display:flex;gap:12px;flex-wrap:wrap"></div>
+    </div>
+
+    <!-- Create Content Panel -->
+    <div id="panel-create" class="adm-panel">
+      <div style="display:flex;gap:12px;margin-bottom:24px">
+        <button id="createTabBlog" onclick="adminCreateTab('blog')" style="padding:9px 20px;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:var(--body);cursor:pointer;border-radius:2px;background:var(--rust);border:none;color:#fff">Blog</button>
+        <button id="createTabAlbum" onclick="adminCreateTab('album')" style="padding:9px 20px;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:var(--body);cursor:pointer;border-radius:2px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.6)">Album</button>
+      </div>
+
+      <!-- Blog Section -->
+      <div id="createBlogSection">
+        <div class="adm-section-title">My Blogs <button onclick="adminShowBlogEditor()" style="margin-left:12px;padding:5px 14px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-family:var(--body);cursor:pointer;background:rgba(193,68,14,.2);border:1px solid rgba(193,68,14,.4);color:var(--rust);border-radius:2px">+ New Blog</button></div>
+        <div id="adminBlogList"><div class="adm-spinner">Loading...</div></div>
+
+        <div id="adminBlogEditor" style="display:none;margin-top:24px;background:#0f0d0b;border:1px solid rgba(255,255,255,.1);padding:24px;border-radius:2px">
+          <input type="hidden" id="adminBlogEditId" value="">
+          <div style="margin-bottom:14px">
+            <input type="text" id="adminBlogTitle" placeholder="Blog title..." style="width:100%;box-sizing:border-box;padding:11px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:var(--body);font-size:16px;border-radius:2px;outline:none">
+          </div>
+          <div id="adminBlogToolbar" style="display:flex;flex-wrap:wrap;gap:2px;padding:8px 10px;background:#1a1410;border:1px solid rgba(255,255,255,.12);border-bottom:none;border-radius:2px 2px 0 0;align-items:center">
+            <button type="button" onclick="document.execCommand('bold')" title="Bold" style="padding:0 10px;height:28px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:12px;cursor:pointer;border-radius:2px;font-family:var(--body);font-weight:bold">B</button>
+            <button type="button" onclick="document.execCommand('italic')" title="Italic" style="padding:0 10px;height:28px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:12px;cursor:pointer;border-radius:2px;font-family:var(--body);font-style:italic">I</button>
+            <button type="button" onclick="document.execCommand('formatBlock',false,'H2')" title="Heading 2" style="padding:0 10px;height:28px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:11px;cursor:pointer;border-radius:2px;font-family:var(--body)">H2</button>
+            <button type="button" onclick="document.execCommand('formatBlock',false,'H3')" title="Heading 3" style="padding:0 10px;height:28px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:11px;cursor:pointer;border-radius:2px;font-family:var(--body)">H3</button>
+            <button type="button" onclick="document.execCommand('insertUnorderedList')" title="Bullet List" style="padding:0 10px;height:28px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:14px;cursor:pointer;border-radius:2px;font-family:var(--body)">&#8226;</button>
+            <button type="button" onclick="document.execCommand('formatBlock',false,'blockquote')" title="Blockquote" style="padding:0 10px;height:28px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:14px;cursor:pointer;border-radius:2px;font-family:var(--body)">&ldquo;</button>
+            <button type="button" onclick="document.getElementById('adminBlogInlinePhotoInput').click()" style="padding:0 12px;height:28px;background:rgba(193,68,14,.2);border:1px solid rgba(193,68,14,.4);color:var(--rust);font-size:11px;letter-spacing:1px;cursor:pointer;border-radius:2px;font-family:var(--body);margin-left:4px">+ PHOTO</button>
+            <input type="file" id="adminBlogInlinePhotoInput" accept="image/*" style="display:none" onchange="adminInsertInlinePhoto(this)">
+          </div>
+          <div id="adminBlogBody" contenteditable="true" data-placeholder="Write your blog here..."
+            style="min-height:260px;padding:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:0 0 2px 2px;color:rgba(255,255,255,.85);font-family:var(--body);font-size:15px;line-height:1.7;outline:none">
+            <style>
+              #adminBlogBody[data-placeholder]:empty:before{content:attr(data-placeholder);color:rgba(255,255,255,.25);pointer-events:none;display:block}
+              #adminBlogBody h2{font-family:var(--headline);font-size:26px;color:#fff;letter-spacing:1px;margin:20px 0 8px}
+              #adminBlogBody h3{font-family:var(--headline);font-size:20px;color:#fff;letter-spacing:.5px;margin:16px 0 6px}
+              #adminBlogBody p{margin:0 0 12px}
+              #adminBlogBody ul,#adminBlogBody ol{padding-left:22px;margin:0 0 12px}
+              #adminBlogBody blockquote{border-left:3px solid var(--rust);margin:16px 0;padding:10px 16px;background:rgba(193,68,14,.08);font-style:italic;color:rgba(255,255,255,.7)}
+              #adminBlogBody img{max-width:100%;border-radius:3px;margin:12px 0;display:block}
+            </style>
+          </div>
+          <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <input type="file" id="adminBlogCoverInput" accept="image/*" style="display:none" onchange="adminUploadBlogCover(this)">
+            <button onclick="document.getElementById('adminBlogCoverInput').click()" style="padding:8px 16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;font-family:var(--body);font-size:13px;cursor:pointer;border-radius:2px">Upload Cover</button>
+            <span id="adminBlogCoverName" style="font-size:12px;color:rgba(255,255,255,.4)"></span>
+            <input type="hidden" id="adminBlogCoverUrl" value="">
+          </div>
+          <div style="margin-top:6px">
+            <label style="font-size:12px;color:rgba(255,255,255,.4);letter-spacing:1px">STATUS</label><br>
+            <select id="adminBlogStatus" style="margin-top:4px;padding:7px 12px;background:#1a1410;border:1px solid rgba(255,255,255,.15);color:#fff;font-family:var(--body);font-size:13px;border-radius:2px;outline:none">
+              <option value="published">Published</option>
+              <option value="draft">Draft</option>
+            </select>
+          </div>
+          <div style="margin-top:16px;display:flex;gap:10px">
+            <button onclick="adminSaveBlog()" style="padding:10px 24px;background:var(--rust);border:none;color:#fff;font-family:var(--body);font-size:13px;letter-spacing:1px;cursor:pointer;border-radius:2px">Save Blog</button>
+            <button onclick="document.getElementById('adminBlogEditor').style.display='none'" style="padding:10px 20px;background:rgba(255,255,255,.06);border:none;color:rgba(255,255,255,.4);font-family:var(--body);font-size:13px;cursor:pointer;border-radius:2px">Cancel</button>
+          </div>
+          <div id="adminBlogMsg" style="font-size:12px;margin-top:10px"></div>
+        </div>
+      </div>
+
+      <!-- Album Section -->
+      <div id="createAlbumSection" style="display:none">
+        <div class="adm-section-title">My Albums <button onclick="document.getElementById('adminAlbumForm').style.display='block'" style="margin-left:12px;padding:5px 14px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-family:var(--body);cursor:pointer;background:rgba(193,68,14,.2);border:1px solid rgba(193,68,14,.4);color:var(--rust);border-radius:2px">+ New Album</button></div>
+        <div id="adminAlbumList"><div class="adm-spinner">Loading...</div></div>
+
+        <div id="adminAlbumForm" style="display:none;margin-top:24px;background:#0f0d0b;border:1px solid rgba(255,255,255,.1);padding:24px;border-radius:2px">
+          <div style="display:grid;gap:12px;margin-bottom:14px">
+            <input type="text" id="adminAlbumTitle" placeholder="Album title (e.g. Winter Spiti 2026)" style="padding:11px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:var(--body);font-size:14px;border-radius:2px;outline:none">
+            <input type="text" id="adminAlbumTripName" placeholder="Trip name (e.g. Leh Ladakh)" style="padding:11px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:var(--body);font-size:14px;border-radius:2px;outline:none">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+              <input type="checkbox" id="adminAlbumIsPublic" style="width:18px;height:18px;accent-color:var(--teal)">
+              <span style="font-size:13px;color:rgba(255,255,255,.7)">Show in community carousel</span>
+            </label>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button onclick="adminCreateAlbum()" style="padding:10px 24px;background:var(--rust);border:none;color:#fff;font-family:var(--body);font-size:13px;letter-spacing:1px;cursor:pointer;border-radius:2px">Create Album</button>
+            <button onclick="document.getElementById('adminAlbumForm').style.display='none'" style="padding:10px 20px;background:rgba(255,255,255,.06);border:none;color:rgba(255,255,255,.4);font-family:var(--body);font-size:13px;cursor:pointer;border-radius:2px">Cancel</button>
+          </div>
+          <div id="adminAlbumFormMsg" style="font-size:12px;margin-top:10px;color:#f87171"></div>
+        </div>
+      </div>
     </div>
 
   </div>
