@@ -509,6 +509,17 @@ window.addEventListener('load', function() {
     _set('greetName', fn);
     _set('greetSub', ph!=='—' ? ph+(city!=='—'?' · '+city:'') : (_session.email||''));
 
+    /* Role label on gtag */
+    var roleTag = document.querySelector('.gtag');
+    if (roleTag) {
+      var memberRole = _session.role || 'member';
+      var roleMap = { super_admin:'FW Super Admin', moderator:'FW Moderator', admin:'FW Admin', member:'FW Explorer' };
+      var roleColor = (memberRole==='super_admin'||memberRole==='admin') ? 'var(--rust)'
+                    : memberRole==='moderator' ? 'var(--teal)'
+                    : 'var(--amber)';
+      roleTag.innerHTML = '<span style="color:' + roleColor + ';letter-spacing:3px">' + (roleMap[memberRole]||'FW Explorer') + '</span>';
+    }
+
     var avEl = document.getElementById('userAvatarEl');
     if(av) { avEl.innerHTML='<img src="'+av+'" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--amber)">'; }
     else   { avEl.textContent=(fn.charAt(0)+(ln?ln.charAt(0):'')).toUpperCase(); }
