@@ -379,6 +379,8 @@ $wa_num = '917817838060';
 
     <!-- Bank -->
     <div class="pay-panel" id="pay-panel-bank">
+      <div id="fw-bank-login-notice" style="display:none;padding:12px;background:rgba(193,68,14,.1);border:1px solid rgba(193,68,14,.3);border-radius:2px;font-size:13px;color:rgba(255,255,255,.7);margin-bottom:12px;text-align:center">Please <a id="fw-bank-login-link" href="/login/" style="color:var(--rust)">log in</a> to view bank details.</div>
+      <div id="fw-bank-details-wrap">
       <div class="pay-bank-block">
         <div class="pay-bank-row"><span class="pay-bank-label">Account Name</span><span class="pay-bank-val">FreeWheel Expeditions</span></div>
         <div class="pay-bank-row"><span class="pay-bank-label">Account No.</span><span class="pay-bank-val mono" id="fw-acc-num">••••••••••••</span></div>
@@ -387,6 +389,7 @@ $wa_num = '917817838060';
         <div class="pay-bank-row"><span class="pay-bank-label">Type</span><span class="pay-bank-val">Current Account</span></div>
       </div>
       <button class="pay-acc-copy" id="fw-acc-copy-btn" onclick="fwCopyAcc()">Copy Account Number</button>
+      </div><!-- end fw-bank-details-wrap -->
     </div>
 
     <div class="pay-confirm-note">
@@ -563,8 +566,12 @@ function fwLoadPaymentDetails(){
     /* Show login prompt instead of bank details */
     var panels=['fw-upi-id-txt','fw-acc-num','fw-acc-ifsc','fw-acc-bank'];
     panels.forEach(function(id){var el=document.getElementById(id);if(el)el.textContent='Log in to view';});
-    var bankBlock=document.querySelector('#pay-panel-bank .pay-bank-block');
-    if(bankBlock){bankBlock.insertAdjacentHTML('beforebegin','<div style="padding:12px;background:rgba(193,68,14,.1);border:1px solid rgba(193,68,14,.3);border-radius:2px;font-size:13px;color:rgba(255,255,255,.7);margin-bottom:12px;text-align:center">Please <a href="'+(window.FW_AUTH?window.FW_AUTH.login_url:'/login/')+'?redirect='+encodeURIComponent(window.location.href)+'" style="color:var(--rust)">log in</a> to view payment details.</div>');}
+    var notice=document.getElementById('fw-bank-login-notice');
+    var wrap=document.getElementById('fw-bank-details-wrap');
+    var loginLink=document.getElementById('fw-bank-login-link');
+    if(notice) notice.style.display='block';
+    if(wrap) wrap.style.display='none';
+    if(loginLink) loginLink.href=(window.FW_AUTH?window.FW_AUTH.login_url:'/login/')+'?redirect='+encodeURIComponent(window.location.href);
     return;
   }
   var nonce=document.getElementById('fw_pay_nonce');
