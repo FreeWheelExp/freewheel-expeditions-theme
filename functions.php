@@ -2574,7 +2574,7 @@ function fw_get_payment_details() {
         'acc_num'  => '0501001000000499',
         'ifsc'     => 'NTBL0HAL050',
         'bank'     => 'Nainital Bank, Haldwani',
-        'qr_image' => get_option('fw_upi_qr_image', ''),
+        'qr_image' => get_option('fw_upi_qr_image', 'https://freewheelexpeditions.in/wp-content/uploads/2026/04/QR.jpeg'),
     ));
     exit;
 }
