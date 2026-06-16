@@ -264,7 +264,7 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
           dropEl.style.cssText = 'display:none;position:absolute;right:0;top:calc(100% + 8px);background:#1a1410;border:1px solid rgba(193,68,14,.3);border-radius:2px;min-width:180px;z-index:999';
           var linkStyle = 'display:block;padding:10px 16px;font-size:13px;color:rgba(255,255,255,.7);text-decoration:none;border-bottom:1px solid rgba(255,255,255,.06)';
           dropEl.innerHTML =
-            '<a href="' + dashUrl + '" style="' + linkStyle + '">My Dashboard</a>' +
+            (isAdmin ? '' : '<a href="' + dashUrl + '" style="' + linkStyle + '">My Dashboard</a>') +
             (isAdmin ? '<a href="/admin-dashboard/" style="' + linkStyle + '">Admin Dashboard</a>' : '') +
             '<a href="/edit-profile/" style="' + linkStyle + '">Edit Profile</a>' +
             '<a href="#" id="fwNavLogout" style="display:block;padding:10px 16px;font-size:13px;color:#f87171;text-decoration:none">Log Out</a>';
