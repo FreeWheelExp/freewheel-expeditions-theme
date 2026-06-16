@@ -250,6 +250,24 @@ get_header();
 
 
 <script>
+/* ── Pre-boot: check session role immediately before any other JS ── */
+try {
+  var _preSession = JSON.parse(localStorage.getItem('fw_session')||'null');
+  if (_preSession && _preSession.role) {
+    var _preRoles = ['admin','super_admin','moderator'];
+    if (_preRoles.indexOf(_preSession.role) !== -1) {
+      document.addEventListener('DOMContentLoaded', function() {
+        var g = document.getElementById('admGate');
+        var d = document.getElementById('admDash');
+        if (g) g.style.display = 'none';
+        if (d) d.style.display = 'block';
+      });
+    }
+  }
+} catch(e) {}
+</script>
+
+<script>
 /* ── Boot ── */
 var _admToken = null;
 var _admRest  = window.FW_AUTH ? FW_AUTH.rest_url : '/wp-json/freewheel/v1';
