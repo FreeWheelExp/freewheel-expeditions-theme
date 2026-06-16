@@ -1246,6 +1246,12 @@ add_action( 'rest_api_init', function() {
     register_rest_route( 'freewheel/v1', '/admin/members',         array( 'methods'=>'GET',  'callback'=>'fw_admin_get_members',      'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/update-member',   array( 'methods'=>'POST', 'callback'=>'fw_admin_update_member',    'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/site-stats',      array( 'methods'=>'GET',  'callback'=>'fw_admin_site_stats',       'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/save-blog',           array( 'methods'=>'POST', 'callback'=>'fw_admin_save_blog',           'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/upload-blog-cover',   array( 'methods'=>'POST', 'callback'=>'fw_admin_upload_blog_cover',   'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/create-album',        array( 'methods'=>'POST', 'callback'=>'fw_admin_create_album',        'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/upload-album-photo',  array( 'methods'=>'POST', 'callback'=>'fw_admin_upload_album_photo',  'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/get-blogs',           array( 'methods'=>'GET',  'callback'=>'fw_admin_get_blogs',           'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/get-albums',          array( 'methods'=>'GET',  'callback'=>'fw_admin_get_albums',          'permission_callback'=>'__return_true' ));
 });
 
 /* ── Admin auth: WP admin OR fw_members role=admin ── */
@@ -3038,3 +3044,163 @@ function fw_admin_site_stats( $request ) {
     ));
 }
 
+
+/* ── Admin Content Creation ── */
+
+/* Helper: get admin user from request, returns user array or WP_Error */
+function fw_admin_get_user( $request ) {
+    $auth = $request->get_header( 'authorization' );
+    if ( ! $auth || strpos( $auth, 'Bearer ' ) !== 0 ) {
+        return new WP_Error( 'no_token', 'Token required.', array( 'status' => 401 ) );
+    }
+    $token = substr( $auth, 7 );
+    $resp  = wp_remote_get( FW_SUPABASE_URL . '/auth/v1/user', array(
+        'headers' => array( 'apikey' => FW_SUPABASE_ANON, 'Authorization' => 'Bearer ' . $token ),
+        'timeout' => 10,
+    ));
+    if ( is_wp_error( $resp ) || wp_remote_retrieve_response_code( $resp ) !== 200 ) {
+        return new WP_Error( 'invalid_token', 'Invalid token.', array( 'status' => 401 ) );
+    }
+    $user = json_decode( wp_remote_retrieve_body( $resp ), true );
+    if ( empty( $user['id'] ) ) return new WP_Error( 'invalid_token', 'Invalid token.', array( 'status' => 401 ) );
+    return $user;
+}
+
+/* /admin/get-blogs — list blogs created by this admin user */
+function fw_admin_get_blogs( $request ) {
+    if ( ! fw_is_admin( $request ) ) return fw_admin_deny();
+    $user = fw_admin_get_user( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $resp  = wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_blogs?user_id=eq.' . rawurlencode( $user['id'] ) . '&order=created_at.desc&select=id,title,status,created_at,cover_image',
+        array( 'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE ), 'timeout' => 10 )
+    );
+    $blogs = json_decode( wp_remote_retrieve_body( $resp ), true ) ?: array();
+    return rest_ensure_response( array( 'success' => true, 'blogs' => $blogs ) );
+}
+
+/* /admin/get-albums — list albums created by this admin user */
+function fw_admin_get_albums( $request ) {
+    if ( ! fw_is_admin( $request ) ) return fw_admin_deny();
+    $user = fw_admin_get_user( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $resp   = wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_albums?user_id=eq.' . rawurlencode( $user['id'] ) . '&order=created_at.desc&select=id,title,trip_name,status,created_at,is_public',
+        array( 'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE ), 'timeout' => 10 )
+    );
+    $albums = json_decode( wp_remote_retrieve_body( $resp ), true ) ?: array();
+
+    $h = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
+    foreach ( $albums as &$album ) {
+        $photos = json_decode( wp_remote_retrieve_body( wp_remote_get(
+            FW_SUPABASE_URL . '/rest/v1/fw_album_photos?album_id=eq.' . rawurlencode( $album['id'] ) . '&order=sort_order.asc&select=id,photo_url,caption',
+            array( 'headers' => $h, 'timeout' => 8 )
+        )), true ) ?: array();
+        $album['photos'] = $photos;
+    }
+    unset( $album );
+
+    return rest_ensure_response( array( 'success' => true, 'albums' => $albums ) );
+}
+
+/* /admin/save-blog — create or update blog, auto-published */
+function fw_admin_save_blog( $request ) {
+    if ( ! fw_is_admin( $request ) ) return fw_admin_deny();
+    $user = fw_admin_get_user( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $p      = $request->get_json_params() ?: array();
+    $id     = sanitize_text_field( $p['id'] ?? '' );
+    $title  = sanitize_text_field( $p['title'] ?? '' );
+    $body   = wp_kses_post( $p['body'] ?? '' );
+    $cover  = esc_url_raw( $p['cover_image'] ?? '' );
+    $status = in_array( $p['status'] ?? '', array( 'draft', 'pending', 'published' ) ) ? $p['status'] : 'published';
+
+    if ( ! $title || ! $body ) return new WP_Error( 'missing', 'Title and body required.', array( 'status' => 400 ) );
+
+    $payload = array( 'title' => $title, 'body' => $body, 'cover_image' => $cover, 'status' => $status, 'updated_at' => date('c') );
+    $h       = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE, 'Content-Type' => 'application/json', 'Prefer' => 'return=minimal' );
+
+    if ( $id ) {
+        wp_remote_request( FW_SUPABASE_URL . '/rest/v1/fw_blogs?id=eq.' . rawurlencode( $id ), array(
+            'method' => 'PATCH', 'headers' => $h, 'body' => wp_json_encode( $payload ), 'timeout' => 10,
+        ));
+    } else {
+        $payload['user_id'] = $user['id'];
+        wp_remote_post( FW_SUPABASE_URL . '/rest/v1/fw_blogs', array(
+            'headers' => $h, 'body' => wp_json_encode( $payload ), 'timeout' => 10, 'data_format' => 'body',
+        ));
+    }
+    return rest_ensure_response( array( 'success' => true ) );
+}
+
+/* /admin/upload-blog-cover */
+function fw_admin_upload_blog_cover( $request ) {
+    if ( ! fw_is_admin( $request ) ) return fw_admin_deny();
+    $user = fw_admin_get_user( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    if ( empty( $_FILES['photo'] ) || $_FILES['photo']['error'] !== UPLOAD_ERR_OK ) {
+        return new WP_Error( 'no_file', 'No file uploaded.', array( 'status' => 400 ) );
+    }
+    $path = 'blog-covers/admin/' . $user['id'] . '/' . time() . '_' . mt_rand(100,999);
+    $url  = fw_upload_image( $_FILES['photo'], $path );
+    if ( is_wp_error( $url ) ) return $url;
+    return rest_ensure_response( array( 'success' => true, 'url' => $url ) );
+}
+
+/* /admin/create-album — auto-published */
+function fw_admin_create_album( $request ) {
+    if ( ! fw_is_admin( $request ) ) return fw_admin_deny();
+    $user = fw_admin_get_user( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $p         = $request->get_json_params() ?: array();
+    $title     = sanitize_text_field( $p['title'] ?? '' );
+    $trip_name = sanitize_text_field( $p['trip_name'] ?? '' );
+    $is_public = ! empty( $p['is_public'] );
+
+    if ( ! $title ) return new WP_Error( 'missing', 'Album title required.', array( 'status' => 400 ) );
+
+    $resp = wp_remote_post( FW_SUPABASE_URL . '/rest/v1/fw_albums', array(
+        'headers'     => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE, 'Content-Type' => 'application/json', 'Prefer' => 'return=representation' ),
+        'body'        => wp_json_encode( array( 'user_id' => $user['id'], 'title' => $title, 'trip_name' => $trip_name, 'status' => 'published', 'is_public' => $is_public ) ),
+        'timeout'     => 10, 'data_format' => 'body',
+    ));
+    $data = json_decode( wp_remote_retrieve_body( $resp ), true );
+    if ( empty( $data[0] ) ) return new WP_Error( 'db_fail', 'Failed to create album.', array( 'status' => 500 ) );
+    return rest_ensure_response( array( 'success' => true, 'album' => $data[0] ) );
+}
+
+/* /admin/upload-album-photo — no ownership check, no 6-photo cap enforced (admins can exceed) */
+function fw_admin_upload_album_photo( $request ) {
+    if ( ! fw_is_admin( $request ) ) return fw_admin_deny();
+    $user = fw_admin_get_user( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    if ( empty( $_FILES['photo'] ) || $_FILES['photo']['error'] !== UPLOAD_ERR_OK ) {
+        return new WP_Error( 'no_file', 'No file uploaded.', array( 'status' => 400 ) );
+    }
+    $album_id = sanitize_text_field( $_POST['album_id'] ?? '' );
+    if ( ! $album_id ) return new WP_Error( 'missing', 'Album ID required.', array( 'status' => 400 ) );
+
+    $h = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
+
+    $photos_chk = wp_remote_get( FW_SUPABASE_URL . '/rest/v1/fw_album_photos?album_id=eq.' . rawurlencode( $album_id ) . '&select=id',
+        array( 'headers' => $h, 'timeout' => 10 ) );
+    $existing = json_decode( wp_remote_retrieve_body( $photos_chk ), true ) ?: array();
+
+    $path = 'albums/admin/' . $user['id'] . '/' . $album_id . '/' . time() . '_' . mt_rand(100,999);
+    $url  = fw_upload_image( $_FILES['photo'], $path );
+    if ( is_wp_error( $url ) ) return $url;
+
+    $caption = sanitize_text_field( $_POST['caption'] ?? '' );
+    wp_remote_post( FW_SUPABASE_URL . '/rest/v1/fw_album_photos', array(
+        'headers'     => array_merge( $h, array( 'Content-Type' => 'application/json', 'Prefer' => 'return=minimal' ) ),
+        'body'        => wp_json_encode( array( 'album_id' => $album_id, 'photo_url' => $url, 'sort_order' => count( $existing ), 'caption' => $caption ) ),
+        'timeout'     => 10, 'data_format' => 'body',
+    ));
+    return rest_ensure_response( array( 'success' => true, 'url' => $url ) );
+}
