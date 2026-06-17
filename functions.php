@@ -1252,6 +1252,7 @@ add_action( 'rest_api_init', function() {
     register_rest_route( 'freewheel/v1', '/admin/upload-album-photo',  array( 'methods'=>'POST', 'callback'=>'fw_admin_upload_album_photo',  'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/get-blogs',           array( 'methods'=>'GET',  'callback'=>'fw_admin_get_blogs',           'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/get-albums',          array( 'methods'=>'GET',  'callback'=>'fw_admin_get_albums',          'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/delete-album',        array( 'methods'=>'POST', 'callback'=>'fw_admin_delete_album',        'permission_callback'=>'__return_true' ));
 });
 
 /* ── Admin auth: WP admin OR fw_members role=admin ── */
@@ -1652,7 +1653,7 @@ function fw_get_public_albums( $request ) {
             FW_SUPABASE_URL . '/rest/v1/fw_members?id=eq.' . rawurlencode( $album['user_id'] ) . '&select=first_name,last_name,city,instagram,avatar_url,role,trips_completed',
             array( 'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE ), 'timeout' => 8 )
         )), true );
-        $album['member_name']      = trim( ($member[0]['first_name'] ?? '') . ' ' . ($member[0]['last_name'] ?? '') ) ?: 'Explorer';
+        $album['member_name']      = $member[0]['first_name'] ?? 'Explorer';
         $album['member_city']      = $member[0]['city'] ?? '';
         $album['member_instagram'] = $member[0]['instagram'] ?? '';
         $album['member_photo']     = $member[0]['avatar_url'] ?? '';
@@ -3223,4 +3224,26 @@ function fw_admin_upload_album_photo( $request ) {
         'timeout'     => 10, 'data_format' => 'body',
     ));
     return rest_ensure_response( array( 'success' => true, 'url' => $url ) );
+}
+
+/* /admin/delete-album — delete album + all its photos */
+function fw_admin_delete_album( $request ) {
+    $user = fw_admin_auth( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $p        = $request->get_json_params() ?: array();
+    $album_id = sanitize_text_field( $p['album_id'] ?? '' );
+    if ( ! $album_id ) return new WP_Error( 'missing', 'Album ID required.', array( 'status' => 400 ) );
+
+    $h = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE, 'Content-Type' => 'application/json' );
+
+    /* Delete photos first */
+    wp_remote_request( FW_SUPABASE_URL . '/rest/v1/fw_album_photos?album_id=eq.' . rawurlencode( $album_id ),
+        array( 'method' => 'DELETE', 'headers' => $h, 'timeout' => 10 ) );
+
+    /* Delete album */
+    wp_remote_request( FW_SUPABASE_URL . '/rest/v1/fw_albums?id=eq.' . rawurlencode( $album_id ),
+        array( 'method' => 'DELETE', 'headers' => $h, 'timeout' => 10 ) );
+
+    return rest_ensure_response( array( 'success' => true ) );
 }
