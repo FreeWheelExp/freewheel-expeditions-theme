@@ -228,31 +228,33 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
           photoSlots += '<div class="alb-photo-empty"></div>';
         }
       }
+      var firstName = (album.member_name || 'Explorer').split(' ')[0];
       var albumJson = encodeURIComponent(JSON.stringify({
         title: album.title,
         trip: album.trip_name || '',
         city: album.member_city || '',
-        member: album.member_name,
+        member: firstName,
         badge: album.member_badge || 'Explorer',
         instagram: album.member_instagram || '',
         photo: album.member_photo || '',
         photos: photos
       }));
+      var avatarHtml = album.member_photo
+        ? '<img src="' + album.member_photo + '" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(193,68,14,.5);display:block;flex-shrink:0">'
+        : '<div style="width:32px;height:32px;border-radius:50%;background:rgba(193,68,14,.2);border:1.5px solid rgba(193,68,14,.4);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--rust);font-family:var(--headline);font-weight:700;flex-shrink:0">' + firstName.charAt(0).toUpperCase() + '</div>';
       return '<div class="alb-card" onclick="openAlbumLightbox(this)" data-album="' + albumJson + '" style="cursor:pointer">' +
         '<div class="alb-photos">' + photoSlots + '</div>' +
         '<div class="alb-info">' +
           '<div class="alb-title">' + album.title + '</div>' +
-          '<div class="alb-meta" style="display:flex;align-items:center;gap:8px;margin-top:8px">' +
-            (album.member_photo
-              ? '<img src="' + album.member_photo + '" style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(193,68,14,.5);flex-shrink:0">'
-              : '<div style="width:28px;height:28px;border-radius:50%;background:rgba(193,68,14,.2);border:1.5px solid rgba(193,68,14,.4);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--rust);font-family:var(--headline);flex-shrink:0;font-weight:700">' + (album.member_name||'?').charAt(0).toUpperCase() + '</div>') +
-            '<div style="min-width:0">' +
-              '<div style="display:flex;align-items:center;gap:6px">' +
-                '<span style="font-size:13px;color:#fff;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (album.member_name||'Explorer') + '</span>' +
-                '<span style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);white-space:nowrap;flex-shrink:0">' + (album.member_badge||'Explorer') + '</span>' +
+          '<div style="display:flex;align-items:flex-start;gap:10px;margin-top:10px">' +
+            avatarHtml +
+            '<div style="min-width:0;line-height:1.4">' +
+              '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">' +
+                '<span style="font-size:14px;color:#fff;font-weight:600">' + firstName + '</span>' +
+                '<span style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber)">' + (album.member_badge||'Explorer') + '</span>' +
               '</div>' +
               (album.member_city ? '<div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:1px">' + album.member_city + '</div>' : '') +
-              (album.member_instagram ? '<div style="margin-top:4px"><a href="https://instagram.com/' + album.member_instagram.replace(/^@/,'') + '" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:3px;font-size:13px;color:#c13584;text-decoration:none">&#128247; ' + album.member_instagram + '</a></div>' : '') +
+              (album.member_instagram ? '<div style="margin-top:5px"><a href="https://instagram.com/' + album.member_instagram.replace(/^@/,'') + '" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="font-size:13px;color:#c13584;text-decoration:none">&#128247; ' + album.member_instagram + '</a></div>' : '') +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -284,14 +286,11 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
               (data.photo ? '<img src="' + data.photo + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid rgba(193,68,14,.4)">' : '<div style="width:36px;height:36px;border-radius:50%;background:rgba(193,68,14,.2);border:2px solid rgba(193,68,14,.4);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--rust);font-family:var(--headline);font-weight:700">' + (data.member||'?').charAt(0).toUpperCase() + '</div>') +
               '<div>' +
                 '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">' +
-                  '<span style="font-size:14px;color:#fff;font-weight:500">' + (data.member||'Explorer') + '</span>' +
+                  '<span style="font-size:14px;color:#fff;font-weight:600">' + (data.member||'Explorer') + '</span>' +
                   '<span style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber)">' + (data.badge||'Explorer') + '</span>' +
                 '</div>' +
-                '<div style="display:flex;align-items:center;gap:8px;margin-top:3px;flex-wrap:wrap">' +
-                  (data.city ? '<span style="font-size:12px;color:rgba(255,255,255,.5)">' + data.city + '</span>' : '') +
-                  (data.trip ? '<span style="font-size:12px;color:var(--rust)">' + data.trip + '</span>' : '') +
-                '</div>' +
-                (data.instagram ? '<div style="margin-top:4px"><a href="https://instagram.com/' + data.instagram.replace(/^@/,'') + '" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;font-size:13px;color:#c13584;text-decoration:none">&#128247; ' + data.instagram + '</a></div>' : '') +
+                '<div style="font-size:12px;color:rgba(255,255,255,.45);margin-top:2px">' + (data.city||'') + (data.city && data.trip ? ' · ' : '') + (data.trip ? '<span style="color:var(--rust)">' + data.trip + '</span>' : '') + '</div>' +
+                (data.instagram ? '<div style="margin-top:4px"><a href="https://instagram.com/' + data.instagram.replace(/^@/,'') + '" target="_blank" rel="noopener" style="font-size:13px;color:#c13584;text-decoration:none">&#128247; ' + data.instagram + '</a></div>' : '') +
               '</div>' +
             '</div>' +
             '<div style="position:relative;display:inline-block;max-width:100%">' +
