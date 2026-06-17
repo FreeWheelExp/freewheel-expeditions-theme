@@ -833,25 +833,40 @@ function adminCompressImage(file, maxPx, quality) {
   });
 }
 
+/* Global hidden file input — stays in DOM so .click() works reliably */
+var _adminFileInput = null;
+function _getAdminFileInput() {
+  if (!_adminFileInput) {
+    _adminFileInput = document.createElement('input');
+    _adminFileInput.type = 'file';
+    _adminFileInput.accept = 'image/*';
+    _adminFileInput.multiple = true;
+    _adminFileInput.style.cssText = 'position:fixed;top:-999px;left:-999px;opacity:0;pointer-events:none';
+    document.body.appendChild(_adminFileInput);
+  }
+  return _adminFileInput;
+}
+
 function adminDoUpload(aid, gridEl) {
-  /* Count existing photos */
   var existing = gridEl ? gridEl.querySelectorAll('div[style*="aspect-ratio"]').length : 0;
   var slots = 6 - existing;
   if (slots <= 0) { toast('Max 6 photos per album reached', true); return; }
 
-  var fi = document.createElement('input');
-  fi.type = 'file'; fi.accept = 'image/*'; fi.multiple = true;
+  var fi = _getAdminFileInput();
+  /* Remove any previous listener */
+  var newFi = fi.cloneNode(false);
+  fi.parentNode.replaceChild(newFi, newFi.parentNode ? newFi : fi);
+  _adminFileInput = newFi;
+  fi = newFi;
+
   fi.onchange = function(){
     var files = Array.from(fi.files);
+    fi.value = '';
     if (!files.length) return;
 
-    /* Size warning */
     var oversized = files.filter(function(f){ return f.size > 2 * 1024 * 1024; });
-    if (oversized.length) {
-      toast('Files over 2 MB will be compressed automatically', false);
-    }
+    if (oversized.length) toast('Large files will be compressed to save space', false);
 
-    /* Enforce slot limit */
     if (files.length > slots) {
       toast('Only ' + slots + ' slot(s) left — uploading first ' + slots, false);
       files = files.slice(0, slots);
@@ -861,16 +876,23 @@ function adminDoUpload(aid, gridEl) {
     files.forEach(function(file){
       adminCompressImage(file, 1200, 0.82).then(function(blob) {
         var fd = new FormData();
-        fd.append('photo', blob, file.name.replace(/\.[^.]+$/, '.jpg'));
+        fd.append('photo', blob, 'photo.jpg');
         fd.append('album_id', aid);
-        fetch(_admRest + '/admin/upload-album-photo', { method: 'POST', headers: { 'Authorization': 'Bearer ' + _admToken }, body: fd })
-          .then(function(r){ return r.json(); })
+        fetch(_admRest + '/admin/upload-album-photo', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + _admToken },
+          body: fd
+        })
+          .then(function(r){
+            if (!r.ok) return r.text().then(function(t){ throw new Error(r.status + ': ' + t); });
+            return r.json();
+          })
           .then(function(res){
             done++;
             if (res.success) {
               succeeded++;
               var slot = document.createElement('div');
-              slot.style.cssText = 'aspect-ratio:1;border-radius:3px;overflow:hidden;position:relative';
+              slot.style.cssText = 'aspect-ratio:1;border-radius:3px;overflow:hidden';
               slot.innerHTML = '<img src="' + res.url + '" style="width:100%;height:100%;object-fit:cover">';
               var ep = gridEl ? gridEl.querySelector('.album-empty-note') : null;
               if (ep) ep.remove();
@@ -878,7 +900,7 @@ function adminDoUpload(aid, gridEl) {
             }
             if (done === files.length) toast(succeeded + ' photo(s) uploaded' + (done - succeeded ? ', ' + (done - succeeded) + ' failed' : ''), done !== succeeded);
           })
-          .catch(function(){ done++; if (done === files.length) toast('Upload failed', true); });
+          .catch(function(e){ done++; console.error('Upload error:', e); if (done === files.length) toast('Upload failed: ' + e.message, true); });
       });
     });
   };
@@ -910,14 +932,23 @@ function adminLoadAlbums() {
         meta.innerHTML = '<div style="font-size:14px;color:#fff;font-weight:500">' + (a.title||'Untitled') + '</div>'
           + '<div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:3px">'
           + (a.trip_name ? a.trip_name + ' &middot; ' : '') + fmtDate(a.created_at)
-          + ' &middot; ' + (a.photos ? a.photos.length : 0) + ' photos &middot; ' + statusBadge(a.status) + '</div>';
+          + ' &middot; ' + (Array.isArray(a.photos) ? a.photos.length : 0) + ' photos &middot; ' + statusBadge(a.status) + '</div>';
 
         var addBtn = document.createElement('button');
         addBtn.textContent = '+ Add Photos';
         addBtn.style.cssText = 'padding:6px 16px;font-size:11px;letter-spacing:1px;text-transform:uppercase;font-family:var(--body);cursor:pointer;background:rgba(193,68,14,.2);border:1px solid rgba(193,68,14,.4);color:var(--rust);border-radius:2px;white-space:nowrap;flex-shrink:0';
 
+        var hint = document.createElement('div');
+        hint.style.cssText = 'font-size:10px;color:rgba(255,255,255,.3);margin-top:4px;letter-spacing:.5px;width:100%;padding:0 0 4px 0';
+        hint.textContent = 'Max 6 photos · 2 MB each (auto-compressed)';
+
+        var btnWrap = document.createElement('div');
+        btnWrap.style.cssText = 'display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0';
+        btnWrap.appendChild(addBtn);
+        btnWrap.appendChild(hint);
+
         header.appendChild(meta);
-        header.appendChild(addBtn);
+        header.appendChild(btnWrap);
 
         var grid = document.createElement('div');
         grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:6px;padding:0 16px 16px';
