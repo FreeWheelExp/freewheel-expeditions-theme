@@ -929,6 +929,11 @@ add_action( 'rest_api_init', function() {
     register_rest_route( 'freewheel/v1', '/fw-upload-blog-cover', array( 'methods' => 'POST', 'callback' => 'fw_upload_blog_cover',   'permission_callback' => '__return_true' ));
     register_rest_route( 'freewheel/v1', '/fw-get-testimonials',  array( 'methods' => 'GET',  'callback' => 'fw_get_testimonials',    'permission_callback' => '__return_true' ));
     register_rest_route( 'freewheel/v1', '/fw-create-testimonial',array( 'methods' => 'POST', 'callback' => 'fw_create_testimonial',  'permission_callback' => '__return_true' ));
+    register_rest_route( 'freewheel/v1', '/fw-delete-album',      array( 'methods' => 'POST', 'callback' => 'fw_member_delete_album',  'permission_callback' => '__return_true' ));
+    register_rest_route( 'freewheel/v1', '/fw-delete-blog',       array( 'methods' => 'POST', 'callback' => 'fw_member_delete_blog',   'permission_callback' => '__return_true' ));
+    register_rest_route( 'freewheel/v1', '/fw-delete-testimonial',array( 'methods' => 'POST', 'callback' => 'fw_member_delete_testi',  'permission_callback' => '__return_true' ));
+    register_rest_route( 'freewheel/v1', '/fw-resubmit-album',    array( 'methods' => 'POST', 'callback' => 'fw_member_resubmit_album','permission_callback' => '__return_true' ));
+    register_rest_route( 'freewheel/v1', '/fw-resubmit-testi',    array( 'methods' => 'POST', 'callback' => 'fw_member_resubmit_testi','permission_callback' => '__return_true' ));
 });
 
 /* ── Helper: compress image to WebP, max 1920px, return temp path ── */
@@ -3322,3 +3327,76 @@ function fw_admin_delete_album( $request ) {
     return rest_ensure_response( array( 'success' => true ) );
 }
 
+
+/* ── Member: delete album (only rejected ones) ── */
+function fw_member_delete_album( $request ) {
+    $user = fw_validate_token( $request );
+    if ( is_wp_error( $user ) ) return $user;
+    $p        = $request->get_json_params() ?: array();
+    $album_id = sanitize_text_field( $p['album_id'] ?? '' );
+    if ( ! $album_id ) return new WP_Error( 'missing', 'Album ID required.', array( 'status' => 400 ) );
+    $h = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
+    /* Verify ownership + only allow delete of rejected albums */
+    $chk  = json_decode( wp_remote_retrieve_body( wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_albums?id=eq.' . rawurlencode($album_id) . '&user_id=eq.' . rawurlencode($user['id']) . '&select=status',
+        array( 'headers' => $h, 'timeout' => 8 )
+    )), true );
+    if ( empty($chk[0]) ) return new WP_Error( 'not_found', 'Album not found.', array( 'status' => 404 ) );
+    wp_remote_request( FW_SUPABASE_URL . '/rest/v1/fw_album_photos?album_id=eq.' . rawurlencode($album_id),
+        array( 'method'=>'DELETE', 'headers'=>$h, 'timeout'=>10 ) );
+    wp_remote_request( FW_SUPABASE_URL . '/rest/v1/fw_albums?id=eq.' . rawurlencode($album_id) . '&user_id=eq.' . rawurlencode($user['id']),
+        array( 'method'=>'DELETE', 'headers'=>$h, 'timeout'=>10 ) );
+    return rest_ensure_response( array( 'success' => true ) );
+}
+
+/* ── Member: resubmit rejected album ── */
+function fw_member_resubmit_album( $request ) {
+    $user = fw_validate_token( $request );
+    if ( is_wp_error( $user ) ) return $user;
+    $p        = $request->get_json_params() ?: array();
+    $album_id = sanitize_text_field( $p['album_id'] ?? '' );
+    if ( ! $album_id ) return new WP_Error( 'missing', 'Album ID required.', array( 'status' => 400 ) );
+    $h = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE, 'Content-Type' => 'application/json', 'Prefer' => 'return=minimal' );
+    wp_remote_request( FW_SUPABASE_URL . '/rest/v1/fw_albums?id=eq.' . rawurlencode($album_id) . '&user_id=eq.' . rawurlencode($user['id']),
+        array( 'method'=>'PATCH', 'headers'=>$h, 'body'=>wp_json_encode(array('status'=>'pending')), 'timeout'=>10, 'data_format'=>'body' ) );
+    return rest_ensure_response( array( 'success' => true ) );
+}
+
+/* ── Member: delete blog ── */
+function fw_member_delete_blog( $request ) {
+    $user = fw_validate_token( $request );
+    if ( is_wp_error( $user ) ) return $user;
+    $p  = $request->get_json_params() ?: array();
+    $id = sanitize_text_field( $p['blog_id'] ?? '' );
+    if ( ! $id ) return new WP_Error( 'missing', 'Blog ID required.', array( 'status' => 400 ) );
+    $h = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
+    wp_remote_request( FW_SUPABASE_URL . '/rest/v1/fw_blogs?id=eq.' . rawurlencode($id) . '&user_id=eq.' . rawurlencode($user['id']),
+        array( 'method'=>'DELETE', 'headers'=>$h, 'timeout'=>10 ) );
+    return rest_ensure_response( array( 'success' => true ) );
+}
+
+/* ── Member: delete testimonial ── */
+function fw_member_delete_testi( $request ) {
+    $user = fw_validate_token( $request );
+    if ( is_wp_error( $user ) ) return $user;
+    $p  = $request->get_json_params() ?: array();
+    $id = sanitize_text_field( $p['testi_id'] ?? '' );
+    if ( ! $id ) return new WP_Error( 'missing', 'Testimonial ID required.', array( 'status' => 400 ) );
+    $h = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
+    wp_remote_request( FW_SUPABASE_URL . '/rest/v1/fw_testimonials?id=eq.' . rawurlencode($id) . '&user_id=eq.' . rawurlencode($user['id']),
+        array( 'method'=>'DELETE', 'headers'=>$h, 'timeout'=>10 ) );
+    return rest_ensure_response( array( 'success' => true ) );
+}
+
+/* ── Member: resubmit rejected testimonial ── */
+function fw_member_resubmit_testi( $request ) {
+    $user = fw_validate_token( $request );
+    if ( is_wp_error( $user ) ) return $user;
+    $p  = $request->get_json_params() ?: array();
+    $id = sanitize_text_field( $p['testi_id'] ?? '' );
+    if ( ! $id ) return new WP_Error( 'missing', 'Testimonial ID required.', array( 'status' => 400 ) );
+    $h = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE, 'Content-Type' => 'application/json', 'Prefer' => 'return=minimal' );
+    wp_remote_request( FW_SUPABASE_URL . '/rest/v1/fw_testimonials?id=eq.' . rawurlencode($id) . '&user_id=eq.' . rawurlencode($user['id']),
+        array( 'method'=>'PATCH', 'headers'=>$h, 'body'=>wp_json_encode(array('status'=>'pending')), 'timeout'=>10, 'data_format'=>'body' ) );
+    return rest_ensure_response( array( 'success' => true ) );
+}
