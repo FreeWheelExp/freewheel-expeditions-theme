@@ -1257,6 +1257,7 @@ add_action( 'rest_api_init', function() {
     register_rest_route( 'freewheel/v1', '/admin/link-booking',    array( 'methods'=>'POST', 'callback'=>'fw_admin_link_booking',    'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/members',         array( 'methods'=>'GET',  'callback'=>'fw_admin_get_members',      'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/update-member',   array( 'methods'=>'POST', 'callback'=>'fw_admin_update_member',    'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/remove-member',   array( 'methods'=>'POST', 'callback'=>'fw_admin_remove_member',    'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/site-stats',      array( 'methods'=>'GET',  'callback'=>'fw_admin_site_stats',       'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/save-blog',           array( 'methods'=>'POST', 'callback'=>'fw_admin_save_blog',           'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/upload-blog-cover',   array( 'methods'=>'POST', 'callback'=>'fw_admin_upload_blog_cover',   'permission_callback'=>'__return_true' ));
@@ -2752,15 +2753,10 @@ function fw_rzp_create_order( $req ) {
     $user = fw_validate_token( $req );
     if ( is_wp_error( $user ) ) return $user;
 
-    $p       = $req->get_json_params() ?: array();
-    $amount  = intval( $p['amount'] ?? 0 );   /* in paise */
-    $type    = sanitize_text_field( $p['type'] ?? '' );   /* expedition | merchandise */
-    $ref_id  = sanitize_text_field( $p['ref_id'] ?? '' ); /* expedition post ID or product ID */
-    $note    = sanitize_text_field( $p['note'] ?? '' );
+    $p      = $req->get_json_params() ?: array();
+    $type   = sanitize_text_field( $p['type'] ?? '' );   /* expedition | merchandise */
+    $note   = sanitize_text_field( $p['note'] ?? '' );
 
-    if ( $amount < 100 ) {
-        return new WP_Error( 'invalid_amount', 'Amount must be at least ₹1.', array( 'status' => 400 ) );
-    }
     if ( ! in_array( $type, array( 'expedition', 'merchandise' ), true ) ) {
         return new WP_Error( 'invalid_type', 'type must be expedition or merchandise.', array( 'status' => 400 ) );
     }
@@ -2768,19 +2764,74 @@ function fw_rzp_create_order( $req ) {
         return new WP_Error( 'rzp_config', 'Payment gateway not configured.', array( 'status' => 503 ) );
     }
 
+    /* SECURITY: amount is ALWAYS computed server-side from WP post meta — the client
+       cannot influence price. This is the only source of truth for what gets charged. */
+    $amount   = 0;
+    $ref_id   = '';
+    $seats    = 1;
+    $size     = '';
+    $cart_min = array(); /* compact cart for storage in Razorpay order notes */
+
+    if ( $type === 'expedition' ) {
+        $ref_id = sanitize_text_field( $p['ref_id'] ?? '' );
+        $seats  = max( 1, intval( $p['seats'] ?? 1 ) );
+        if ( ! $ref_id ) return new WP_Error( 'missing_ref', 'Expedition ID required.', array( 'status' => 400 ) );
+        $post = get_post( intval( $ref_id ) );
+        if ( ! $post ) return new WP_Error( 'not_found', 'Expedition not found.', array( 'status' => 404 ) );
+        $unit_price = floatval( get_post_meta( $post->ID, 'fw_price', true ) );
+        if ( $unit_price <= 0 ) return new WP_Error( 'no_price', 'Price not set for this expedition. Contact support.', array( 'status' => 400 ) );
+        $amount = intval( round( $unit_price * 100 * $seats ) );
+    }
+
+    if ( $type === 'merchandise' ) {
+        $cart = is_array( $p['cart'] ?? null ) ? $p['cart'] : array();
+        if ( empty( $cart ) ) return new WP_Error( 'empty_cart', 'Cart is empty.', array( 'status' => 400 ) );
+
+        $subtotal  = 0;
+        $total_qty = 0;
+        foreach ( $cart as $item ) {
+            $pid = intval( $item['product_id'] ?? 0 );
+            $qty = max( 1, intval( $item['qty'] ?? 1 ) );
+            if ( ! $pid ) continue;
+            $unit_price = floatval( get_post_meta( $pid, 'fw_prod_price', true ) );
+            if ( $unit_price <= 0 ) {
+                return new WP_Error( 'no_price', 'One or more items have no price set. Contact support.', array( 'status' => 400 ) );
+            }
+            $subtotal  += $unit_price * $qty;
+            $total_qty += $qty;
+            $cart_min[] = $pid . ':' . $qty . ( ! empty($item['size']) ? ':' . sanitize_text_field($item['size']) : '' );
+            if ( count( $cart_min ) === 1 ) { $ref_id = (string) $pid; $size = sanitize_text_field( $item['size'] ?? '' ); }
+        }
+        if ( $subtotal <= 0 ) return new WP_Error( 'invalid_cart', 'Could not price cart items.', array( 'status' => 400 ) );
+
+        /* Same 5%-off-3-items rule as the frontend, computed server-side */
+        if ( $total_qty >= 3 ) $subtotal = round( $subtotal * 0.95 );
+        $amount = intval( round( $subtotal * 100 ) );
+    }
+
+    if ( $amount < 100 ) {
+        return new WP_Error( 'invalid_amount', 'Amount must be at least ₹1.', array( 'status' => 400 ) );
+    }
+
     $receipt = 'fw_' . $type[0] . '_' . time() . '_' . substr( $user['id'], 0, 8 );
 
+    /* Store everything needed for verification in Razorpay's own order notes —
+       at verify time we re-fetch THIS, not anything the client sends. */
+    $notes = array(
+        'user_id'  => $user['id'],
+        'type'     => $type,
+        'ref_id'   => $ref_id,
+        'seats'    => (string) $seats,
+        'size'     => $size,
+        'cart'     => implode( ',', $cart_min ), /* e.g. "12:2:M,15:1" */
+        'note'     => substr( $note, 0, 200 ),
+    );
+
     $body = wp_json_encode( array(
-        'amount'          => $amount,
-        'currency'        => 'INR',
-        'receipt'         => $receipt,
-        'notes'           => array(
-            'user_id'  => $user['id'],
-            'user_email' => $user['email'],
-            'type'     => $type,
-            'ref_id'   => $ref_id,
-            'note'     => $note,
-        ),
+        'amount'   => $amount,
+        'currency' => 'INR',
+        'receipt'  => $receipt,
+        'notes'    => $notes,
     ));
 
     $response = wp_remote_post( 'https://api.razorpay.com/v1/orders', array(
@@ -2821,23 +2872,53 @@ function fw_rzp_verify_payment( $req ) {
     $razorpay_order_id  = sanitize_text_field( $p['razorpay_order_id']   ?? '' );
     $razorpay_payment_id= sanitize_text_field( $p['razorpay_payment_id'] ?? '' );
     $razorpay_signature = sanitize_text_field( $p['razorpay_signature']  ?? '' );
-    $type               = sanitize_text_field( $p['type']    ?? '' );
-    $ref_id             = sanitize_text_field( $p['ref_id']  ?? '' );
-    $amount             = intval( $p['amount'] ?? 0 );
-    $seats              = intval( $p['seats']  ?? 1 );
-    $note               = sanitize_text_field( $p['note']    ?? '' );
 
     if ( ! $razorpay_order_id || ! $razorpay_payment_id || ! $razorpay_signature ) {
         return new WP_Error( 'missing_params', 'Payment verification data incomplete.', array( 'status' => 400 ) );
     }
 
-    /* Verify signature */
+    /* Verify signature — proves this payment really happened for this order_id */
     $expected = hash_hmac( 'sha256', $razorpay_order_id . '|' . $razorpay_payment_id, FW_RAZORPAY_KEY_SECRET );
     if ( ! hash_equals( $expected, $razorpay_signature ) ) {
         return new WP_Error( 'sig_mismatch', 'Payment verification failed. Please contact support.', array( 'status' => 400 ) );
     }
 
-    /* Payment verified — record in Supabase */
+    /* SECURITY: fetch the order from Razorpay directly — amount and context come from
+       THIS, never from the client's request body. This closes the gap where a client
+       could pay for a cheap item then claim verification for an expensive one. */
+    $order_resp = wp_remote_get( 'https://api.razorpay.com/v1/orders/' . rawurlencode( $razorpay_order_id ), array(
+        'headers' => array( 'Authorization' => 'Basic ' . base64_encode( FW_RAZORPAY_KEY_ID . ':' . FW_RAZORPAY_KEY_SECRET ) ),
+        'timeout' => 15,
+    ));
+    if ( is_wp_error( $order_resp ) || wp_remote_retrieve_response_code( $order_resp ) !== 200 ) {
+        return new WP_Error( 'rzp_lookup_fail', 'Could not verify order with payment gateway.', array( 'status' => 502 ) );
+    }
+    $order_data = json_decode( wp_remote_retrieve_body( $order_resp ), true );
+    if ( empty( $order_data['notes']['user_id'] ) || $order_data['notes']['user_id'] !== $user['id'] ) {
+        return new WP_Error( 'order_mismatch', 'This order does not belong to your account.', array( 'status' => 403 ) );
+    }
+    if ( $order_data['status'] !== 'paid' ) {
+        return new WP_Error( 'not_paid', 'Order is not marked as paid by the gateway.', array( 'status' => 400 ) );
+    }
+
+    /* All values below come from Razorpay's authoritative order record, not the client */
+    $type   = $order_data['notes']['type']   ?? '';
+    $ref_id = $order_data['notes']['ref_id'] ?? '';
+    $seats  = intval( $order_data['notes']['seats'] ?? 1 );
+    $amount = intval( $order_data['amount'] ?? 0 ); /* paise — authoritative */
+    $note   = sanitize_text_field( $order_data['notes']['note'] ?? '' );
+
+    /* Idempotency: refuse to record the same payment twice — check the table matching this type */
+    $dedup_table = ( $type === 'merchandise' ) ? 'fw_orders' : 'fw_bookings';
+    $dup_check = wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/' . $dedup_table . '?payment_ref=eq.' . rawurlencode($razorpay_payment_id) . '&select=id&limit=1',
+        array( 'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE ), 'timeout' => 8 )
+    );
+    $dup_rows = json_decode( wp_remote_retrieve_body( $dup_check ), true );
+    if ( is_array( $dup_rows ) && ! empty( $dup_rows ) ) {
+        return rest_ensure_response( array( 'success' => true, 'message' => 'Payment already recorded.' ) );
+    }
+
     if ( $type === 'expedition' ) {
         /* Get expedition title from WP */
         $trip_title = '';
@@ -2898,8 +2979,22 @@ function fw_rzp_verify_payment( $req ) {
     }
 
     if ( $type === 'merchandise' ) {
-        $product_name = sanitize_text_field( $p['product_name'] ?? '' );
-        $size         = sanitize_text_field( $p['size'] ?? '' );
+        $size = sanitize_text_field( $order_data['notes']['size'] ?? '' );
+        $cart_str = $order_data['notes']['cart'] ?? '';
+        /* Build a readable product summary from the authoritative cart string "pid:qty:size,pid:qty" */
+        $product_name = '';
+        if ( $cart_str ) {
+            $parts = explode( ',', $cart_str );
+            $names = array();
+            foreach ( $parts as $part ) {
+                $bits = explode( ':', $part );
+                $pid  = intval( $bits[0] ?? 0 );
+                $qty  = intval( $bits[1] ?? 1 );
+                $post = $pid ? get_post( $pid ) : null;
+                $names[] = ( $post ? $post->post_title : 'Item' ) . ' x' . $qty;
+            }
+            $product_name = implode( ', ', $names );
+        }
 
         $order = array(
             'user_id'      => $user['id'],
@@ -2959,12 +3054,42 @@ function fw_admin_get_members( $request ) {
     return rest_ensure_response( array( 'success' => true, 'members' => $members ) );
 }
 
-/* ---- fw_admin_update_member ---- */
+/* ---- fw_admin_update_member ----
+   Permission model:
+   - super_admin: can change ANY user's role (member/moderator/super_admin) and block/unblock anyone.
+   - moderator:   can ONLY block/unblock users whose CURRENT role is 'member'.
+                  Cannot change roles at all. Cannot act on other moderators or super_admin. */
 function fw_admin_update_member( $request ) {
-    if ( ! fw_is_admin( $request ) ) return fw_admin_deny();
+    $caller = fw_admin_auth( $request );
+    if ( is_wp_error( $caller ) ) return $caller;
+
     $body    = json_decode( $request->get_body(), true );
     $user_id = sanitize_text_field( $body['user_id'] ?? '' );
     if ( empty( $user_id ) ) return new WP_Error( 'missing', 'user_id required.', array( 'status' => 400 ) );
+
+    /* Look up target's current role so we can enforce scope */
+    $h_svc = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
+    $tgt   = json_decode( wp_remote_retrieve_body( wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_members?id=eq.' . rawurlencode($user_id) . '&select=role',
+        array( 'headers' => $h_svc, 'timeout' => 8 )
+    )), true );
+    $target_role = $tgt[0]['role'] ?? '';
+
+    $wants_role_change = isset( $body['role'] );
+    $wants_block_change = isset( $body['is_suspended'] );
+
+    if ( $caller['role'] === 'moderator' ) {
+        /* Moderators may ONLY block/unblock plain members. No role changes, ever. */
+        if ( $wants_role_change ) {
+            return new WP_Error( 'forbidden', 'Only Super Admin can change roles.', array( 'status' => 403 ) );
+        }
+        if ( $target_role !== 'member' ) {
+            return new WP_Error( 'forbidden', 'Moderators can only manage members, not staff accounts.', array( 'status' => 403 ) );
+        }
+    } elseif ( $caller['role'] !== 'super_admin' ) {
+        return new WP_Error( 'forbidden', 'Admin access required.', array( 'status' => 403 ) );
+    }
+
     $allowed = array( 'role', 'is_suspended' );
     $update  = array( 'updated_at' => date('c') );
     foreach ( $allowed as $f ) {
@@ -3398,5 +3523,45 @@ function fw_member_resubmit_testi( $request ) {
     $h = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE, 'Content-Type' => 'application/json', 'Prefer' => 'return=minimal' );
     wp_remote_request( FW_SUPABASE_URL . '/rest/v1/fw_testimonials?id=eq.' . rawurlencode($id) . '&user_id=eq.' . rawurlencode($user['id']),
         array( 'method'=>'PATCH', 'headers'=>$h, 'body'=>wp_json_encode(array('status'=>'pending')), 'timeout'=>10, 'data_format'=>'body' ) );
+    return rest_ensure_response( array( 'success' => true ) );
+}
+
+/* ---- fw_admin_remove_member ----
+   super_admin: can remove anyone except themselves.
+   moderator:   can only remove users whose current role is 'member'. */
+function fw_admin_remove_member( $request ) {
+    $caller = fw_admin_auth( $request );
+    if ( is_wp_error( $caller ) ) return $caller;
+
+    $body    = json_decode( $request->get_body(), true );
+    $user_id = sanitize_text_field( $body['user_id'] ?? '' );
+    if ( empty( $user_id ) ) return new WP_Error( 'missing', 'user_id required.', array( 'status' => 400 ) );
+
+    if ( $user_id === $caller['id'] ) {
+        return new WP_Error( 'self_remove', 'You cannot remove your own account.', array( 'status' => 400 ) );
+    }
+
+    $h_svc = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
+    $tgt   = json_decode( wp_remote_retrieve_body( wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_members?id=eq.' . rawurlencode($user_id) . '&select=role',
+        array( 'headers' => $h_svc, 'timeout' => 8 )
+    )), true );
+    $target_role = $tgt[0]['role'] ?? '';
+
+    if ( $caller['role'] === 'moderator' && $target_role !== 'member' ) {
+        return new WP_Error( 'forbidden', 'Moderators can only remove members, not staff accounts.', array( 'status' => 403 ) );
+    }
+    if ( $caller['role'] !== 'super_admin' && $caller['role'] !== 'moderator' ) {
+        return new WP_Error( 'forbidden', 'Admin access required.', array( 'status' => 403 ) );
+    }
+
+    /* Delete from fw_members (Supabase Auth user record is left intact — only profile row removed) */
+    $resp = wp_remote_request(
+        FW_SUPABASE_URL . '/rest/v1/fw_members?id=eq.' . rawurlencode( $user_id ),
+        array( 'method' => 'DELETE', 'headers' => $h_svc, 'timeout' => 10 )
+    );
+    if ( is_wp_error( $resp ) || wp_remote_retrieve_response_code( $resp ) >= 300 ) {
+        return new WP_Error( 'delete_fail', 'Failed to remove member.', array( 'status' => 500 ) );
+    }
     return rest_ensure_response( array( 'success' => true ) );
 }
