@@ -207,6 +207,21 @@ body{font-family:var(--body);background:#0a0805!important;color:#fff;overflow-x:
     </div>
   </div>
 
+  <!-- Refer & Earn -->
+  <div style="padding:24px 5vw 28px;background:#0f0d0b;border-bottom:1px solid rgba(255,255,255,.06)">
+    <div style="max-width:760px">
+      <div class="dash-section-title" style="margin-bottom:6px">Refer &amp; Earn <span style="font-size:13px;color:rgba(255,255,255,.35);font-family:var(--body);letter-spacing:0;font-weight:300">100 credits for you, 100 for them — once their first trip is done</span></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px">
+        <div id="referralLinkBox" style="flex:1;min-width:240px;padding:11px 14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:2px;color:rgba(255,255,255,.6);font-size:13px;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Loading…</div>
+        <button onclick="copyReferralLink()" style="padding:11px 22px;background:var(--rust);border:none;color:#fff;font-family:var(--headline);font-size:13px;letter-spacing:1px;cursor:pointer;border-radius:2px;white-space:nowrap">COPY LINK</button>
+      </div>
+      <div style="display:flex;gap:24px;margin-top:16px;flex-wrap:wrap">
+        <div><div style="font-family:var(--headline);font-size:22px;color:var(--amber)" id="refTotalCount">0</div><div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35)">Friends Joined</div></div>
+        <div><div style="font-family:var(--headline);font-size:22px;color:#4ade80" id="refCreditedCount">0</div><div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35)">Credits Earned From</div></div>
+      </div>
+    </div>
+  </div>
+
 
   <!-- Main -->
   <div class="dash-content">
@@ -470,17 +485,42 @@ window.addEventListener('load', function() {
     }
 
     /* Load remaining data in parallel — each failure is isolated */
-    var [creditData, bookData, orderData, albumData, blogData, testiData] = await Promise.all([
+    var [creditData, bookData, orderData, albumData, blogData, testiData, refData] = await Promise.all([
       safeFetch(_rest + '/fw-credit-history',   { headers: h }),
       safeFetch(_rest + '/fw-get-bookings',     { headers: h }),
       safeFetch(_rest + '/fw-get-orders',       { headers: h }),
       safeFetch(_rest + '/fw-get-albums',       { headers: h }),
       safeFetch(_rest + '/fw-get-blogs',        { headers: h }),
       safeFetch(_rest + '/fw-get-testimonials', { headers: h }),
+      safeFetch(_rest + '/fw-referral-stats',   { headers: h }),
     ]);
 
     render(profData, creditData, bookData, orderData, albumData, blogData, testiData);
+    renderReferral(refData);
   }
+
+  function renderReferral(refData) {
+    if (!refData || !refData.success) return;
+    var code = refData.referral_code || '';
+    var link = (window.FW_AUTH ? FW_AUTH.register_url : '/register/') + '?ref=' + code;
+    var box  = document.getElementById('referralLinkBox');
+    if (box) { box.textContent = link; box.dataset.link = link; }
+    var rtc = document.getElementById('refTotalCount');
+    var rcc = document.getElementById('refCreditedCount');
+    if (rtc) rtc.textContent = refData.total_referred || 0;
+    if (rcc) rcc.textContent = refData.credited_count || 0;
+  }
+
+  window.copyReferralLink = function() {
+    var box = document.getElementById('referralLinkBox');
+    var link = box ? box.dataset.link : '';
+    if (!link) return;
+    navigator.clipboard.writeText(link).then(function(){ toast('Referral link copied!'); }).catch(function(){
+      var ta = document.createElement('textarea'); ta.value = link; document.body.appendChild(ta);
+      ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+      toast('Referral link copied!');
+    });
+  };
 
   /* ── RENDER ── */
   function render(profData, creditData, bookData, orderData, albumData, blogData, testiData) {
@@ -505,6 +545,15 @@ window.addEventListener('load', function() {
 
     _set('greetName', fn);
     _set('greetSub', ph!=='—' ? ph+(city!=='—'?' · '+city:'') : (_session.email||''));
+
+    /* Public member number badge */
+    if (prof.member_number) {
+      var numBadge = document.createElement('div');
+      numBadge.style.cssText = 'display:inline-block;margin-top:6px;padding:3px 10px;background:rgba(193,68,14,.12);border:1px solid rgba(193,68,14,.3);border-radius:2px;font-size:11px;letter-spacing:1.5px;color:var(--rust);font-family:var(--headline)';
+      numBadge.textContent = 'WHEELER #' + String(prof.member_number).padStart(4,'0');
+      var greetSubEl = document.getElementById('greetSub');
+      if (greetSubEl && greetSubEl.parentNode) greetSubEl.parentNode.appendChild(numBadge);
+    }
 
     /* Role label on gtag */
     var roleTag = document.querySelector('.gtag');
