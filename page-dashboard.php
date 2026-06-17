@@ -788,7 +788,14 @@ window.addEventListener('load', function() {
         : '<span style="font-size:11px;color:#4ade80">Full &#10003;</span>';
 
       var rejNote = a.rejection_note
-        ? '<div style="padding:10px;font-size:12px;color:#f87171;margin-top:3px">Rejection: '+a.rejection_note+'</div>'
+        ? '<div style="padding:10px 12px;font-size:12px;color:#f87171;background:rgba(248,113,113,.06);border-radius:2px;margin-top:6px"><span style="opacity:.6">Reason: </span>'+a.rejection_note+'</div>'
+        : '';
+
+      var rejActions = a.status === 'rejected'
+        ? '<div style="display:flex;gap:8px;padding:10px 4px 4px">' +
+            '<button data-aid="'+a.id+'" onclick="event.stopPropagation();fwResubmitAlbum(this.dataset.aid,this)" style="padding:7px 16px;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);color:#4ade80;font-size:11px;letter-spacing:1px;cursor:pointer;border-radius:2px;font-family:var(--body)">↑ RESUBMIT</button>' +
+            '<button data-aid="'+a.id+'" onclick="event.stopPropagation();fwDeleteAlbum(this.dataset.aid,this)" style="padding:7px 16px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);color:#f87171;font-size:11px;letter-spacing:1px;cursor:pointer;border-radius:2px;font-family:var(--body)">✕ DELETE</button>' +
+          '</div>'
         : '';
 
       card.innerHTML =
@@ -797,19 +804,19 @@ window.addEventListener('load', function() {
           '<div style="flex:1;min-width:0">'+
             '<div style="font-size:15px;color:#fff;margin-bottom:3px">'+a.title+'</div>'+
             '<div style="font-size:12px;color:rgba(255,255,255,.4)">'+
-
               '<span style="color:'+(statusColor[a.status]||'#fff')+';font-weight:500">'+(statusLabel[a.status]||a.status)+'</span>'+
               ' &middot; '+photoCount+'/6 photos'+
             '</div>'+
           '</div>'+
           '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">'+
-            addBtn+
+            (a.status !== 'rejected' ? addBtn : '')+
             '<span id="'+panelId+'-arrow" style="color:rgba(255,255,255,.25);font-size:16px">&#9660;</span>'+
           '</div>'+
         '</div>'+
         '<div id="'+panelId+'" style="display:none;border-top:1px solid rgba(255,255,255,.06);padding:4px">'+
           '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:3px">'+cells+'</div>'+
           rejNote+
+          rejActions+
         '</div>';
 
       el.appendChild(card);
@@ -823,6 +830,60 @@ window.addEventListener('load', function() {
     var open = p.style.display !== 'none';
     p.style.display = open ? 'none' : 'block';
     if (a) a.innerHTML = open ? '&#9660;' : '&#9650;';
+  };
+
+  /* ── Rejected content actions ── */
+  window.fwResubmitAlbum = async function(albumId, btn) {
+    if (!confirm('Resubmit this album for review?')) return;
+    btn.disabled = true; btn.textContent = 'Submitting...';
+    try {
+      var r = await fetch(_rest+'/fw-resubmit-album', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+_token}, body:JSON.stringify({album_id:albumId})});
+      var d = await r.json();
+      if (d.success) { toast('Album resubmitted for approval!'); setTimeout(function(){ location.reload(); }, 900); }
+      else { toast(d.message||'Failed', true); btn.disabled=false; btn.textContent='↑ RESUBMIT'; }
+    } catch(e) { toast('Error: '+e.message, true); btn.disabled=false; btn.textContent='↑ RESUBMIT'; }
+  };
+
+  window.fwDeleteAlbum = async function(albumId, btn) {
+    if (!confirm('Delete this album and all its photos? This cannot be undone.')) return;
+    btn.disabled = true; btn.textContent = 'Deleting...';
+    try {
+      var r = await fetch(_rest+'/fw-delete-album', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+_token}, body:JSON.stringify({album_id:albumId})});
+      var d = await r.json();
+      if (d.success) { toast('Album deleted.'); setTimeout(function(){ location.reload(); }, 900); }
+      else { toast(d.message||'Failed', true); btn.disabled=false; btn.textContent='✕ DELETE'; }
+    } catch(e) { toast('Error: '+e.message, true); btn.disabled=false; btn.textContent='✕ DELETE'; }
+  };
+
+  window.fwDeleteBlog = async function(blogId, el) {
+    if (!confirm('Delete this blog? This cannot be undone.')) return;
+    try {
+      var r = await fetch(_rest+'/fw-delete-blog', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+_token}, body:JSON.stringify({blog_id:blogId})});
+      var d = await r.json();
+      if (d.success) { toast('Blog deleted.'); if (el) el.remove(); }
+      else toast(d.message||'Failed', true);
+    } catch(e) { toast('Error: '+e.message, true); }
+  };
+
+  window.fwDeleteTesti = async function(testiId, el) {
+    if (!confirm('Delete this testimonial? This cannot be undone.')) return;
+    try {
+      var r = await fetch(_rest+'/fw-delete-testimonial', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+_token}, body:JSON.stringify({testi_id:testiId})});
+      var d = await r.json();
+      if (d.success) { toast('Testimonial deleted.'); if (el) el.remove(); }
+      else toast(d.message||'Failed', true);
+    } catch(e) { toast('Error: '+e.message, true); }
+  };
+
+  window.fwResubmitTesti = async function(testiId, btn) {
+    if (!confirm('Resubmit this testimonial for review?')) return;
+    btn.disabled = true; btn.textContent = 'Submitting...';
+    try {
+      var r = await fetch(_rest+'/fw-resubmit-testi', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+_token}, body:JSON.stringify({testi_id:testiId})});
+      var d = await r.json();
+      if (d.success) { toast('Testimonial resubmitted!'); setTimeout(function(){ location.reload(); }, 900); }
+      else { toast(d.message||'Failed', true); btn.disabled=false; btn.textContent='↑ Resubmit'; }
+    } catch(e) { toast('Error: '+e.message, true); btn.disabled=false; btn.textContent='↑ Resubmit'; }
   };
 
   /* ── TITLES DATA ── */
@@ -918,13 +979,23 @@ window.addEventListener('load', function() {
         '<div style="font-size:12px;color:rgba(255,255,255,.4)"><span style="color:' + (statusColor[b.status]||'#fff') + '">' + (statusLabel[b.status]||b.status) + '</span>' +
         (b.rejection_note ? ' &middot; <span style="color:#f87171">' + b.rejection_note + '</span>' : '') + '</div></div>';
       div.innerHTML = inner;
+      var btnWrap = document.createElement('div');
+      btnWrap.style.cssText = 'display:flex;gap:8px;flex-shrink:0';
       if (canEdit) {
-        var btn = document.createElement('button');
-        btn.textContent = 'Edit';
-        btn.style.cssText = 'padding:8px 14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;font-size:12px;cursor:pointer;border-radius:2px;white-space:nowrap';
-        btn.onclick = (function(id, title){ return function(){ editBlog(id, title); }; })(b.id, b.title);
-        div.appendChild(btn);
+        var editBtn = document.createElement('button');
+        editBtn.textContent = 'Edit & Resubmit';
+        editBtn.style.cssText = 'padding:8px 14px;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);color:#4ade80;font-size:11px;letter-spacing:.5px;cursor:pointer;border-radius:2px;white-space:nowrap;font-family:var(--body)';
+        editBtn.onclick = (function(id, title){ return function(){ editBlog(id, title); }; })(b.id, b.title);
+        btnWrap.appendChild(editBtn);
       }
+      if (b.status === 'rejected' || b.status === 'draft') {
+        var delBlogBtn = document.createElement('button');
+        delBlogBtn.textContent = '✕ Delete';
+        delBlogBtn.style.cssText = 'padding:8px 14px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);color:#f87171;font-size:11px;cursor:pointer;border-radius:2px;white-space:nowrap;font-family:var(--body)';
+        delBlogBtn.onclick = (function(id, el){ return function(){ fwDeleteBlog(id, el); }; })(b.id, div);
+        btnWrap.appendChild(delBlogBtn);
+      }
+      if (btnWrap.children.length) div.appendChild(btnWrap);
       el.appendChild(div);
     });
   }
@@ -944,11 +1015,27 @@ window.addEventListener('load', function() {
       for (var s = 1; s <= 5; s++) stars += '<span style="color:' + (s<=t.rating?'#f59e0b':'rgba(255,255,255,.2)') + '">&#9733;</span>';
       var div = document.createElement('div');
       div.style.cssText = 'background:#0f0d0b;border:1px solid rgba(255,255,255,.08);padding:16px 20px;border-radius:2px;margin-bottom:10px';
+      var testiStatusLabel = {pending:'Pending Approval', approved:'Approved', rejected:'Rejected'};
       div.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
         '<div>' + stars + '</div>' +
-        '<span style="font-size:11px;color:' + (statusColor[t.status]||'#fff') + '">' + t.status + '</span></div>' +
+        '<span style="font-size:11px;font-weight:500;color:' + (statusColor[t.status]||'#fff') + '">' + (testiStatusLabel[t.status]||t.status) + '</span></div>' +
         '<div style="font-size:14px;color:rgba(255,255,255,.8);line-height:1.6">' + t.body + '</div>' +
-        (t.trip_name ? '<div style="font-size:12px;color:rgba(255,255,255,.4);margin-top:6px">' + t.trip_name + '</div>' : '');
+        (t.rejection_note ? '<div style="font-size:12px;color:#f87171;margin-top:8px;padding:8px;background:rgba(248,113,113,.06);border-radius:2px"><span style="opacity:.6">Reason: </span>'+t.rejection_note+'</div>' : '');
+      if (t.status === 'rejected') {
+        var testiActions = document.createElement('div');
+        testiActions.style.cssText = 'display:flex;gap:8px;margin-top:12px';
+        var resubBtn = document.createElement('button');
+        resubBtn.textContent = '↑ Resubmit';
+        resubBtn.style.cssText = 'padding:7px 16px;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);color:#4ade80;font-size:11px;letter-spacing:1px;cursor:pointer;border-radius:2px;font-family:var(--body)';
+        resubBtn.onclick = (function(id, btn){ return function(){ fwResubmitTesti(id, btn); }; })(t.id, resubBtn);
+        var delBtn = document.createElement('button');
+        delBtn.textContent = '✕ Delete';
+        delBtn.style.cssText = 'padding:7px 16px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);color:#f87171;font-size:11px;cursor:pointer;border-radius:2px;font-family:var(--body)';
+        delBtn.onclick = (function(id, el){ return function(){ fwDeleteTesti(id, el); }; })(t.id, div);
+        testiActions.appendChild(resubBtn);
+        testiActions.appendChild(delBtn);
+        div.appendChild(testiActions);
+      }
       el.appendChild(div);
     });
   }
