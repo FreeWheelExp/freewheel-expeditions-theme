@@ -314,8 +314,7 @@ get_header();
         <div id="adminAlbumForm" style="display:none;margin-top:24px;background:#0f0d0b;border:1px solid rgba(255,255,255,.1);padding:24px;border-radius:2px">
           <div style="display:grid;gap:12px;margin-bottom:14px">
             <input type="text" id="adminAlbumTitle" placeholder="Album title (e.g. Winter Spiti 2026)" style="padding:11px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:var(--body);font-size:14px;border-radius:2px;outline:none">
-            <input type="text" id="adminAlbumTripName" placeholder="Trip name (e.g. Leh Ladakh)" style="padding:11px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:var(--body);font-size:14px;border-radius:2px;outline:none">
-            <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
               <input type="checkbox" id="adminAlbumIsPublic" style="width:18px;height:18px;accent-color:var(--teal)">
               <span style="font-size:13px;color:rgba(255,255,255,.7)">Show in community carousel</span>
             </label>
