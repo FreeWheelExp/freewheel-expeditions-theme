@@ -691,18 +691,22 @@ async function fwCartRzpPay(){
   if(!window.FW_RZP_KEY){msg.textContent='Payment gateway not configured.';return;}
 
   btn.disabled=true; btn.textContent='Creating order…';
-  var amountPaise=total*100;
   var descStr=cartDesc.join(', ');
-  var firstItem=Object.keys(FW_CART)[0]||'';
+  /* Send the actual cart — server looks up real prices and computes the total itself */
+  var cartPayload=Object.keys(FW_CART).map(function(pid){
+    var it=FW_CART[pid];
+    return {product_id:parseInt(pid,10), qty:it.qty, size:it.size||''};
+  });
 
   try{
     var or=await fetch((window.FW_AUTH?window.FW_AUTH.rest_url:'/wp-json/freewheel/v1')+'/rzp-create-order',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
-      body:JSON.stringify({amount:amountPaise,type:'merchandise',ref_id:firstItem,note:descStr})
+      body:JSON.stringify({type:'merchandise',cart:cartPayload,note:descStr})
     });
     var od=await or.json();
     if(!or.ok) throw new Error(od.message||'Order creation failed.');
+    var amountPaise=od.amount; /* authoritative — from server, not client total */
 
     var rzp=new Razorpay({
       key:window.FW_RZP_KEY,
@@ -723,9 +727,7 @@ async function fwCartRzpPay(){
             body:JSON.stringify({
               razorpay_order_id:r.razorpay_order_id,
               razorpay_payment_id:r.razorpay_payment_id,
-              razorpay_signature:r.razorpay_signature,
-              type:'merchandise',ref_id:firstItem,
-              amount:amountPaise,product_name:descStr,size:''
+              razorpay_signature:r.razorpay_signature
             })
           });
           var vd=await vr.json();
