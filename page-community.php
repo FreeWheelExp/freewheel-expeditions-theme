@@ -231,7 +231,8 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
       var albumJson = encodeURIComponent(JSON.stringify({
         title: album.title,
         trip: album.trip_name || '',
-        member: album.member_name + (album.member_city ? ', ' + album.member_city : ''),
+        city: album.member_city || '',
+        member: album.member_name,
         role: album.member_role || 'FW Explorer',
         instagram: album.member_instagram || '',
         photo: album.member_photo || '',
@@ -246,12 +247,12 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
               ? '<img src="' + album.member_photo + '" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(193,68,14,.5);flex-shrink:0">'
               : '<div style="width:26px;height:26px;border-radius:50%;background:rgba(193,68,14,.2);border:1.5px solid rgba(193,68,14,.4);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--rust);font-family:var(--headline);flex-shrink:0;font-weight:700">' + (album.member_name||'?').charAt(0).toUpperCase() + '</div>') +
             '<div style="display:flex;flex-direction:column;gap:2px;min-width:0">' +
-              '<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">' +
-                '<span style="font-size:12px;color:#fff;font-weight:500;white-space:nowrap">' + (album.member_name||'Explorer') + '</span>' +
-                '<span style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);opacity:.8;white-space:nowrap">' + (album.member_role||'FW Explorer') + '</span>' +
+              '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">' +
+                '<span style="font-size:13px;color:#fff;font-weight:500">' + (album.member_name||'Explorer') + '</span>' +
+                '<span style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);opacity:.85;white-space:nowrap">' + (album.member_role||'FW Explorer') + '</span>' +
               '</div>' +
               '<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">' +
-                (album.trip_name ? '<span style="font-size:11px;color:var(--rust)">' + album.trip_name + '</span>' : '') +
+                (album.member_city ? '<span style="font-size:11px;color:rgba(255,255,255,.45)">' + album.member_city + '</span>' : '') +
                 (album.member_instagram ? '<a href="https://instagram.com/' + album.member_instagram.replace(/^@/,'') + '" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;color:#c13584;text-decoration:none;white-space:nowrap">&#128247; ' + album.member_instagram + '</a>' : '') +
               '</div>' +
             '</div>' +
@@ -285,10 +286,11 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
               (data.photo ? '<img src="' + data.photo + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid rgba(193,68,14,.4)">' : '<div style="width:36px;height:36px;border-radius:50%;background:rgba(193,68,14,.2);border:2px solid rgba(193,68,14,.4);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--rust);font-family:var(--headline);font-weight:700">' + (data.member||'?').charAt(0).toUpperCase() + '</div>') +
               '<div>' +
                 '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">' +
-                  '<span style="font-size:14px;color:#fff;font-weight:500">' + data.member + '</span>' +
+                  '<span style="font-size:14px;color:#fff;font-weight:500">' + (data.member||'Explorer') + '</span>' +
                   '<span style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);opacity:.85">' + (data.role||'FW Explorer') + '</span>' +
                 '</div>' +
                 '<div style="display:flex;align-items:center;gap:8px;margin-top:3px;flex-wrap:wrap">' +
+                  (data.city ? '<span style="font-size:12px;color:rgba(255,255,255,.5)">' + data.city + '</span>' : '') +
                   (data.trip ? '<span style="font-size:12px;color:var(--rust)">' + data.trip + '</span>' : '') +
                   (data.instagram ? '<a href="https://instagram.com/' + data.instagram.replace(/^@/,'') + '" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#c13584;text-decoration:none;padding:2px 8px;background:rgba(193,53,132,.1);border:1px solid rgba(193,53,132,.25);border-radius:10px">&#128247; ' + data.instagram + '</a>' : '') +
                 '</div>' +
