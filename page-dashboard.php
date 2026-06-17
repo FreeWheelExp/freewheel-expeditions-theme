@@ -550,7 +550,7 @@ window.addEventListener('load', function() {
     if (prof.member_number) {
       var numBadge = document.createElement('div');
       numBadge.style.cssText = 'display:inline-block;margin-top:6px;padding:3px 10px;background:rgba(193,68,14,.12);border:1px solid rgba(193,68,14,.3);border-radius:2px;font-size:11px;letter-spacing:1.5px;color:var(--rust);font-family:var(--headline)';
-      numBadge.textContent = 'WHEELER #' + String(prof.member_number).padStart(4,'0');
+      numBadge.textContent = 'JUNGLI #' + String(prof.member_number).padStart(4,'0');
       var greetSubEl = document.getElementById('greetSub');
       if (greetSubEl && greetSubEl.parentNode) greetSubEl.parentNode.appendChild(numBadge);
     }
