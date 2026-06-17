@@ -268,9 +268,6 @@ body{font-family:var(--body);background:#0a0805!important;color:#fff;overflow-x:
         <div style="margin-bottom:14px">
           <input type="text" id="albumTitle" placeholder="Album title (e.g. Winter Spiti 2026)" style="width:100%;box-sizing:border-box;padding:11px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:var(--body);font-size:14px;border-radius:2px;outline:none">
         </div>
-        <div style="margin-bottom:14px">
-          <input type="text" id="albumTripName" placeholder="Trip name (e.g. Leh Ladakh)" style="width:100%;box-sizing:border-box;padding:11px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:var(--body);font-size:14px;border-radius:2px;outline:none">
-        </div>
         <label style="display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;cursor:pointer;padding:14px;background:rgba(42,122,110,.08);border:1px solid rgba(42,122,110,.25);border-radius:2px">
           <input type="checkbox" id="albumIsPublic" style="width:18px;height:18px;margin-top:2px;accent-color:var(--teal);cursor:pointer;flex-shrink:0">
           <div>
@@ -787,7 +784,7 @@ window.addEventListener('load', function() {
         : '<div style="width:52px;height:52px;background:rgba(255,255,255,.06);border-radius:2px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px">&#128247;</div>';
 
       var addBtn = photoCount < 6
-        ? '<button data-aid="'+a.id+'" onclick="event.stopPropagation();openAlbumUploader(this.dataset.aid)" style="padding:6px 12px;background:rgba(193,68,14,.15);border:1px solid rgba(193,68,14,.3);color:var(--rust);font-size:11px;cursor:pointer;border-radius:2px">+ Photo</button>'
+        ? '<button data-aid="'+a.id+'" data-title="'+encodeURIComponent(a.title||'')+'" data-count="'+photoCount+'" onclick="event.stopPropagation();openAlbumUploader(this.dataset.aid,decodeURIComponent(this.dataset.title),parseInt(this.dataset.count))" style="padding:6px 12px;background:rgba(193,68,14,.15);border:1px solid rgba(193,68,14,.3);color:var(--rust);font-size:11px;cursor:pointer;border-radius:2px">+ Photo</button>'
         : '<span style="font-size:11px;color:#4ade80">Full &#10003;</span>';
 
       var rejNote = a.rejection_note
@@ -800,7 +797,7 @@ window.addEventListener('load', function() {
           '<div style="flex:1;min-width:0">'+
             '<div style="font-size:15px;color:#fff;margin-bottom:3px">'+a.title+'</div>'+
             '<div style="font-size:12px;color:rgba(255,255,255,.4)">'+
-              (a.trip_name ? a.trip_name + ' &middot; ' : '')+
+
               '<span style="color:'+(statusColor[a.status]||'#fff')+';font-weight:500">'+(statusLabel[a.status]||a.status)+'</span>'+
               ' &middot; '+photoCount+'/6 photos'+
             '</div>'+
@@ -1031,12 +1028,11 @@ window.addEventListener('load', function() {
 
   window.submitNewAlbum = async function() {
     var title = (document.getElementById('albumTitle')||{}).value||'';
-    var trip  = (document.getElementById('albumTripName')||{}).value||'';
     var pub   = document.getElementById('albumIsPublic') && document.getElementById('albumIsPublic').checked;
     var msg   = document.getElementById('albumFormMsg');
     if (!title.trim()) { if(msg){msg.textContent='Please enter a title.';} return; }
     try {
-      var r = await fetch(_rest+'/fw-create-album',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+_token},body:JSON.stringify({title:title,trip_name:trip,is_public:pub})});
+      var r = await fetch(_rest+'/fw-create-album',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+_token},body:JSON.stringify({title:title,is_public:pub})});
       var d = await r.json();
       if (!r.ok) throw new Error(d.message||'Failed');
       toast('Album created!');
@@ -1045,34 +1041,139 @@ window.addEventListener('load', function() {
     } catch(e) { if(msg){msg.textContent=e.message||'Failed';} }
   };
 
-  /* ── Album Photo Upload ── */
-  window.openAlbumUploader = function(albumId) {
-    var input = document.createElement('input');
-    input.type='file'; input.accept='image/*'; input.multiple=true;
-    input.onchange = function() {
-      var files = Array.from(input.files).slice(0,6);
-      if (!files.length) return;
-      uploadWithCaptions(albumId, files, 0);
-    };
-    input.click();
-  };
-
-  function uploadWithCaptions(albumId, files, idx) {
-    if (idx >= files.length) {
-      toast('Photos uploaded!');
-      setTimeout(function(){ location.reload(); }, 1200);
-      return;
-    }
-    var caption = window.prompt('Caption for photo '+(idx+1)+' of '+files.length+' (optional):') || '';
-    toast('Uploading '+(idx+1)+'/'+files.length+'...');
-    var fd = new FormData();
-    fd.append('photo', files[idx]);
-    fd.append('album_id', albumId);
-    fd.append('caption', caption);
-    fetch(_rest+'/fw-upload-album-photo',{method:'POST',headers:{'Authorization':'Bearer '+_token},body:fd})
-      .then(function(){ uploadWithCaptions(albumId, files, idx+1); })
-      .catch(function(){ toast('Photo '+(idx+1)+' failed', true); uploadWithCaptions(albumId, files, idx+1); });
+  /* ── Album Photo Upload — same panel as admin ── */
+  function memberCompressImage(file, maxPx, quality) {
+    return new Promise(function(resolve) {
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function() {
+        URL.revokeObjectURL(url);
+        var w = img.naturalWidth, h = img.naturalHeight;
+        var scale = Math.min(1, maxPx / Math.max(w, h));
+        w = Math.round(w * scale); h = Math.round(h * scale);
+        var canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        canvas.toBlob(function(blob) { resolve(blob || file); }, 'image/jpeg', quality);
+      };
+      img.onerror = function() { URL.revokeObjectURL(url); resolve(file); };
+      img.src = url;
+    });
   }
+
+  window.openAlbumUploader = function(albumId, albumTitle, existingCount) {
+    var existing = existingCount || 0;
+    var slots    = 6 - existing;
+    if (slots <= 0) { toast('Album is full (max 6 photos)', true); return; }
+
+    var panel = document.createElement('div');
+    panel.id  = 'fw-member-upload-panel';
+    panel.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px)';
+    panel.innerHTML =
+      '<div style="background:#0f0d0b;border:1px solid rgba(255,255,255,.1);border-radius:4px;width:100%;max-width:640px;padding:28px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">' +
+          '<div>' +
+            '<div style="font-family:var(--headline);font-size:18px;color:#fff;letter-spacing:1px">Upload Photos</div>' +
+            '<div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:2px">' + (albumTitle||'Album') + ' · max 6 photos · auto-compressed</div>' +
+          '</div>' +
+          '<button id="fw-mp-close" style="background:none;border:none;color:rgba(255,255,255,.4);font-size:22px;cursor:pointer;padding:0">&times;</button>' +
+        '</div>' +
+        '<label id="fw-mp-drop" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;border:2px dashed rgba(255,255,255,.15);border-radius:4px;padding:32px 20px;cursor:pointer;margin-bottom:16px">' +
+          '<div style="font-size:32px">📷</div>' +
+          '<div style="font-size:13px;color:rgba(255,255,255,.5)">Click to select photos</div>' +
+          '<div style="font-size:11px;color:rgba(255,255,255,.25)">Any size — auto-compressed</div>' +
+          '<input id="fw-mp-input" type="file" accept="image/*" multiple style="display:none">' +
+        '</label>' +
+        '<div id="fw-mp-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px"></div>' +
+        '<div id="fw-mp-status" style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:12px;min-height:18px"></div>' +
+        '<div style="display:flex;gap:10px">' +
+          '<button id="fw-mp-save" style="display:none;padding:10px 28px;background:var(--rust);border:none;color:#fff;font-family:var(--body);font-size:13px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border-radius:2px">Save Photos</button>' +
+          '<button id="fw-mp-cancel" style="padding:10px 20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);font-family:var(--body);font-size:13px;cursor:pointer;border-radius:2px">Cancel</button>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(panel);
+
+    var fileInput   = panel.querySelector('#fw-mp-input');
+    var dropZone    = panel.querySelector('#fw-mp-drop');
+    var previewGrid = panel.querySelector('#fw-mp-grid');
+    var statusEl    = panel.querySelector('#fw-mp-status');
+    var saveBtn     = panel.querySelector('#fw-mp-save');
+    var cancelBtn   = panel.querySelector('#fw-mp-cancel');
+    var closeBtn    = panel.querySelector('#fw-mp-close');
+    var selectedFiles = [];
+
+    function closePanel() { panel.remove(); }
+    cancelBtn.onclick = closePanel;
+    closeBtn.onclick  = closePanel;
+    panel.addEventListener('click', function(e) { if (e.target === panel) closePanel(); });
+
+    dropZone.addEventListener('dragover',  function(e){ e.preventDefault(); dropZone.style.borderColor='var(--rust)'; });
+    dropZone.addEventListener('dragleave', function(){  dropZone.style.borderColor='rgba(255,255,255,.15)'; });
+    dropZone.addEventListener('drop', function(e){
+      e.preventDefault(); dropZone.style.borderColor='rgba(255,255,255,.15)';
+      handleFiles(Array.from(e.dataTransfer.files).filter(function(f){ return f.type.startsWith('image/'); }));
+    });
+    fileInput.addEventListener('change', function(){
+      handleFiles(Array.from(fileInput.files||[]));
+      fileInput.value = '';
+    });
+
+    function handleFiles(files) {
+      var available = slots - selectedFiles.length;
+      if (available <= 0) { statusEl.textContent = 'Album full (max 6).'; statusEl.style.color='#f87171'; return; }
+      if (files.length > available) { files = files.slice(0, available); statusEl.textContent = 'Only '+available+' slot(s) left.'; }
+      files.forEach(function(file) {
+        selectedFiles.push(file);
+        var thumb = document.createElement('div');
+        thumb.style.cssText = 'aspect-ratio:1;border-radius:3px;overflow:hidden;background:rgba(255,255,255,.05)';
+        previewGrid.appendChild(thumb);
+        var objUrl = URL.createObjectURL(file);
+        var img    = document.createElement('img');
+        img.onload = function(){ URL.revokeObjectURL(objUrl); thumb.innerHTML=''; thumb.appendChild(img); };
+        img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
+        img.src = objUrl;
+      });
+      statusEl.textContent = selectedFiles.length + ' photo(s) selected — click Save.';
+      statusEl.style.color = '#4ade80';
+      saveBtn.style.display = 'block';
+    }
+
+    saveBtn.onclick = function() {
+      if (!selectedFiles.length) return;
+      saveBtn.disabled = true; saveBtn.textContent = 'Uploading...';
+      var total = selectedFiles.length, succeeded = 0, errors = [];
+
+      function uploadNext(idx) {
+        if (idx >= total) {
+          if (succeeded === total) {
+            statusEl.innerHTML = '<span style="color:#4ade80">&#10003; '+succeeded+' photo(s) saved!</span>';
+            setTimeout(function(){ closePanel(); location.reload(); }, 800);
+          } else {
+            statusEl.innerHTML = '<span style="color:#f87171">'+succeeded+'/'+total+' saved.</span>'+(errors.length?'<br><small style="color:#f87171;font-size:11px">'+errors.join('<br>')+'</small>':'');
+            saveBtn.disabled = false; saveBtn.textContent = 'Retry';
+          }
+          return;
+        }
+        statusEl.innerHTML = 'Uploading '+(idx+1)+' / '+total+'...';
+        memberCompressImage(selectedFiles[idx], 1400, 0.85).then(function(blob) {
+          var fd = new FormData();
+          fd.append('photo', blob, 'photo.jpg');
+          fd.append('album_id', albumId);
+          fd.append('sort_order', String(idx));
+          fetch(_rest+'/fw-upload-album-photo', {method:'POST', headers:{'Authorization':'Bearer '+_token}, body:fd})
+            .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,status:r.status,body:j}; }).catch(function(){ return r.text().then(function(t){ return {ok:false,status:r.status,body:t}; }); }); })
+            .then(function(result){
+              if (result.ok && result.body && result.body.success) succeeded++;
+              else { var msg='Photo '+(idx+1)+' ['+result.status+']: '+((result.body&&result.body.message)||JSON.stringify(result.body)).substring(0,100); errors.push(msg); console.error('[FW]',msg); }
+              uploadNext(idx+1);
+            })
+            .catch(function(e){ errors.push('Photo '+(idx+1)+' error: '+e.message); uploadNext(idx+1); });
+        });
+      }
+      uploadNext(0);
+    };
+  };
 
   /* ── Blog Editor ── */
   window.openBlogEditor = function() {
