@@ -93,6 +93,8 @@ function loadAll() {
     if (_s && _s.role === 'super_admin') {
       var tabEl = document.getElementById('tabStats');
       if (tabEl) { tabEl.style.display = 'block'; loadStats(); }
+      var logTabEl = document.getElementById('tabActivityLog');
+      if (logTabEl) logTabEl.style.display = 'block';
     }
   } catch(e) {}
 }
@@ -582,6 +584,41 @@ function admTab(id, btn) {
   btn.classList.add('active');
   document.getElementById('panel-'+id).classList.add('active');
   if (id === 'create') adminCreateTab('blog');
+  if (id === 'activitylog') loadActivityLog();
+}
+
+function loadActivityLog() {
+  var el = document.getElementById('activityLogList');
+  el.innerHTML = '<div class="adm-spinner">Loading...</div>';
+  fetch(_admRest + '/admin/activity-log', { headers: h() })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d.success || !d.logs || !d.logs.length) { el.innerHTML = '<div class="adm-empty">No activity recorded yet.</div>'; return; }
+      var actionLabel = {
+        role_change: 'Changed role', block_member: 'Blocked', unblock_member: 'Unblocked',
+        remove_member: 'Removed member', approve_content: 'Approved', reject_content: 'Rejected',
+        credit_adjustment: 'Adjusted credits'
+      };
+      var actionColor = {
+        role_change: '#e8a020', block_member: '#f87171', unblock_member: '#4ade80',
+        remove_member: '#f87171', approve_content: '#4ade80', reject_content: '#f87171',
+        credit_adjustment: '#7c3aed'
+      };
+      el.innerHTML = d.logs.map(function(log) {
+        var label = actionLabel[log.action] || log.action;
+        var color = actionColor[log.action] || 'rgba(255,255,255,.6)';
+        return '<div style="display:flex;align-items:flex-start;gap:12px;padding:11px 14px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);border-radius:2px;margin-bottom:6px">' +
+          '<span style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:'+color+';background:'+color+'18;padding:3px 8px;border-radius:2px;white-space:nowrap;flex-shrink:0">'+label+'</span>' +
+          '<div style="flex:1;min-width:0">' +
+            '<div style="font-size:12px;color:rgba(255,255,255,.7)">'+(log.actor_email||'unknown')+' <span style="color:rgba(255,255,255,.3)">('+(log.actor_role||'?')+')</span>' +
+            (log.target_type ? ' &middot; <span style="color:rgba(255,255,255,.4)">'+log.target_type+(log.target_id ? ' #'+String(log.target_id).substring(0,8) : '')+'</span>' : '') + '</div>' +
+            (log.details ? '<div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:3px">'+log.details+'</div>' : '') +
+          '</div>' +
+          '<span style="font-size:10px;color:rgba(255,255,255,.25);white-space:nowrap;flex-shrink:0">'+fmtDate(log.created_at)+'</span>' +
+        '</div>';
+      }).join('');
+    })
+    .catch(function(){ el.innerHTML = '<div class="adm-empty">Failed to load.</div>'; });
 }
 
 function toggleAdmMenu() {
