@@ -1260,6 +1260,7 @@ add_action( 'rest_api_init', function() {
     register_rest_route( 'freewheel/v1', '/admin/get-blogs',           array( 'methods'=>'GET',  'callback'=>'fw_admin_get_blogs',           'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/get-albums',          array( 'methods'=>'GET',  'callback'=>'fw_admin_get_albums',          'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/delete-album',        array( 'methods'=>'POST', 'callback'=>'fw_admin_delete_album',        'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/probe-schema',        array( 'methods'=>'GET',  'callback'=>'fw_admin_probe_schema',         'permission_callback'=>'__return_true' ));
 });
 
 /* ── Admin auth: WP admin OR fw_members role=admin ── */
@@ -3311,4 +3312,32 @@ function fw_admin_delete_album( $request ) {
         array( 'method' => 'DELETE', 'headers' => $h, 'timeout' => 10 ) );
 
     return rest_ensure_response( array( 'success' => true ) );
+}
+
+/* TEMP: probe actual fw_album_photos column names */
+function fw_admin_probe_schema( $request ) {
+    $user = fw_admin_auth( $request );
+    if ( is_wp_error( $user ) ) return $user;
+    $h = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
+    // Try select * limit 1 — shows actual columns
+    $resp = wp_remote_get( FW_SUPABASE_URL . '/rest/v1/fw_album_photos?limit=1&select=*',
+        array( 'headers' => $h, 'timeout' => 10 ) );
+    $body = wp_remote_retrieve_body( $resp );
+    $code = wp_remote_retrieve_response_code( $resp );
+    $data = json_decode( $body, true );
+    $columns = array();
+    if ( is_array( $data ) && ! empty( $data[0] ) ) {
+        $columns = array_keys( $data[0] );
+    }
+    // Also try to insert a dummy row to get exact column error
+    $test_resp = wp_remote_post( FW_SUPABASE_URL . '/rest/v1/fw_album_photos',
+        array( 'headers' => array_merge( $h, array( 'Content-Type' => 'application/json', 'Prefer' => 'return=minimal' ) ),
+               'body' => wp_json_encode( array( 'probe' => 'test' ) ), 'timeout' => 10, 'data_format' => 'body' ) );
+    $test_body = wp_remote_retrieve_body( $test_resp );
+    return rest_ensure_response( array(
+        'select_code'    => $code,
+        'select_raw'     => $body,
+        'columns_found'  => $columns,
+        'insert_test'    => $test_body,
+    ));
 }
