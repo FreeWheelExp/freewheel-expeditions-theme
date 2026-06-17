@@ -111,6 +111,7 @@ get_header();
       <button class="adm-tab" onclick="admTab('users',this)">Members</button>
       <button class="adm-tab" onclick="admTab('create',this)">Create Content</button>
       <button class="adm-tab" id="tabStats" style="display:none" onclick="admTab('stats',this)">Site Stats</button>
+      <button class="adm-tab" id="tabActivityLog" style="display:none" onclick="admTab('activitylog',this)">Activity Log</button>
     </div>
 
     <!-- ── CONTENT APPROVAL ── -->
@@ -326,6 +327,12 @@ get_header();
           <div id="adminAlbumFormMsg" style="font-size:12px;margin-top:10px;color:#f87171"></div>
         </div>
       </div>
+    </div>
+
+    <!-- Activity Log Panel (Super Admin only) -->
+    <div id="panel-activitylog" class="adm-panel">
+      <div class="adm-section-title">Admin Activity Log <span style="font-size:11px;color:rgba(255,255,255,.3);font-weight:400;text-transform:none;letter-spacing:0">— last 200 actions</span></div>
+      <div id="activityLogList"><div class="adm-spinner">Loading...</div></div>
     </div>
 
   </div>
