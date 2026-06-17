@@ -907,7 +907,7 @@ function fw_upload_trip_photo( $request ) {
             'Content-Type'  => 'application/json',
             'Prefer'        => 'return=minimal',
         ),
-        'body'        => wp_json_encode( array( 'album_id' => $booking_id, 'photo_url' => $url, 'sort_order' => count($existing) ) ),
+        'body'        => wp_json_encode( array( 'album_id' => $booking_id, 'user_id' => $user['id'], 'url' => $url, 'sort_order' => count( $existing ), 'caption' => '' ) ),
         'timeout'     => 10,
         'data_format' => 'body',
     ));
@@ -1030,7 +1030,7 @@ function fw_get_albums( $request ) {
     /* Include photos so user can see them regardless of approval status */
     foreach ( $albums as &$album ) {
         $photos = json_decode( wp_remote_retrieve_body( wp_remote_get(
-            FW_SUPABASE_URL . '/rest/v1/fw_album_photos?album_id=eq.' . rawurlencode( $album['id'] ) . '&order=sort_order.asc&select=photo_url,caption',
+            FW_SUPABASE_URL . '/rest/v1/fw_album_photos?album_id=eq.' . rawurlencode( $album['id'] ) . '&order=sort_order.asc&select=url,caption',
             array( 'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE ), 'timeout' => 8 )
         )), true ) ?: array();
         $album['photos'] = $photos;
@@ -1100,7 +1100,7 @@ function fw_upload_album_photo( $request ) {
     $caption = sanitize_text_field( $_POST['caption'] ?? '' );
     wp_remote_post( FW_SUPABASE_URL . '/rest/v1/fw_album_photos', array(
         'headers'     => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE, 'Content-Type' => 'application/json', 'Prefer' => 'return=minimal' ),
-        'body'        => wp_json_encode( array( 'album_id' => $album_id, 'photo_url' => $url, 'sort_order' => count( $existing ), 'caption' => $caption ) ),
+        'body'        => wp_json_encode( array( 'album_id' => $album_id, 'user_id' => $user['id'], 'url' => $url, 'sort_order' => count( $existing ), 'caption' => $caption ) ),
         'timeout'     => 10, 'data_format' => 'body',
     ));
 
@@ -1260,7 +1260,6 @@ add_action( 'rest_api_init', function() {
     register_rest_route( 'freewheel/v1', '/admin/get-blogs',           array( 'methods'=>'GET',  'callback'=>'fw_admin_get_blogs',           'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/get-albums',          array( 'methods'=>'GET',  'callback'=>'fw_admin_get_albums',          'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/delete-album',        array( 'methods'=>'POST', 'callback'=>'fw_admin_delete_album',        'permission_callback'=>'__return_true' ));
-    register_rest_route( 'freewheel/v1', '/admin/probe-schema',        array( 'methods'=>'GET',  'callback'=>'fw_admin_probe_schema',         'permission_callback'=>'__return_true' ));
 });
 
 /* ── Admin auth: WP admin OR fw_members role=admin ── */
@@ -1384,7 +1383,7 @@ function fw_admin_pending_content( $request ) {
     $h = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
     foreach ( $albums as &$album ) {
         $photos = json_decode( wp_remote_retrieve_body( wp_remote_get(
-            FW_SUPABASE_URL . '/rest/v1/fw_album_photos?album_id=eq.' . rawurlencode( $album['id'] ) . '&order=sort_order.asc&select=photo_url,caption',
+            FW_SUPABASE_URL . '/rest/v1/fw_album_photos?album_id=eq.' . rawurlencode( $album['id'] ) . '&order=sort_order.asc&select=url,caption',
             array( 'headers' => $h, 'timeout' => 8 )
         )), true ) ?: array();
         $album['photos'] = $photos;
@@ -1651,7 +1650,7 @@ function fw_get_public_albums( $request ) {
     /* Fetch photos + member name for each album */
     foreach ( $albums as &$album ) {
         $photos = json_decode( wp_remote_retrieve_body( wp_remote_get(
-            FW_SUPABASE_URL . '/rest/v1/fw_album_photos?album_id=eq.' . rawurlencode( $album['id'] ) . '&order=sort_order.asc&limit=6&select=photo_url,caption',
+            FW_SUPABASE_URL . '/rest/v1/fw_album_photos?album_id=eq.' . rawurlencode( $album['id'] ) . '&order=sort_order.asc&limit=6&select=url,caption',
             array( 'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE ), 'timeout' => 8 )
         )), true ) ?: array();
         $album['photos'] = $photos;
@@ -3128,7 +3127,7 @@ function fw_admin_get_albums( $request ) {
     $h = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
     foreach ( $albums as &$album ) {
         $photos = json_decode( wp_remote_retrieve_body( wp_remote_get(
-            FW_SUPABASE_URL . '/rest/v1/fw_album_photos?album_id=eq.' . rawurlencode( $album['id'] ) . '&order=sort_order.asc&select=id,photo_url,caption',
+            FW_SUPABASE_URL . '/rest/v1/fw_album_photos?album_id=eq.' . rawurlencode( $album['id'] ) . '&order=sort_order.asc&select=id,url,caption',
             array( 'headers' => $h, 'timeout' => 8 )
         )), true ) ?: array();
         $album['photos'] = $photos;
@@ -3272,7 +3271,8 @@ function fw_admin_upload_album_photo( $request ) {
         'headers'     => $h_json,
         'body'        => wp_json_encode( array(
             'album_id'   => $album_id,
-            'photo_url'  => $public_url,
+            'user_id'    => $user['id'],
+            'url'        => $public_url,
             'sort_order' => $sort_order,
             'caption'    => $caption,
         )),
@@ -3314,46 +3314,3 @@ function fw_admin_delete_album( $request ) {
     return rest_ensure_response( array( 'success' => true ) );
 }
 
-/* TEMP: probe fw_album_photos column names by trying each candidate */
-function fw_admin_probe_schema( $request ) {
-    $h = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
-    $h_json = array_merge( $h, array( 'Content-Type' => 'application/json', 'Prefer' => 'return=minimal' ) );
-
-    /* Try each candidate photo URL column name.
-       PGRST204 = column doesn't exist.
-       Any other response = column EXISTS (FK/null error expected since album_id is fake). */
-    $candidates = array( 'photo_url', 'url', 'image_url', 'photo', 'file_url', 'src', 'path', 'image', 'thumbnail_url' );
-    $results = array();
-    $fake_uuid = '00000000-0000-0000-0000-000000000000';
-
-    foreach ( $candidates as $col ) {
-        $r = wp_remote_post( FW_SUPABASE_URL . '/rest/v1/fw_album_photos',
-            array( 'headers' => $h_json,
-                   'body'    => wp_json_encode( array( 'album_id' => $fake_uuid, $col => 'http://test.jpg', 'sort_order' => 0 ) ),
-                   'timeout' => 8, 'data_format' => 'body' ) );
-        $code = wp_remote_retrieve_response_code( $r );
-        $body = wp_remote_retrieve_body( $r );
-        $decoded = json_decode( $body, true );
-        $pgrst_code = $decoded['code'] ?? '';
-        $results[ $col ] = array(
-            'http_code'  => $code,
-            'pgrst_code' => $pgrst_code,
-            'exists'     => ( $pgrst_code !== 'PGRST204' ),
-            'msg'        => substr( $decoded['message'] ?? $body, 0, 120 ),
-        );
-    }
-
-    /* Also get the OpenAPI spec to find columns */
-    $spec_resp = wp_remote_get( FW_SUPABASE_URL . '/rest/v1/',
-        array( 'headers' => array_merge( $h, array( 'Accept' => 'application/openapi+json' ) ), 'timeout' => 10 ) );
-    $spec      = json_decode( wp_remote_retrieve_body( $spec_resp ), true );
-    $schema_cols = array();
-    if ( isset( $spec['definitions']['fw_album_photos']['properties'] ) ) {
-        $schema_cols = array_keys( $spec['definitions']['fw_album_photos']['properties'] );
-    }
-
-    return rest_ensure_response( array(
-        'column_probe' => $results,
-        'schema_cols'  => $schema_cols,
-    ));
-}
