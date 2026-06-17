@@ -530,29 +530,42 @@ function fw_register_member( $request ) {
     $city       = sanitize_text_field( $p['city']       ?? '' );
     $state      = sanitize_text_field( $p['state']      ?? '' );
     $country    = sanitize_text_field( $p['country']    ?? 'India' );
+    $ref_code   = sanitize_text_field( $p['ref_code']   ?? '' );
 
     if ( ! $first_name ) {
         return new WP_Error( 'missing', 'First name is required.', array( 'status' => 400 ) );
     }
 
-    // Create fw_members row
+    $h_svc = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
+
+    /* Resolve referral code to a referrer's user id (ignore if invalid/self) */
+    $referred_by = null;
+    if ( $ref_code ) {
+        $ref_lookup = json_decode( wp_remote_retrieve_body( wp_remote_get(
+            FW_SUPABASE_URL . '/rest/v1/fw_members?referral_code=eq.' . rawurlencode( $ref_code ) . '&select=id',
+            array( 'headers' => $h_svc, 'timeout' => 8 )
+        )), true );
+        if ( ! empty( $ref_lookup[0]['id'] ) && $ref_lookup[0]['id'] !== $user_id ) {
+            $referred_by = $ref_lookup[0]['id'];
+        }
+    }
+
+    $insert_data = array(
+        'id'         => $user_id,
+        'first_name' => $first_name,
+        'last_name'  => $last_name,
+        'email'      => $email,
+        'phone'      => $phone,
+        'city'       => $city,
+        'state'      => $state,
+        'country'    => $country,
+    );
+    if ( $referred_by ) $insert_data['referred_by'] = $referred_by;
+
+    // Create fw_members row — return=representation so we get the auto-assigned member_number back
     $member_resp = wp_remote_post( FW_SUPABASE_URL . '/rest/v1/fw_members', array(
-        'headers'     => array(
-            'apikey'        => FW_SUPABASE_SERVICE,
-            'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE,
-            'Content-Type'  => 'application/json',
-            'Prefer'        => 'return=minimal',
-        ),
-        'body'        => wp_json_encode( array(
-            'id'         => $user_id,
-            'first_name' => $first_name,
-            'last_name'  => $last_name,
-            'email'      => $email,
-            'phone'      => $phone,
-            'city'       => $city,
-            'state'      => $state,
-            'country'    => $country,
-        )),
+        'headers'     => array_merge( $h_svc, array( 'Content-Type' => 'application/json', 'Prefer' => 'return=representation' ) ),
+        'body'        => wp_json_encode( $insert_data ),
         'timeout'     => 15,
         'data_format' => 'body',
     ));
@@ -563,6 +576,19 @@ function fw_register_member( $request ) {
         $err_detail = is_wp_error( $member_resp ) ? $member_resp->get_error_message() : $err_body;
         error_log( '[FW] fw_members insert failed ' . $err_code . ': ' . $err_detail );
         return new WP_Error( 'db_fail', 'Database error saving new user: ' . $err_code . ' - ' . $err_detail, array( 'status' => 500 ) );
+    }
+
+    /* Assign this member's own referral code from their auto-numbered member_number */
+    $created = json_decode( wp_remote_retrieve_body( $member_resp ), true );
+    $member_number = $created[0]['member_number'] ?? null;
+    if ( $member_number ) {
+        $own_code = 'FW' . str_pad( $member_number, 4, '0', STR_PAD_LEFT );
+        wp_remote_request( FW_SUPABASE_URL . '/rest/v1/fw_members?id=eq.' . rawurlencode( $user_id ), array(
+            'method'  => 'PATCH',
+            'headers' => array_merge( $h_svc, array( 'Content-Type' => 'application/json', 'Prefer' => 'return=minimal' ) ),
+            'body'    => wp_json_encode( array( 'referral_code' => $own_code ) ),
+            'timeout' => 10,
+        ));
     }
 
     // Award 50 registration credits
@@ -576,6 +602,7 @@ function fw_register_member( $request ) {
         'existing'        => false,
         'credits_awarded' => 50,
         'name'            => $first_name,
+        'member_number'   => $member_number,
     ));
 }
 
@@ -934,6 +961,8 @@ add_action( 'rest_api_init', function() {
     register_rest_route( 'freewheel/v1', '/fw-delete-testimonial',array( 'methods' => 'POST', 'callback' => 'fw_member_delete_testi',  'permission_callback' => '__return_true' ));
     register_rest_route( 'freewheel/v1', '/fw-resubmit-album',    array( 'methods' => 'POST', 'callback' => 'fw_member_resubmit_album','permission_callback' => '__return_true' ));
     register_rest_route( 'freewheel/v1', '/fw-resubmit-testi',    array( 'methods' => 'POST', 'callback' => 'fw_member_resubmit_testi','permission_callback' => '__return_true' ));
+    register_rest_route( 'freewheel/v1', '/fw-referral-stats',    array( 'methods' => 'GET',  'callback' => 'fw_referral_stats',       'permission_callback' => '__return_true' ));
+    register_rest_route( 'freewheel/v1', '/fw-public-profile',    array( 'methods' => 'GET',  'callback' => 'fw_public_profile',       'permission_callback' => '__return_true' ));
 });
 
 /* ── Helper: compress image to WebP, max 1920px, return temp path ── */
@@ -1258,6 +1287,7 @@ add_action( 'rest_api_init', function() {
     register_rest_route( 'freewheel/v1', '/admin/members',         array( 'methods'=>'GET',  'callback'=>'fw_admin_get_members',      'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/update-member',   array( 'methods'=>'POST', 'callback'=>'fw_admin_update_member',    'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/remove-member',   array( 'methods'=>'POST', 'callback'=>'fw_admin_remove_member',    'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/activity-log',    array( 'methods'=>'GET',  'callback'=>'fw_admin_activity_log',    'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/site-stats',      array( 'methods'=>'GET',  'callback'=>'fw_admin_site_stats',       'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/save-blog',           array( 'methods'=>'POST', 'callback'=>'fw_admin_save_blog',           'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/upload-blog-cover',   array( 'methods'=>'POST', 'callback'=>'fw_admin_upload_blog_cover',   'permission_callback'=>'__return_true' ));
@@ -1468,6 +1498,7 @@ function fw_admin_approve_content( $request ) {
             fw_give_credits( $user_id, $amount, $type . '_' . ( $type==='testimonial' ? 'approved' : 'published' ), $id, $type, 'Approved by admin' );
         }
     }
+    fw_log_admin_action( fw_admin_auth($request), $action === 'approve' ? 'approve_content' : 'reject_content', $type, $id, $note );
 
     /* Status logged for audit - skipping fw_log_status as it's for bookings/orders only */
 
@@ -1556,6 +1587,11 @@ function fw_admin_save_booking( $request ) {
                     wp_remote_request( FW_SUPABASE_URL . '/rest/v1/fw_bookings?id=eq.' . rawurlencode($id),
                         array( 'method'=>'PATCH', 'headers'=>array('apikey'=>FW_SUPABASE_SERVICE,'Authorization'=>'Bearer '.FW_SUPABASE_SERVICE,'Content-Type'=>'application/json','Prefer'=>'return=minimal'),
                                'body'=>wp_json_encode(array('credits_awarded'=>true)), 'timeout'=>8 ) );
+
+                    /* Referral bonus: triggers once, on the referee's FIRST completed trip */
+                    if ( $tc === 1 ) {
+                        fw_maybe_award_referral_bonus( $p['user_id'] );
+                    }
                 }
             }
         }
@@ -1610,7 +1646,8 @@ function fw_admin_update_order( $request ) {
 
 /* ── fw_admin_adjust_credits ── */
 function fw_admin_adjust_credits( $request ) {
-    if ( ! fw_is_admin( $request ) ) return fw_admin_deny();
+    $caller = fw_admin_auth( $request );
+    if ( is_wp_error( $caller ) ) return $caller;
     $p       = $request->get_json_params() ?: array();
     $user_id = sanitize_text_field( $p['user_id'] ?? '' );
     $amount  = intval( $p['amount'] ?? 0 );
@@ -1619,6 +1656,7 @@ function fw_admin_adjust_credits( $request ) {
     if ( ! $user_id || $amount === 0 ) return new WP_Error( 'missing', 'user_id and amount required.', array( 'status'=>400 ) );
 
     fw_give_credits( $user_id, $amount, 'admin_adjustment', '', '', $note );
+    fw_log_admin_action( $caller, 'credit_adjustment', 'member', $user_id, ( $amount > 0 ? '+' : '' ) . $amount . ' credits — ' . $note );
     return rest_ensure_response( array( 'success'=>true, 'new_balance'=>fw_credit_balance($user_id) ) );
 }
 
@@ -1671,7 +1709,7 @@ function fw_get_public_albums( $request ) {
 
         /* Get member first name only (privacy) */
         $member = json_decode( wp_remote_retrieve_body( wp_remote_get(
-            FW_SUPABASE_URL . '/rest/v1/fw_members?id=eq.' . rawurlencode( $album['user_id'] ) . '&select=first_name,last_name,city,instagram,avatar_url,role,trips_completed',
+            FW_SUPABASE_URL . '/rest/v1/fw_members?id=eq.' . rawurlencode( $album['user_id'] ) . '&select=first_name,last_name,city,instagram,avatar_url,role,trips_completed,member_number',
             array( 'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE ), 'timeout' => 8 )
         )), true );
         $album['member_name']      = $member[0]['first_name'] ?? 'Explorer';
@@ -1680,6 +1718,7 @@ function fw_get_public_albums( $request ) {
         $album['member_photo']     = $member[0]['avatar_url'] ?? '';
         $tier = fw_loyalty_tier( $member[0]['trips_completed'] ?? 0 );
         $album['member_badge']     = $tier['name'];  /* Explorer / Road Warrior / Pioneer / Legend */
+        $album['member_number']    = $member[0]['member_number'] ?? null;
         $role = $member[0]['role'] ?? 'member';
         $album['member_role']      = $role === 'super_admin' ? 'FW Super Admin'
                                    : ( $role === 'moderator' ? 'FW Moderator'
@@ -3108,6 +3147,12 @@ function fw_admin_update_member( $request ) {
     if ( is_wp_error( $resp ) || wp_remote_retrieve_response_code( $resp ) >= 300 ) {
         return new WP_Error( 'update_fail', 'Update failed.', array( 'status' => 500 ) );
     }
+    if ( $wants_role_change ) {
+        fw_log_admin_action( $caller, 'role_change', 'member', $user_id, 'Role set to ' . $update['role'] );
+    }
+    if ( $wants_block_change ) {
+        fw_log_admin_action( $caller, $update['is_suspended'] ? 'block_member' : 'unblock_member', 'member', $user_id, '' );
+    }
     return rest_ensure_response( array( 'success' => true ) );
 }
 
@@ -3563,5 +3608,145 @@ function fw_admin_remove_member( $request ) {
     if ( is_wp_error( $resp ) || wp_remote_retrieve_response_code( $resp ) >= 300 ) {
         return new WP_Error( 'delete_fail', 'Failed to remove member.', array( 'status' => 500 ) );
     }
+    fw_log_admin_action( $caller, 'remove_member', 'member', $user_id, 'Target role was: ' . $target_role );
     return rest_ensure_response( array( 'success' => true ) );
+}
+
+/* ── Admin activity log ── */
+function fw_log_admin_action( $actor, $action, $target_type = '', $target_id = '', $details = '' ) {
+    if ( empty( $actor ) || ! is_array( $actor ) ) return;
+    wp_remote_post( FW_SUPABASE_URL . '/rest/v1/fw_admin_logs', array(
+        'headers'     => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE, 'Content-Type' => 'application/json', 'Prefer' => 'return=minimal' ),
+        'body'        => wp_json_encode( array(
+            'actor_id'    => $actor['id'] ?? '',
+            'actor_email' => $actor['email'] ?? '',
+            'actor_role'  => $actor['role'] ?? '',
+            'action'      => $action,
+            'target_type' => $target_type,
+            'target_id'   => (string) $target_id,
+            'details'     => substr( $details, 0, 500 ),
+        )),
+        'timeout' => 8, 'data_format' => 'body',
+    ));
+}
+
+/* ---- /admin/activity-log (super_admin only) ---- */
+function fw_admin_activity_log( $request ) {
+    $caller = fw_admin_auth( $request );
+    if ( is_wp_error( $caller ) ) return $caller;
+    if ( $caller['role'] !== 'super_admin' ) {
+        return new WP_Error( 'forbidden', 'Only Super Admin can view the activity log.', array( 'status' => 403 ) );
+    }
+    $resp = wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_admin_logs?order=created_at.desc&limit=200',
+        array( 'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE ), 'timeout' => 10 )
+    );
+    $logs = json_decode( wp_remote_retrieve_body( $resp ), true );
+    if ( ! is_array( $logs ) ) $logs = array();
+    return rest_ensure_response( array( 'success' => true, 'logs' => $logs ) );
+}
+
+/* ── Referral bonus — fires once, when a referred member completes their first trip ── */
+function fw_maybe_award_referral_bonus( $referee_id ) {
+    $h = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
+
+    $m = json_decode( wp_remote_retrieve_body( wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_members?id=eq.' . rawurlencode( $referee_id ) . '&select=referred_by,referral_bonus_given,first_name',
+        array( 'headers' => $h, 'timeout' => 8 )
+    )), true );
+
+    $referred_by = $m[0]['referred_by'] ?? null;
+    $already     = $m[0]['referral_bonus_given'] ?? false;
+    $referee_name = $m[0]['first_name'] ?? 'Your friend';
+
+    if ( ! $referred_by || $already ) return; /* not referred, or already paid out */
+
+    fw_give_credits( $referred_by, 100, 'referral_bonus', $referee_id, 'member', $referee_name . ' completed their first trip' );
+    fw_give_credits( $referee_id, 100, 'referral_bonus', $referred_by, 'member', 'Referral bonus — first trip completed' );
+
+    wp_remote_request( FW_SUPABASE_URL . '/rest/v1/fw_members?id=eq.' . rawurlencode( $referee_id ), array(
+        'method'  => 'PATCH',
+        'headers' => array_merge( $h, array( 'Content-Type' => 'application/json', 'Prefer' => 'return=minimal' ) ),
+        'body'    => wp_json_encode( array( 'referral_bonus_given' => true ) ),
+        'timeout' => 8,
+    ));
+}
+
+/* ── GET /fw-referral-stats — member's own referral code + who they referred ── */
+function fw_referral_stats( $request ) {
+    $user = fw_validate_token( $request );
+    if ( is_wp_error( $user ) ) return $user;
+    $h = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
+
+    $me = json_decode( wp_remote_retrieve_body( wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_members?id=eq.' . rawurlencode($user['id']) . '&select=referral_code,member_number',
+        array( 'headers' => $h, 'timeout' => 8 )
+    )), true );
+
+    $referrals = json_decode( wp_remote_retrieve_body( wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_members?referred_by=eq.' . rawurlencode($user['id']) . '&select=first_name,referral_bonus_given,created_at&order=created_at.desc',
+        array( 'headers' => $h, 'timeout' => 8 )
+    )), true );
+    if ( ! is_array( $referrals ) ) $referrals = array();
+
+    $credited = 0;
+    foreach ( $referrals as $r ) { if ( ! empty( $r['referral_bonus_given'] ) ) $credited++; }
+
+    return rest_ensure_response( array(
+        'success'        => true,
+        'referral_code'  => $me[0]['referral_code'] ?? '',
+        'member_number'  => $me[0]['member_number'] ?? null,
+        'total_referred' => count( $referrals ),
+        'credited_count' => $credited,
+        'referrals'      => $referrals,
+    ));
+}
+
+/* ── GET /fw-public-profile?n=42 — public rider profile by member_number ── */
+function fw_public_profile( $request ) {
+    $num = absint( $request->get_param('n') );
+    if ( ! $num ) return new WP_Error( 'missing', 'Member number required.', array( 'status' => 400 ) );
+
+    $h = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
+
+    $m = json_decode( wp_remote_retrieve_body( wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_members?member_number=eq.' . $num . '&select=id,first_name,city,state,instagram,avatar_url,trips_completed,member_number,created_at',
+        array( 'headers' => $h, 'timeout' => 10 )
+    )), true );
+
+    if ( empty( $m[0] ) ) return new WP_Error( 'not_found', 'Rider not found.', array( 'status' => 404 ) );
+    $profile = $m[0];
+    $user_id = $profile['id'];
+    $tier    = fw_loyalty_tier( $profile['trips_completed'] ?? 0 );
+
+    /* Public, published albums only */
+    $albums = json_decode( wp_remote_retrieve_body( wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_albums?user_id=eq.' . rawurlencode($user_id) . '&status=eq.published&order=created_at.desc&select=id,title,trip_name,created_at',
+        array( 'headers' => $h, 'timeout' => 10 )
+    )), true ) ?: array();
+    foreach ( $albums as &$a ) {
+        $photos = json_decode( wp_remote_retrieve_body( wp_remote_get(
+            FW_SUPABASE_URL . '/rest/v1/fw_album_photos?album_id=eq.' . rawurlencode($a['id']) . '&order=sort_order.asc&select=url',
+            array( 'headers' => $h, 'timeout' => 8 )
+        )), true ) ?: array();
+        $a['photos'] = $photos;
+    }
+    unset( $a );
+
+    /* Published blogs only */
+    $blogs = json_decode( wp_remote_retrieve_body( wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_blogs?user_id=eq.' . rawurlencode($user_id) . '&status=eq.published&order=created_at.desc&select=id,title,cover_image,created_at',
+        array( 'headers' => $h, 'timeout' => 10 )
+    )), true ) ?: array();
+
+    /* Remove internal id from response */
+    unset( $profile['id'] );
+
+    return rest_ensure_response( array(
+        'success' => true,
+        'profile' => $profile,
+        'tier'    => $tier,
+        'albums'  => $albums,
+        'blogs'   => $blogs,
+    ));
 }
