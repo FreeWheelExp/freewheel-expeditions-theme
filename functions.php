@@ -1416,42 +1416,50 @@ function fw_admin_approve_content( $request ) {
     $new_status = $status_map[ $type ][ $action ] ?? null;
     if ( ! $table || ! $new_status ) return new WP_Error( 'invalid', 'Invalid type.', array( 'status' => 400 ) );
 
-    // Get current status + user_id
-    $cur = json_decode( wp_remote_retrieve_body( wp_remote_get(
-        FW_SUPABASE_URL . '/rest/v1/' . $table . '?id=eq.' . rawurlencode($id) . '&select=status,user_id,credits_awarded',
+    /* Get current row — only select columns we know exist */
+    $cur_resp = wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/' . $table . '?id=eq.' . rawurlencode($id) . '&select=status,user_id',
         array( 'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE ), 'timeout' => 8 )
-    )), true );
-    $old_status = $cur[0]['status'] ?? '';
-    $user_id    = $cur[0]['user_id'] ?? '';
-    $credited   = $cur[0]['credits_awarded'] ?? false;
+    );
+    $cur     = json_decode( wp_remote_retrieve_body( $cur_resp ), true );
+    $user_id = ( is_array($cur) && ! empty($cur[0]['user_id']) ) ? $cur[0]['user_id'] : '';
 
-    // Update status
+    /* Build PATCH payload — only include rejection_note if it exists in schema */
     $update = array( 'status' => $new_status );
-    if ( $action === 'reject' && $note ) $update['rejection_note'] = $note;
-    if ( $action === 'approve' )         $update['rejection_note'] = '';
     if ( $type === 'blog' && $action === 'approve' ) $update['published_at'] = date('c');
+
+    /* Try to patch with rejection_note first, fall back without it if column missing */
+    $update_with_note = $update;
+    if ( $action === 'reject' && $note ) $update_with_note['rejection_note'] = $note;
+    if ( $action === 'approve' )         $update_with_note['rejection_note'] = '';
 
     $patch_resp = wp_remote_request(
         FW_SUPABASE_URL . '/rest/v1/' . $table . '?id=eq.' . rawurlencode($id),
         array( 'method'=>'PATCH', 'headers'=>array('apikey'=>FW_SUPABASE_SERVICE,'Authorization'=>'Bearer '.FW_SUPABASE_SERVICE,'Content-Type'=>'application/json','Prefer'=>'return=minimal'),
-               'body'=>wp_json_encode($update), 'timeout'=>10 )
+               'body'=>wp_json_encode($update_with_note), 'timeout'=>10 )
     );
-    if ( is_wp_error( $patch_resp ) || wp_remote_retrieve_response_code( $patch_resp ) >= 300 ) {
-        $err = is_wp_error($patch_resp) ? $patch_resp->get_error_message() : wp_remote_retrieve_body($patch_resp);
-        return new WP_Error( 'update_fail', 'Status update failed: ' . $err, array( 'status' => 500 ) );
+
+    $patch_code = wp_remote_retrieve_response_code( $patch_resp );
+
+    /* If patch failed (likely missing column), retry with just status */
+    if ( is_wp_error( $patch_resp ) || $patch_code >= 300 ) {
+        $patch_resp2 = wp_remote_request(
+            FW_SUPABASE_URL . '/rest/v1/' . $table . '?id=eq.' . rawurlencode($id),
+            array( 'method'=>'PATCH', 'headers'=>array('apikey'=>FW_SUPABASE_SERVICE,'Authorization'=>'Bearer '.FW_SUPABASE_SERVICE,'Content-Type'=>'application/json','Prefer'=>'return=minimal'),
+                   'body'=>wp_json_encode($update), 'timeout'=>10 )
+        );
+        if ( is_wp_error( $patch_resp2 ) || wp_remote_retrieve_response_code( $patch_resp2 ) >= 300 ) {
+            $err = is_wp_error($patch_resp2) ? $patch_resp2->get_error_message() : wp_remote_retrieve_body($patch_resp2);
+            return new WP_Error( 'update_fail', 'Status update failed: ' . substr($err,0,200), array( 'status' => 500 ) );
+        }
     }
 
-    // Award credits on approval (only once)
-    if ( $action === 'approve' && $user_id && ! $credited ) {
+    /* Award credits on approval */
+    if ( $action === 'approve' && $user_id ) {
         $credit_map = array( 'blog'=>100, 'testimonial'=>75, 'album'=>50 );
         $amount = $credit_map[ $type ] ?? 0;
         if ( $amount ) {
             fw_give_credits( $user_id, $amount, $type . '_' . ( $type==='testimonial' ? 'approved' : 'published' ), $id, $type, 'Approved by admin' );
-            wp_remote_request(
-                FW_SUPABASE_URL . '/rest/v1/' . $table . '?id=eq.' . rawurlencode($id),
-                array( 'method'=>'PATCH', 'headers'=>array('apikey'=>FW_SUPABASE_SERVICE,'Authorization'=>'Bearer '.FW_SUPABASE_SERVICE,'Content-Type'=>'application/json','Prefer'=>'return=minimal'),
-                       'body'=>wp_json_encode(array('credits_awarded'=>true)), 'timeout'=>8 )
-            );
         }
     }
 
