@@ -238,11 +238,15 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
       }
       var firstName = (album.member_name || 'Explorer').split(' ')[0].toUpperCase();
       var badge     = (album.member_badge || 'Explorer').toUpperCase();
+      var memberNum = album.member_number ? '#' + String(album.member_number).padStart(4,'0') : '';
+      var profileUrl = album.member_number ? '/rider/?n=' + album.member_number : '';
       var albumJson = encodeURIComponent(JSON.stringify({
         title: album.title,
         trip: album.trip_name || '',
         member: firstName,
         badge: badge,
+        member_number: memberNum,
+        profile_url: profileUrl,
         instagram: album.member_instagram || '',
         photo: album.member_photo || '',
         photos: photos
@@ -250,6 +254,9 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
       var avatarHtml = album.member_photo
         ? '<img src="' + album.member_photo + '" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(193,68,14,.5);flex-shrink:0">'
         : '<div style="width:34px;height:34px;border-radius:50%;background:rgba(193,68,14,.2);border:1.5px solid rgba(193,68,14,.4);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--rust);font-family:var(--headline);font-weight:700;flex-shrink:0">' + firstName.charAt(0) + '</div>';
+      var nameLink = profileUrl
+        ? '<a href="' + profileUrl + '" onclick="event.stopPropagation()" style="color:#fff;text-decoration:none">' + firstName + '</a>'
+        : firstName;
       return '<div class="alb-card" onclick="openAlbumLightbox(this)" data-album="' + albumJson + '" style="cursor:pointer">' +
         '<div class="alb-photos">' + photoSlots + '</div>' +
         '<div class="alb-info">' +
@@ -258,7 +265,7 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
             avatarHtml +
             '<div style="min-width:0">' +
               '<div style="font-size:12px;color:#fff;font-weight:600;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
-                firstName + ' <span style="color:rgba(255,255,255,.25);font-weight:400">—</span> <span style="color:var(--amber);letter-spacing:1px">' + badge + '</span>' +
+                nameLink + (memberNum ? ' <span style="color:rgba(255,255,255,.3);font-weight:400">' + memberNum + '</span>' : '') + ' <span style="color:rgba(255,255,255,.25);font-weight:400">—</span> <span style="color:var(--amber);letter-spacing:1px">' + badge + '</span>' +
               '</div>' +
               (album.member_instagram ? '<div style="margin-top:5px"><a href="https://instagram.com/' + album.member_instagram.replace(/^@/,'') + '" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="font-size:12px;color:#c13584;text-decoration:none;display:flex;align-items:center;gap:3px">&#128247; ' + album.member_instagram + '</a></div>' : '') +
             '</div>' +
