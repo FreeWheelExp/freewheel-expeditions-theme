@@ -171,7 +171,10 @@ body{font-family:var(--body);background:#0a0805!important;color:#fff;overflow-x:
         </div>
         <div class="user-greeting">
           <div class="gtag">Welcome Back</div>
-          <h1 id="greetName">—</h1>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <h1 id="greetName" style="margin:0">—</h1>
+            <span id="junglibadgeName" style="display:none;padding:5px 12px;background:rgba(193,68,14,.15);border:1px solid rgba(193,68,14,.4);border-radius:2px;font-family:var(--headline);font-size:15px;letter-spacing:1.5px;color:var(--rust)"></span>
+          </div>
           <div class="usub" id="greetSub">—</div>
         </div>
       </div>
@@ -194,7 +197,10 @@ body{font-family:var(--body);background:#0a0805!important;color:#fff;overflow-x:
           <div style="font-size:10px;color:rgba(255,255,255,.3);line-height:1.7">1 credit = &#8377;0.25 &middot; Min. 400 credits to redeem &middot; Credits valid 12 months</div>
         </div>
       </div>
-      <div class="dstat"><div class="dstat-n" id="statDisc">—</div><div class="dstat-l">My Discount</div></div>
+      <div class="dstat">
+        <div id="junglibadgeDisc" style="display:none;font-family:var(--headline);font-size:11px;letter-spacing:1.5px;color:var(--rust);margin-bottom:6px"></div>
+        <div class="dstat-n" id="statDisc">—</div><div class="dstat-l">My Discount</div>
+      </div>
     </div>
   </div>
 
@@ -546,13 +552,13 @@ window.addEventListener('load', function() {
     _set('greetName', fn);
     _set('greetSub', ph!=='—' ? ph+(city!=='—'?' · '+city:'') : (_session.email||''));
 
-    /* Public member number badge */
+    /* Public member number badge — shown next to name AND above My Discount stat */
     if (prof.member_number) {
-      var numBadge = document.createElement('div');
-      numBadge.style.cssText = 'display:inline-block;margin-top:6px;padding:3px 10px;background:rgba(193,68,14,.12);border:1px solid rgba(193,68,14,.3);border-radius:2px;font-size:11px;letter-spacing:1.5px;color:var(--rust);font-family:var(--headline)';
-      numBadge.textContent = 'JUNGLI #' + String(prof.member_number).padStart(4,'0');
-      var greetSubEl = document.getElementById('greetSub');
-      if (greetSubEl && greetSubEl.parentNode) greetSubEl.parentNode.appendChild(numBadge);
+      var junglText = 'JUNGLI #' + String(prof.member_number).padStart(4,'0');
+      var b1 = document.getElementById('junglibadgeName');
+      var b2 = document.getElementById('junglibadgeDisc');
+      if (b1) { b1.textContent = junglText; b1.style.display = 'inline-block'; }
+      if (b2) { b2.textContent = junglText; b2.style.display = 'block'; }
     }
 
     /* Role label on gtag */
