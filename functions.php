@@ -3314,28 +3314,46 @@ function fw_admin_delete_album( $request ) {
     return rest_ensure_response( array( 'success' => true ) );
 }
 
-/* TEMP: probe actual fw_album_photos column names — NO AUTH, delete after use */
+/* TEMP: probe fw_album_photos column names by trying each candidate */
 function fw_admin_probe_schema( $request ) {
     $h = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
-    // Try select * limit 1 — shows actual columns
-    $resp = wp_remote_get( FW_SUPABASE_URL . '/rest/v1/fw_album_photos?limit=1&select=*',
-        array( 'headers' => $h, 'timeout' => 10 ) );
-    $body = wp_remote_retrieve_body( $resp );
-    $code = wp_remote_retrieve_response_code( $resp );
-    $data = json_decode( $body, true );
-    $columns = array();
-    if ( is_array( $data ) && ! empty( $data[0] ) ) {
-        $columns = array_keys( $data[0] );
+    $h_json = array_merge( $h, array( 'Content-Type' => 'application/json', 'Prefer' => 'return=minimal' ) );
+
+    /* Try each candidate photo URL column name.
+       PGRST204 = column doesn't exist.
+       Any other response = column EXISTS (FK/null error expected since album_id is fake). */
+    $candidates = array( 'photo_url', 'url', 'image_url', 'photo', 'file_url', 'src', 'path', 'image', 'thumbnail_url' );
+    $results = array();
+    $fake_uuid = '00000000-0000-0000-0000-000000000000';
+
+    foreach ( $candidates as $col ) {
+        $r = wp_remote_post( FW_SUPABASE_URL . '/rest/v1/fw_album_photos',
+            array( 'headers' => $h_json,
+                   'body'    => wp_json_encode( array( 'album_id' => $fake_uuid, $col => 'http://test.jpg', 'sort_order' => 0 ) ),
+                   'timeout' => 8, 'data_format' => 'body' ) );
+        $code = wp_remote_retrieve_response_code( $r );
+        $body = wp_remote_retrieve_body( $r );
+        $decoded = json_decode( $body, true );
+        $pgrst_code = $decoded['code'] ?? '';
+        $results[ $col ] = array(
+            'http_code'  => $code,
+            'pgrst_code' => $pgrst_code,
+            'exists'     => ( $pgrst_code !== 'PGRST204' ),
+            'msg'        => substr( $decoded['message'] ?? $body, 0, 120 ),
+        );
     }
-    // Also try to insert a dummy row to get exact column error
-    $test_resp = wp_remote_post( FW_SUPABASE_URL . '/rest/v1/fw_album_photos',
-        array( 'headers' => array_merge( $h, array( 'Content-Type' => 'application/json', 'Prefer' => 'return=minimal' ) ),
-               'body' => wp_json_encode( array( 'probe' => 'test' ) ), 'timeout' => 10, 'data_format' => 'body' ) );
-    $test_body = wp_remote_retrieve_body( $test_resp );
+
+    /* Also get the OpenAPI spec to find columns */
+    $spec_resp = wp_remote_get( FW_SUPABASE_URL . '/rest/v1/',
+        array( 'headers' => array_merge( $h, array( 'Accept' => 'application/openapi+json' ) ), 'timeout' => 10 ) );
+    $spec      = json_decode( wp_remote_retrieve_body( $spec_resp ), true );
+    $schema_cols = array();
+    if ( isset( $spec['definitions']['fw_album_photos']['properties'] ) ) {
+        $schema_cols = array_keys( $spec['definitions']['fw_album_photos']['properties'] );
+    }
+
     return rest_ensure_response( array(
-        'select_code'    => $code,
-        'select_raw'     => $body,
-        'columns_found'  => $columns,
-        'insert_test'    => $test_body,
+        'column_probe' => $results,
+        'schema_cols'  => $schema_cols,
     ));
 }
