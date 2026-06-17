@@ -812,33 +812,74 @@ function adminSaveBlog() {
 }
 
 /* ---- Album ---- */
+/* Compress image to max 1200px wide, quality 0.82, returns Blob */
+function adminCompressImage(file, maxPx, quality) {
+  return new Promise(function(resolve) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var img = new Image();
+      img.onload = function() {
+        var w = img.width, h = img.height;
+        if (w > maxPx) { h = Math.round(h * maxPx / w); w = maxPx; }
+        if (h > maxPx) { w = Math.round(w * maxPx / h); h = maxPx; }
+        var canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        canvas.toBlob(function(blob) { resolve(blob || file); }, 'image/jpeg', quality);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 function adminDoUpload(aid, gridEl) {
+  /* Count existing photos */
+  var existing = gridEl ? gridEl.querySelectorAll('div[style*="aspect-ratio"]').length : 0;
+  var slots = 6 - existing;
+  if (slots <= 0) { toast('Max 6 photos per album reached', true); return; }
+
   var fi = document.createElement('input');
   fi.type = 'file'; fi.accept = 'image/*'; fi.multiple = true;
   fi.onchange = function(){
     var files = Array.from(fi.files);
     if (!files.length) return;
+
+    /* Size warning */
+    var oversized = files.filter(function(f){ return f.size > 2 * 1024 * 1024; });
+    if (oversized.length) {
+      toast('Files over 2 MB will be compressed automatically', false);
+    }
+
+    /* Enforce slot limit */
+    if (files.length > slots) {
+      toast('Only ' + slots + ' slot(s) left — uploading first ' + slots, false);
+      files = files.slice(0, slots);
+    }
+
     var done = 0, succeeded = 0;
     files.forEach(function(file){
-      var fd = new FormData();
-      fd.append('photo', file);
-      fd.append('album_id', aid);
-      fetch(_admRest + '/admin/upload-album-photo', { method: 'POST', headers: { 'Authorization': 'Bearer ' + _admToken }, body: fd })
-        .then(function(r){ return r.json(); })
-        .then(function(res){
-          done++;
-          if (res.success) {
-            succeeded++;
-            var slot = document.createElement('div');
-            slot.style.cssText = 'aspect-ratio:1;border-radius:3px;overflow:hidden;position:relative';
-            slot.innerHTML = '<img src="' + res.url + '" style="width:100%;height:100%;object-fit:cover">';
-            var ep = gridEl ? gridEl.querySelector('.album-empty-note') : null;
-            if (ep) ep.remove();
-            if (gridEl) gridEl.appendChild(slot);
-          }
-          if (done === files.length) toast(succeeded + ' photo(s) uploaded' + (done-succeeded ? ', ' + (done-succeeded) + ' failed' : ''), done===succeeded ? false : true);
-        })
-        .catch(function(){ done++; toast('Upload failed', true); });
+      adminCompressImage(file, 1200, 0.82).then(function(blob) {
+        var fd = new FormData();
+        fd.append('photo', blob, file.name.replace(/\.[^.]+$/, '.jpg'));
+        fd.append('album_id', aid);
+        fetch(_admRest + '/admin/upload-album-photo', { method: 'POST', headers: { 'Authorization': 'Bearer ' + _admToken }, body: fd })
+          .then(function(r){ return r.json(); })
+          .then(function(res){
+            done++;
+            if (res.success) {
+              succeeded++;
+              var slot = document.createElement('div');
+              slot.style.cssText = 'aspect-ratio:1;border-radius:3px;overflow:hidden;position:relative';
+              slot.innerHTML = '<img src="' + res.url + '" style="width:100%;height:100%;object-fit:cover">';
+              var ep = gridEl ? gridEl.querySelector('.album-empty-note') : null;
+              if (ep) ep.remove();
+              if (gridEl) gridEl.appendChild(slot);
+            }
+            if (done === files.length) toast(succeeded + ' photo(s) uploaded' + (done - succeeded ? ', ' + (done - succeeded) + ' failed' : ''), done !== succeeded);
+          })
+          .catch(function(){ done++; if (done === files.length) toast('Upload failed', true); });
+      });
     });
   };
   fi.click();
@@ -853,7 +894,7 @@ function adminLoadAlbums() {
       return r.json();
     })
     .then(function(d){
-      if (!d.success || !d.albums || !d.albums.length) {
+      if (!d.success || !Array.isArray(d.albums) || !d.albums.length) {
         el.innerHTML = '<div class="adm-empty">No albums yet. Create one above.</div>';
         return;
       }
@@ -881,7 +922,7 @@ function adminLoadAlbums() {
         var grid = document.createElement('div');
         grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:6px;padding:0 16px 16px';
 
-        (a.photos || []).forEach(function(p){
+        (Array.isArray(a.photos) ? a.photos : []).forEach(function(p){
           var slot = document.createElement('div');
           slot.style.cssText = 'aspect-ratio:1;border-radius:3px;overflow:hidden';
           slot.innerHTML = '<img src="' + p.photo_url + '" style="width:100%;height:100%;object-fit:cover">';
