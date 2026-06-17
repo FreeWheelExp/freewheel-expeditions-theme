@@ -767,7 +767,7 @@ window.addEventListener('load', function() {
     albums.forEach(function(a) {
       var photos = a.photos || [];
       var photoCount = photos.length;
-      var cover = photos[0] ? photos[0].photo_url : '';
+      var cover = photos[0] ? photos[0].url : '';
       var panelId = 'alb-panel-' + a.id;
 
       var card = document.createElement('div');
@@ -776,7 +776,7 @@ window.addEventListener('load', function() {
       var cells = '';
       for (var i = 0; i < 6; i++) {
         if (photos[i]) {
-          cells += '<div style="aspect-ratio:1;overflow:hidden;border-radius:2px"><img src="'+photos[i].photo_url+'" style="width:100%;height:100%;object-fit:cover;display:block" loading="lazy"></div>';
+          cells += '<div style="aspect-ratio:1;overflow:hidden;border-radius:2px"><img src="'+photos[i].url+'" style="width:100%;height:100%;object-fit:cover;display:block" loading="lazy"></div>';
         } else {
           cells += '<div style="aspect-ratio:1;background:rgba(255,255,255,.04);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:18px;color:rgba(255,255,255,.1)">+</div>';
         }
