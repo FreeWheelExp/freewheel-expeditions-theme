@@ -3314,10 +3314,8 @@ function fw_admin_delete_album( $request ) {
     return rest_ensure_response( array( 'success' => true ) );
 }
 
-/* TEMP: probe actual fw_album_photos column names */
+/* TEMP: probe actual fw_album_photos column names — NO AUTH, delete after use */
 function fw_admin_probe_schema( $request ) {
-    $user = fw_admin_auth( $request );
-    if ( is_wp_error( $user ) ) return $user;
     $h = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
     // Try select * limit 1 — shows actual columns
     $resp = wp_remote_get( FW_SUPABASE_URL . '/rest/v1/fw_album_photos?limit=1&select=*',
