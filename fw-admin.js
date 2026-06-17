@@ -644,16 +644,34 @@ function loadMembers() {
 function renderMembers(members) {
   var el = document.getElementById('membersList');
   if (!members.length) { el.innerHTML = '<div class="adm-empty">No members found.</div>'; return; }
+  var session = null;
+  try { session = JSON.parse(localStorage.getItem('fw_session')||'null'); } catch(e){}
+  var isSuperAdmin = !!(session && session.role === 'super_admin');
+
   el.innerHTML = members.map(function(m) {
     var initL = ((m.first_name||'?')[0]).toUpperCase();
     var av = m.avatar_url ? '<img src="'+m.avatar_url+'" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid rgba(193,68,14,.3);flex-shrink:0">' : '<div style="width:38px;height:38px;border-radius:50%;background:rgba(193,68,14,.2);display:flex;align-items:center;justify-content:center;font-family:var(--headline);font-size:16px;color:var(--rust);flex-shrink:0">'+initL+'</div>';
     var sb = m.is_suspended ? '<span class="adm-badge badge-rejected">Blocked</span>' : '<span class="adm-badge badge-approved">Active</span>';
     var rb = '<span style="font-size:10px;padding:2px 8px;border-radius:2px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1)">'+m.role+'</span>';
+
+    var isStaff = m.role === 'moderator' || m.role === 'super_admin';
+    /* Moderators cannot act on staff accounts at all — render as read-only */
+    if ( !isSuperAdmin && isStaff ) {
+      return '<div class="adm-card" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;opacity:.55">'+av+'<div style="flex:1;min-width:160px"><div style="font-size:14px;color:#fff">'+(m.first_name||'')+' '+(m.last_name||'')+'</div><div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">'+m.email+'</div></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+sb+rb+'<span style="font-size:10px;color:rgba(255,255,255,.3)">Staff account — Super Admin only</span></div></div>';
+    }
+
     var bb = m.is_suspended
       ? '<button class="adm-btn btn-approve" data-uid="'+m.id+'" data-block="0" onclick="toggleBlock(this.dataset.uid,false)">Unblock</button>'
       : '<button class="adm-btn btn-reject" data-uid="'+m.id+'" data-block="1" onclick="toggleBlock(this.dataset.uid,true)">Block</button>';
-    var rs = '<select data-uid="'+m.id+'" onchange="changeMemberRole(this.dataset.uid,this.value)" style="padding:5px 8px;background:#0f0d0b;border:1px solid rgba(255,255,255,.12);color:#fff;font-size:11px;border-radius:2px;cursor:pointer"><option value="">Change role...</option><option value="member">Member</option><option value="moderator">Moderator</option><option value="super_admin">Super Admin</option></select>';
-    return '<div class="adm-card" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">'+av+'<div style="flex:1;min-width:160px"><div style="font-size:14px;color:#fff">'+(m.first_name||'')+' '+(m.last_name||'')+'</div><div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">'+m.email+'</div><div style="font-size:11px;color:rgba(255,255,255,.3)">'+(m.phone||'')+(m.city?' - '+m.city:'')+'</div></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+sb+rb+rs+bb+'</div></div>';
+
+    /* Role dropdown — Super Admin only */
+    var rs = isSuperAdmin
+      ? '<select data-uid="'+m.id+'" onchange="changeMemberRole(this.dataset.uid,this.value)" style="padding:5px 8px;background:#0f0d0b;border:1px solid rgba(255,255,255,.12);color:#fff;font-size:11px;border-radius:2px;cursor:pointer"><option value="">Change role...</option><option value="member">Member</option><option value="moderator">Moderator</option><option value="super_admin">Super Admin</option></select>'
+      : '';
+
+    var removeBtn = '<button data-uid="'+m.id+'" data-name="'+((m.first_name||'')+' '+(m.last_name||'')).trim().replace(/"/g,'')+'" onclick="removeMember(this.dataset.uid,this.dataset.name)" style="padding:6px 12px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);color:#f87171;font-size:11px;cursor:pointer;border-radius:2px">Remove</button>';
+
+    return '<div class="adm-card" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">'+av+'<div style="flex:1;min-width:160px"><div style="font-size:14px;color:#fff">'+(m.first_name||'')+' '+(m.last_name||'')+'</div><div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">'+m.email+'</div><div style="font-size:11px;color:rgba(255,255,255,.3)">'+(m.phone||'')+(m.city?' - '+m.city:'')+'</div></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+sb+rb+rs+bb+removeBtn+'</div></div>';
   }).join('');
 }
 function filterMembers(q) {
@@ -674,6 +692,11 @@ async function toggleBlock(uid, block) {
   if (!confirm('Are you sure?')) return;
   var r=await fetch(_admRest+'/admin/update-member',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},h()),body:JSON.stringify({user_id:uid,is_suspended:block})});
   var d=await r.json(); if(d.success) loadMembers(); else alert(d.message||'Failed.');
+}
+async function removeMember(uid, name) {
+  if (!confirm('Permanently remove '+(name||'this member')+'? This cannot be undone.')) return;
+  var r=await fetch(_admRest+'/admin/remove-member',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},h()),body:JSON.stringify({user_id:uid})});
+  var d=await r.json(); if(d.success) { toast('Member removed.'); loadMembers(); } else alert(d.message||'Failed.');
 }
 /* ---- Site stats ---- */
 function loadStats() {
