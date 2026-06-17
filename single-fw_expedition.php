@@ -599,16 +599,16 @@ async function fwExpRzpPay(){
         if(!session||!session.access_token||session.expires_at<Date.now()){msg.textContent='Please log in to book.';setTimeout(function(){window.location.href=window.FW_AUTH.login_url+'?redirect='+encodeURIComponent(window.location.href);},1200);return;}
         if(!window.FW_RZP_KEY){msg.textContent='Payment gateway not configured.';return;}
         btn.disabled=true;btn.textContent='Creating order…';
-        var amountPaise=_expSeats*_expPrice*100;
         try{
-          var or=await fetch(window.FW_AUTH.rest_url+'/rzp-create-order',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},body:JSON.stringify({amount:amountPaise,type:'expedition',ref_id:_expPostId,note:_expTitle+' · '+_expDates+' · '+_expSeats+' seat(s)'})});
+          /* Server computes the real price from the expedition's fw_price meta — seats sent for context only */
+          var or=await fetch(window.FW_AUTH.rest_url+'/rzp-create-order',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},body:JSON.stringify({type:'expedition',ref_id:_expPostId,seats:_expSeats,note:_expTitle+' · '+_expDates+' · '+_expSeats+' seat(s)'})});
           var od=await or.json();if(!or.ok)throw new Error(od.message||'Order creation failed.');
           var rzp=new Razorpay({key:window.FW_RZP_KEY,amount:od.amount,currency:od.currency,name:'FreeWheel Expeditions',description:_expTitle+(_expDates?' · '+_expDates:'')+' · '+_expSeats+' seat(s)',order_id:od.order_id,prefill:{email:session.email,name:session.first_name||''},theme:{color:'#c1440e'},
             modal:{ondismiss:function(){btn.disabled=false;btn.textContent='PAY & BOOK NOW';}},
             handler:async function(r){
               btn.textContent='Verifying…';
               try{
-                var vr=await fetch(window.FW_AUTH.rest_url+'/rzp-verify-payment',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},body:JSON.stringify({razorpay_order_id:r.razorpay_order_id,razorpay_payment_id:r.razorpay_payment_id,razorpay_signature:r.razorpay_signature,type:'expedition',ref_id:_expPostId,amount:amountPaise,seats:_expSeats,note:_expTitle+' · '+_expDates})});
+                var vr=await fetch(window.FW_AUTH.rest_url+'/rzp-verify-payment',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},body:JSON.stringify({razorpay_order_id:r.razorpay_order_id,razorpay_payment_id:r.razorpay_payment_id,razorpay_signature:r.razorpay_signature})});
                 var vd=await vr.json();if(!vr.ok)throw new Error(vd.message||'Verification failed.');
                 btn.style.background='#16a34a';btn.textContent='✓ BOOKING CONFIRMED!';
                 msg.textContent=vd.message||'Booking confirmed!';msg.style.color='#4ade80';
