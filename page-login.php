@@ -141,6 +141,17 @@ async function doLogin() {
         })
       ]);
 
+      /* Blocked accounts get a clear message instead of a half-working session */
+      if (profResp.status === 403) {
+        var profErr = await profResp.json().catch(function(){ return {}; });
+        if (profErr.code === 'account_blocked') {
+          await _sb.auth.signOut();
+          msg.textContent = 'Your account has been blocked. Please contact support.'; msg.className = 'login-msg error';
+          btn.disabled = false; btn.textContent = 'LOG IN';
+          return;
+        }
+      }
+
       if (profResp.ok) {
         var profD = await profResp.json();
         if (profD.profile) {
