@@ -1649,13 +1649,15 @@ function fw_get_public_albums( $request ) {
 
         /* Get member first name only (privacy) */
         $member = json_decode( wp_remote_retrieve_body( wp_remote_get(
-            FW_SUPABASE_URL . '/rest/v1/fw_members?id=eq.' . rawurlencode( $album['user_id'] ) . '&select=first_name,last_name,city,instagram,avatar_url,role',
+            FW_SUPABASE_URL . '/rest/v1/fw_members?id=eq.' . rawurlencode( $album['user_id'] ) . '&select=first_name,last_name,city,instagram,avatar_url,role,trips_completed',
             array( 'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE ), 'timeout' => 8 )
         )), true );
         $album['member_name']      = trim( ($member[0]['first_name'] ?? '') . ' ' . ($member[0]['last_name'] ?? '') ) ?: 'Explorer';
         $album['member_city']      = $member[0]['city'] ?? '';
         $album['member_instagram'] = $member[0]['instagram'] ?? '';
         $album['member_photo']     = $member[0]['avatar_url'] ?? '';
+        $tier = fw_loyalty_tier( $member[0]['trips_completed'] ?? 0 );
+        $album['member_badge']     = $tier['name'];  /* Explorer / Road Warrior / Pioneer / Legend */
         $role = $member[0]['role'] ?? 'member';
         $album['member_role']      = $role === 'super_admin' ? 'FW Super Admin'
                                    : ( $role === 'moderator' ? 'FW Moderator'
