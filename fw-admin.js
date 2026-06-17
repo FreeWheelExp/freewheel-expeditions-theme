@@ -937,38 +937,37 @@ function adminDoUpload(aid, albumTitle) {
 
     var total = selectedFiles.length;
     var succeeded = 0;
+    var errors = [];
 
-    /* Sequential upload — one at a time to avoid sort_order race conditions */
+    /* Sequential upload — one at a time, no sort_order races */
     function uploadNext(idx) {
       if (idx >= total) {
-        /* All done */
         if (succeeded === total) {
-          statusEl.textContent = succeeded + ' photo(s) saved!';
-          statusEl.style.color = '#4ade80';
+          statusEl.innerHTML = '<span style="color:#4ade80">&#10003; ' + succeeded + ' photo(s) saved successfully!</span>';
           setTimeout(function() { closePanel(); adminLoadAlbums(); }, 800);
         } else {
-          statusEl.textContent = succeeded + '/' + total + ' saved. ' + (total - succeeded) + ' failed — check console.';
-          statusEl.style.color = '#f87171';
+          var errHtml = '<span style="color:#f87171">' + succeeded + '/' + total + ' saved.</span>';
+          if (errors.length) errHtml += '<br><small style="color:#f87171;font-size:11px">' + errors.join('<br>') + '</small>';
+          statusEl.innerHTML = errHtml;
           saveBtn.disabled = false;
-          saveBtn.textContent = 'Save Photos';
+          saveBtn.textContent = 'Retry';
         }
         return;
       }
 
       var file = selectedFiles[idx];
-      statusEl.textContent = 'Compressing photo ' + (idx + 1) + ' of ' + total + '...';
+      statusEl.innerHTML = 'Uploading ' + (idx + 1) + ' / ' + total + '...';
+      statusEl.style.color = 'rgba(255,255,255,.5)';
 
       adminCompressImage(file, 1400, 0.85).then(function(blob) {
         var origKB = Math.round(file.size / 1024);
         var compKB = Math.round(blob.size / 1024);
-        console.log('[FW] photo ' + (idx+1) + ': ' + origKB + 'KB → ' + compKB + 'KB');
-
-        statusEl.textContent = 'Uploading photo ' + (idx + 1) + ' of ' + total + '...';
+        console.log('[FW] ' + (idx+1) + ': ' + origKB + 'KB → ' + compKB + 'KB');
 
         var fd = new FormData();
         fd.append('photo', blob, 'photo.jpg');
         fd.append('album_id', aid);
-        fd.append('sort_order', String(idx)); /* sequential index — no race */
+        fd.append('sort_order', String(idx));
 
         fetch(_admRest + '/admin/upload-album-photo', {
           method: 'POST',
@@ -976,24 +975,27 @@ function adminDoUpload(aid, albumTitle) {
           body: fd
         })
           .then(function(r) {
-            if (!r.ok) return r.text().then(function(t) { throw new Error(r.status + ': ' + t.substring(0, 400)); });
-            return r.json();
+            /* Always read body — contains error detail even on non-200 */
+            return r.json().then(function(j) { return { ok: r.ok, status: r.status, body: j }; })
+                   .catch(function() { return r.text().then(function(t) { return { ok: false, status: r.status, body: t }; }); });
           })
-          .then(function(res) {
-            if (res.success) {
+          .then(function(result) {
+            if (result.ok && result.body && result.body.success) {
               succeeded++;
-              console.log('[FW] photo ' + (idx+1) + ' saved:', res.url);
+              console.log('[FW] photo ' + (idx+1) + ' saved:', result.body.url);
             } else {
-              console.error('[FW] photo ' + (idx+1) + ' rejected:', res);
+              var msg = (result.body && result.body.message) ? result.body.message : JSON.stringify(result.body).substring(0, 200);
+              var errMsg = 'Photo ' + (idx+1) + ' [' + result.status + ']: ' + msg;
+              console.error('[FW]', errMsg);
+              errors.push(errMsg);
             }
             uploadNext(idx + 1);
           })
           .catch(function(e) {
-            console.error('[FW] photo ' + (idx+1) + ' failed:', e.message);
-            /* Keep error visible for 2s before moving to next */
-            statusEl.textContent = 'Photo ' + (idx+1) + ' failed: ' + e.message;
-            statusEl.style.color = '#f87171';
-            setTimeout(function() { uploadNext(idx + 1); }, 2000);
+            var errMsg = 'Photo ' + (idx+1) + ' network error: ' + e.message;
+            console.error('[FW]', errMsg);
+            errors.push(errMsg);
+            uploadNext(idx + 1);
           });
       });
     }
