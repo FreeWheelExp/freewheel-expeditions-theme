@@ -891,7 +891,10 @@ function adminDoUpload(aid, gridEl) {
               toast('Upload error: ' + (res.message || 'unknown'), true);
             }
             if (done === files.length) {
-              if (succeeded > 0) toast(succeeded + ' photo(s) uploaded');
+              if (succeeded > 0) {
+                toast(succeeded + ' photo(s) uploaded');
+                setTimeout(adminLoadAlbums, 800);
+              }
             }
           })
           .catch(function(e) {
