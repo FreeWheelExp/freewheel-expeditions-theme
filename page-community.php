@@ -222,8 +222,8 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
       var photos = album.photos || [];
       var photoSlots = '';
       for (var i = 0; i < 6; i++) {
-        if (photos[i] && photos[i].photo_url) {
-          photoSlots += '<img src="' + photos[i].photo_url + '" alt="' + (photos[i].caption||album.title) + '" loading="lazy">';
+        if (photos[i] && photos[i].url) {
+          photoSlots += '<img src="' + photos[i].url + '" alt="' + (photos[i].caption||album.title) + '" loading="lazy">';
         } else {
           photoSlots += '<div class="alb-photo-empty"></div>';
         }
@@ -271,7 +271,7 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
         document.body.appendChild(overlay);
       }
 
-      var photos = data.photos.filter(function(p){ return p && p.photo_url; });
+      var photos = data.photos.filter(function(p){ return p && p.url; });
       var currentIdx = 0;
 
       function render() {
@@ -291,13 +291,13 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
             '</div>' +
             '<div style="position:relative;display:inline-block;max-width:100%">' +
               (photos.length > 1 ? '<button onclick="lbPrev()" style="position:absolute;left:-50px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.1);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer">&#8249;</button>' : '') +
-              '<img id="lbImg" src="' + p.photo_url + '" style="max-width:100%;max-height:70vh;object-fit:contain;border-radius:4px;display:block">' +
+              '<img id="lbImg" src="' + p.url + '" style="max-width:100%;max-height:70vh;object-fit:contain;border-radius:4px;display:block">' +
               (photos.length > 1 ? '<button onclick="lbNext()" style="position:absolute;right:-50px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.1);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer">&#8250;</button>' : '') +
             '</div>' +
             (p.caption ? '<div style="font-size:13px;color:rgba(255,255,255,.6);margin-top:12px">' + p.caption + '</div>' : '') +
             '<div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:8px">' + (currentIdx+1) + ' / ' + photos.length + '</div>' +
             (photos.length > 1 ? '<div style="display:flex;gap:6px;justify-content:center;margin-top:16px">' +
-              photos.map(function(ph,i){ return '<div onclick="lbGoto('+i+')" style="width:48px;height:48px;border-radius:2px;overflow:hidden;cursor:pointer;opacity:'+(i===currentIdx?'1':'.4')+';border:2px solid '+(i===currentIdx?'var(--rust)':'transparent')+'"><img src="'+ph.photo_url+'" style="width:100%;height:100%;object-fit:cover"></div>'; }).join('') +
+              photos.map(function(ph,i){ return '<div onclick="lbGoto('+i+')" style="width:48px;height:48px;border-radius:2px;overflow:hidden;cursor:pointer;opacity:'+(i===currentIdx?'1':'.4')+';border:2px solid '+(i===currentIdx?'var(--rust)':'transparent')+'"><img src="'+ph.url+'" style="width:100%;height:100%;object-fit:cover"></div>'; }).join('') +
             '</div>' : '') +
           '</div>';
 
