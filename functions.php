@@ -961,9 +961,15 @@ function fw_compress_to_webp( $tmp_path, $mime ) {
     }
 
     $out = $tmp_path . '_compressed.webp';
-    imagewebp( $src, $out, 82 ); // quality 82 — good balance size/quality
+    $ok = imagewebp( $src, $out, 82 );
     imagedestroy( $src );
-    return $out;
+    // Only return compressed file if it actually exists and has content
+    if ( $ok && file_exists( $out ) && filesize( $out ) > 0 ) {
+        return $out;
+    }
+    // WebP not supported on this server — fall back to original file
+    if ( file_exists( $out ) ) @unlink( $out );
+    return $tmp_path;
 }
 
 /* ── Helper: upload image file to Supabase storage with WebP compression ── */
@@ -980,10 +986,11 @@ function fw_upload_image( $file, $storage_path ) {
         return new WP_Error( 'too_large', 'Max 15MB per image.', array( 'status' => 400 ) );
     }
 
-    // Compress to WebP
+    // Compress to WebP (falls back to original if WebP not supported)
     $compressed = fw_compress_to_webp( $file['tmp_name'], $mimetype );
-    $final_path = $storage_path . '.webp';
-    $final_mime = 'image/webp';
+    $is_webp    = ( $compressed !== $file['tmp_name'] );
+    $final_path = $storage_path . ( $is_webp ? '.webp' : '.jpg' );
+    $final_mime = $is_webp ? 'image/webp' : 'image/jpeg';
 
     $upload = wp_remote_request( FW_SUPABASE_URL . '/storage/v1/object/avatars/' . $final_path, array(
         'method'  => 'POST',
@@ -3209,20 +3216,30 @@ function fw_admin_upload_album_photo( $request ) {
 
     $h = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
 
-    $photos_chk = wp_remote_get( FW_SUPABASE_URL . '/rest/v1/fw_album_photos?album_id=eq.' . rawurlencode( $album_id ) . '&select=id',
-        array( 'headers' => $h, 'timeout' => 10 ) );
-    $existing = json_decode( wp_remote_retrieve_body( $photos_chk ), true ) ?: array();
+    /* Use client-supplied sort_order if present (sequential uploads send index 0,1,2…)
+       Otherwise fall back to a unique microsecond-based value to avoid race conditions */
+    $sort_order = isset( $_POST['sort_order'] ) ? intval( $_POST['sort_order'] ) : intval( round( microtime(true) * 1000 ) );
 
-    $path = 'albums/admin/' . $user['id'] . '/' . $album_id . '/' . time() . '_' . mt_rand(100,999);
+    $path = 'albums/' . $album_id . '/' . time() . '_' . mt_rand(1000,9999);
     $url  = fw_upload_image( $_FILES['photo'], $path );
-    if ( is_wp_error( $url ) ) return $url;
+    if ( is_wp_error( $url ) ) {
+        return new WP_Error( 'upload_fail', $url->get_error_message(), array( 'status' => 500 ) );
+    }
 
-    $caption = sanitize_text_field( $_POST['caption'] ?? '' );
-    wp_remote_post( FW_SUPABASE_URL . '/rest/v1/fw_album_photos', array(
-        'headers'     => array_merge( $h, array( 'Content-Type' => 'application/json', 'Prefer' => 'return=minimal' ) ),
-        'body'        => wp_json_encode( array( 'album_id' => $album_id, 'photo_url' => $url, 'sort_order' => count( $existing ), 'caption' => $caption ) ),
-        'timeout'     => 10, 'data_format' => 'body',
+    $caption    = sanitize_text_field( $_POST['caption'] ?? '' );
+    $h_json     = array_merge( $h, array( 'Content-Type' => 'application/json', 'Prefer' => 'return=representation' ) );
+    $db_resp    = wp_remote_post( FW_SUPABASE_URL . '/rest/v1/fw_album_photos', array(
+        'headers'     => $h_json,
+        'body'        => wp_json_encode( array( 'album_id' => $album_id, 'photo_url' => $url, 'sort_order' => $sort_order, 'caption' => $caption ) ),
+        'timeout'     => 15, 'data_format' => 'body',
     ));
+
+    $db_code = wp_remote_retrieve_response_code( $db_resp );
+    if ( is_wp_error( $db_resp ) || $db_code >= 300 ) {
+        $db_body = wp_remote_retrieve_body( $db_resp );
+        return new WP_Error( 'db_fail', 'Photo saved to storage but DB insert failed (' . $db_code . '): ' . substr($db_body,0,200), array( 'status' => 500 ) );
+    }
+
     return rest_ensure_response( array( 'success' => true, 'url' => $url ) );
 }
 
