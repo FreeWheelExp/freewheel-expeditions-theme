@@ -933,20 +933,42 @@ function adminDoUpload(aid, albumTitle) {
     if (!selectedFiles.length) return;
     saveBtn.disabled = true;
     saveBtn.textContent = 'Uploading...';
-    statusEl.textContent = 'Compressing and uploading...';
     statusEl.style.color = 'rgba(255,255,255,.4)';
 
-    var done = 0, succeeded = 0, total = selectedFiles.length;
+    var total = selectedFiles.length;
+    var succeeded = 0;
 
-    selectedFiles.forEach(function(file, idx) {
+    /* Sequential upload — one at a time to avoid sort_order race conditions */
+    function uploadNext(idx) {
+      if (idx >= total) {
+        /* All done */
+        if (succeeded === total) {
+          statusEl.textContent = succeeded + ' photo(s) saved!';
+          statusEl.style.color = '#4ade80';
+          setTimeout(function() { closePanel(); adminLoadAlbums(); }, 800);
+        } else {
+          statusEl.textContent = succeeded + '/' + total + ' saved. ' + (total - succeeded) + ' failed — check console.';
+          statusEl.style.color = '#f87171';
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save Photos';
+        }
+        return;
+      }
+
+      var file = selectedFiles[idx];
+      statusEl.textContent = 'Compressing photo ' + (idx + 1) + ' of ' + total + '...';
+
       adminCompressImage(file, 1400, 0.85).then(function(blob) {
         var origKB = Math.round(file.size / 1024);
         var compKB = Math.round(blob.size / 1024);
-        console.log('[FW] ' + (file.name||'photo') + ': ' + origKB + 'KB → ' + compKB + 'KB');
+        console.log('[FW] photo ' + (idx+1) + ': ' + origKB + 'KB → ' + compKB + 'KB');
+
+        statusEl.textContent = 'Uploading photo ' + (idx + 1) + ' of ' + total + '...';
 
         var fd = new FormData();
-        fd.append('photo', blob, 'photo_' + idx + '.jpg');
+        fd.append('photo', blob, 'photo.jpg');
         fd.append('album_id', aid);
+        fd.append('sort_order', String(idx)); /* sequential index — no race */
 
         fetch(_admRest + '/admin/upload-album-photo', {
           method: 'POST',
@@ -954,38 +976,29 @@ function adminDoUpload(aid, albumTitle) {
           body: fd
         })
           .then(function(r) {
-            if (!r.ok) return r.text().then(function(t) { throw new Error(r.status + ': ' + t.substring(0, 300)); });
+            if (!r.ok) return r.text().then(function(t) { throw new Error(r.status + ': ' + t.substring(0, 400)); });
             return r.json();
           })
           .then(function(res) {
-            done++;
-            if (res.success) succeeded++;
-            else console.error('[FW] Server rejected photo:', res);
-            statusEl.textContent = 'Uploading ' + done + '/' + total + '...';
-            if (done === total) finish();
+            if (res.success) {
+              succeeded++;
+              console.log('[FW] photo ' + (idx+1) + ' saved:', res.url);
+            } else {
+              console.error('[FW] photo ' + (idx+1) + ' rejected:', res);
+            }
+            uploadNext(idx + 1);
           })
           .catch(function(e) {
-            done++;
-            console.error('[FW] Upload error:', e);
-            statusEl.textContent = 'Error: ' + e.message;
+            console.error('[FW] photo ' + (idx+1) + ' failed:', e.message);
+            statusEl.textContent = 'Photo ' + (idx+1) + ' failed: ' + e.message;
             statusEl.style.color = '#f87171';
-            if (done === total) finish();
+            /* Continue with next photo even if one fails */
+            uploadNext(idx + 1);
           });
       });
-    });
-
-    function finish() {
-      if (succeeded === total) {
-        statusEl.textContent = succeeded + ' photo(s) saved successfully!';
-        statusEl.style.color = '#4ade80';
-        setTimeout(function() { closePanel(); adminLoadAlbums(); }, 1000);
-      } else {
-        statusEl.textContent = succeeded + '/' + total + ' uploaded. ' + (total - succeeded) + ' failed.';
-        statusEl.style.color = '#f87171';
-        saveBtn.disabled = false;
-        saveBtn.textContent = 'Retry Failed';
-      }
     }
+
+    uploadNext(0);
   };
 }
 
