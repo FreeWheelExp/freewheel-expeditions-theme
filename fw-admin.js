@@ -813,59 +813,41 @@ function adminSaveBlog() {
 
 /* ---- Album ---- */
 /* Compress image to max 1200px wide, quality 0.82, returns Blob */
+/* Compress image: resize to maxPx longest side, re-encode JPEG at quality */
 function adminCompressImage(file, maxPx, quality) {
   return new Promise(function(resolve) {
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      var img = new Image();
-      img.onload = function() {
-        var w = img.width, h = img.height;
-        if (w > maxPx) { h = Math.round(h * maxPx / w); w = maxPx; }
-        if (h > maxPx) { w = Math.round(w * maxPx / h); h = maxPx; }
-        var canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        canvas.toBlob(function(blob) { resolve(blob || file); }, 'image/jpeg', quality);
-      };
-      img.src = e.target.result;
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function() {
+      URL.revokeObjectURL(url);
+      var w = img.naturalWidth, h = img.naturalHeight;
+      var scale = Math.min(1, maxPx / Math.max(w, h));
+      w = Math.round(w * scale); h = Math.round(h * scale);
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      canvas.toBlob(function(blob) { resolve(blob || file); }, 'image/jpeg', quality);
     };
-    reader.readAsDataURL(file);
+    img.onerror = function() { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
   });
 }
 
-/* Global hidden file input — stays in DOM so .click() works reliably */
-var _adminFileInput = null;
-function _getAdminFileInput() {
-  if (!_adminFileInput) {
-    _adminFileInput = document.createElement('input');
-    _adminFileInput.type = 'file';
-    _adminFileInput.accept = 'image/*';
-    _adminFileInput.multiple = true;
-    _adminFileInput.style.cssText = 'position:fixed;top:-999px;left:-999px;opacity:0;pointer-events:none';
-    document.body.appendChild(_adminFileInput);
-  }
-  return _adminFileInput;
-}
-
 function adminDoUpload(aid, gridEl) {
-  var existing = gridEl ? gridEl.querySelectorAll('div[style*="aspect-ratio"]').length : 0;
+  var existing = gridEl ? gridEl.querySelectorAll('.photo-slot').length : 0;
   var slots = 6 - existing;
   if (slots <= 0) { toast('Max 6 photos per album reached', true); return; }
 
-  var fi = _getAdminFileInput();
-  /* Remove any previous listener */
-  var newFi = fi.cloneNode(false);
-  fi.parentNode.replaceChild(newFi, newFi.parentNode ? newFi : fi);
-  _adminFileInput = newFi;
-  fi = newFi;
+  /* Create fresh input every time — safest cross-browser approach */
+  var fi = document.createElement('input');
+  fi.type = 'file'; fi.accept = 'image/*'; fi.multiple = true;
+  fi.style.cssText = 'display:none';
+  document.body.appendChild(fi);
 
-  fi.onchange = function(){
-    var files = Array.from(fi.files);
-    fi.value = '';
+  fi.addEventListener('change', function() {
+    var files = Array.from(fi.files || []);
+    document.body.removeChild(fi); /* clean up immediately */
     if (!files.length) return;
-
-    var oversized = files.filter(function(f){ return f.size > 2 * 1024 * 1024; });
-    if (oversized.length) toast('Large files will be compressed to save space', false);
 
     if (files.length > slots) {
       toast('Only ' + slots + ' slot(s) left — uploading first ' + slots, false);
@@ -873,37 +855,57 @@ function adminDoUpload(aid, gridEl) {
     }
 
     var done = 0, succeeded = 0;
-    files.forEach(function(file){
-      adminCompressImage(file, 1200, 0.82).then(function(blob) {
+
+    function uploadOne(file) {
+      /* Always compress — no size gate, handles any size */
+      adminCompressImage(file, 1400, 0.85).then(function(blob) {
+        var origKB = Math.round(file.size / 1024);
+        var compKB = Math.round(blob.size / 1024);
+        console.log('[FW] ' + file.name + ': ' + origKB + 'KB → ' + compKB + 'KB');
+
         var fd = new FormData();
         fd.append('photo', blob, 'photo.jpg');
         fd.append('album_id', aid);
+
         fetch(_admRest + '/admin/upload-album-photo', {
           method: 'POST',
           headers: { 'Authorization': 'Bearer ' + _admToken },
           body: fd
         })
-          .then(function(r){
-            if (!r.ok) return r.text().then(function(t){ throw new Error(r.status + ': ' + t); });
+          .then(function(r) {
+            if (!r.ok) return r.text().then(function(t) { throw new Error(r.status + ': ' + t.substring(0, 200)); });
             return r.json();
           })
-          .then(function(res){
+          .then(function(res) {
             done++;
             if (res.success) {
               succeeded++;
               var slot = document.createElement('div');
-              slot.style.cssText = 'aspect-ratio:1;border-radius:3px;overflow:hidden';
-              slot.innerHTML = '<img src="' + res.url + '" style="width:100%;height:100%;object-fit:cover">';
+              slot.className = 'photo-slot';
+              slot.style.cssText = 'aspect-ratio:1;border-radius:3px;overflow:hidden;position:relative';
+              slot.innerHTML = '<img src="' + res.url + '" style="width:100%;height:100%;object-fit:cover;display:block">';
               var ep = gridEl ? gridEl.querySelector('.album-empty-note') : null;
               if (ep) ep.remove();
               if (gridEl) gridEl.appendChild(slot);
+            } else {
+              toast('Upload error: ' + (res.message || 'unknown'), true);
             }
-            if (done === files.length) toast(succeeded + ' photo(s) uploaded' + (done - succeeded ? ', ' + (done - succeeded) + ' failed' : ''), done !== succeeded);
+            if (done === files.length) {
+              if (succeeded > 0) toast(succeeded + ' photo(s) uploaded');
+            }
           })
-          .catch(function(e){ done++; console.error('Upload error:', e); if (done === files.length) toast('Upload failed: ' + e.message, true); });
+          .catch(function(e) {
+            done++;
+            console.error('[FW] Upload failed:', e);
+            toast('Upload failed: ' + e.message, true);
+          });
       });
-    });
-  };
+    }
+
+    files.forEach(uploadOne);
+  });
+
+  /* Trigger picker — must happen synchronously in user gesture handler */
   fi.click();
 }
 
@@ -928,35 +930,59 @@ function adminLoadAlbums() {
         var header = document.createElement('div');
         header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 16px;gap:12px;flex-wrap:wrap';
 
+        var photoCount = Array.isArray(a.photos) ? a.photos.length : 0;
+
         var meta = document.createElement('div');
+        meta.style.cssText = 'flex:1;min-width:0';
         meta.innerHTML = '<div style="font-size:14px;color:#fff;font-weight:500">' + (a.title||'Untitled') + '</div>'
           + '<div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:3px">'
           + (a.trip_name ? a.trip_name + ' &middot; ' : '') + fmtDate(a.created_at)
-          + ' &middot; ' + (Array.isArray(a.photos) ? a.photos.length : 0) + ' photos &middot; ' + statusBadge(a.status) + '</div>';
+          + ' &middot; ' + photoCount + '/6 photos &middot; ' + statusBadge(a.status) + '</div>';
 
         var addBtn = document.createElement('button');
         addBtn.textContent = '+ Add Photos';
-        addBtn.style.cssText = 'padding:6px 16px;font-size:11px;letter-spacing:1px;text-transform:uppercase;font-family:var(--body);cursor:pointer;background:rgba(193,68,14,.2);border:1px solid rgba(193,68,14,.4);color:var(--rust);border-radius:2px;white-space:nowrap;flex-shrink:0';
+        addBtn.style.cssText = 'padding:6px 14px;font-size:11px;letter-spacing:1px;text-transform:uppercase;font-family:var(--body);cursor:pointer;background:rgba(193,68,14,.2);border:1px solid rgba(193,68,14,.4);color:var(--rust);border-radius:2px;white-space:nowrap';
+
+        var delBtn = document.createElement('button');
+        delBtn.textContent = 'Delete';
+        delBtn.style.cssText = 'padding:6px 14px;font-size:11px;letter-spacing:1px;text-transform:uppercase;font-family:var(--body);cursor:pointer;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);color:#f87171;border-radius:2px;white-space:nowrap';
 
         var hint = document.createElement('div');
-        hint.style.cssText = 'font-size:10px;color:rgba(255,255,255,.3);margin-top:4px;letter-spacing:.5px;width:100%;padding:0 0 4px 0';
-        hint.textContent = 'Max 6 photos · 2 MB each (auto-compressed)';
+        hint.style.cssText = 'font-size:10px;color:rgba(255,255,255,.25);margin-top:3px;text-align:right';
+        hint.textContent = 'Max 6 photos · auto-compressed';
 
         var btnWrap = document.createElement('div');
-        btnWrap.style.cssText = 'display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0';
-        btnWrap.appendChild(addBtn);
+        btnWrap.style.cssText = 'display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0';
+        var btnRow = document.createElement('div');
+        btnRow.style.cssText = 'display:flex;gap:6px';
+        btnRow.appendChild(addBtn);
+        btnRow.appendChild(delBtn);
+        btnWrap.appendChild(btnRow);
         btnWrap.appendChild(hint);
 
         header.appendChild(meta);
         header.appendChild(btnWrap);
+
+        delBtn.addEventListener('click', (function(aid, cardEl){ return function(){
+          if (!confirm('Delete this album and all its photos? This cannot be undone.')) return;
+          fetch(_admRest + '/admin/delete-album', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + _admToken, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ album_id: aid })
+          })
+            .then(function(r){ return r.json(); })
+            .then(function(d){ if (d.success) { cardEl.remove(); toast('Album deleted'); } else toast('Delete failed', true); })
+            .catch(function(){ toast('Delete failed', true); });
+        }; })(a.id, card));
 
         var grid = document.createElement('div');
         grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:6px;padding:0 16px 16px';
 
         (Array.isArray(a.photos) ? a.photos : []).forEach(function(p){
           var slot = document.createElement('div');
+          slot.className = 'photo-slot';
           slot.style.cssText = 'aspect-ratio:1;border-radius:3px;overflow:hidden';
-          slot.innerHTML = '<img src="' + p.photo_url + '" style="width:100%;height:100%;object-fit:cover">';
+          slot.innerHTML = '<img src="' + p.photo_url + '" style="width:100%;height:100%;object-fit:cover;display:block">';
           grid.appendChild(slot);
         });
         if (!(a.photos||[]).length) {
