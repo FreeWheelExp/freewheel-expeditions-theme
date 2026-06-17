@@ -88,10 +88,10 @@ html,body,body.page,#page,#content,#primary,#main,.site,.site-content,.entry-con
     var tier = d.tier || { name: 'Explorer' };
     var firstName = (p.first_name || 'Rider').toUpperCase();
 
-    document.title = firstName + ' — WHEELER #' + String(p.member_number).padStart(4,'0') + ' | FreeWheel Expeditions';
+    document.title = firstName + ' — JUNGLI #' + String(p.member_number).padStart(4,'0') + ' | FreeWheel Expeditions';
 
     document.getElementById('riderName').textContent = firstName;
-    document.getElementById('riderNumber').textContent = 'WHEELER #' + String(p.member_number||0).padStart(4,'0');
+    document.getElementById('riderNumber').textContent = 'JUNGLI #' + String(p.member_number||0).padStart(4,'0');
 
     var avWrap = document.getElementById('riderAvatarWrap');
     avWrap.innerHTML = p.avatar_url
