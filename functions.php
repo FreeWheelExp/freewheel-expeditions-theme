@@ -1635,7 +1635,7 @@ add_action( 'rest_api_init', function() {
 });
 
 function fw_get_public_albums( $request ) {
-    $limit = min( absint( $request->get_param('limit') ?? 5 ), 10 );
+    $limit = min( absint( $request->get_param('limit') ?? 10 ), 10 );
 
     /* Fetch latest public approved albums */
     $albums = json_decode( wp_remote_retrieve_body( wp_remote_get(
