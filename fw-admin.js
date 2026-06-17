@@ -147,31 +147,33 @@ function filterContent(type, status, btn) {
   if (type==='albums') renderAlbums(filtered);
 }
 
-function approveContent(type, id, action, noteId) {
+function approveContent(type, id, action, noteId, btnEl) {
   var note = noteId ? (document.getElementById(noteId)||{}).value||'' : '';
+  /* Visual feedback on the button */
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = action === 'approve' ? 'Approving...' : 'Rejecting...'; }
   fetch(_admRest + '/admin/approve-content', {
     method:'POST', headers: h(),
     body: JSON.stringify({type:type, id:id, action:action, note:note})
-  }).then(function(r){ return r.json(); })
-    .then(function(d){
-      if (d.success) {
-        var label = action==='approve' ? 'Approved! Credits awarded to user.' : 'Rejected.';
+  }).then(function(r){ return r.json().then(function(j){ return {ok:r.ok, body:j}; }); })
+    .then(function(result){
+      if (result.body && result.body.success) {
+        var label = action==='approve' ? '✓ Approved' : '✓ Rejected';
         toast(label);
         /* Remove from local array immediately */
         var key = type==='blog' ? 'blogs' : type==='testimonial' ? 'testis' : 'albums';
         _allContent[key] = _allContent[key].filter(function(item){ return item.id !== id; });
-        /* Reload fresh from server */
         loadContent();
-        /* Auto-switch filter to pending to see remaining queue */
         setTimeout(function(){
-          var pendingBtns = document.querySelectorAll('.adm-filter-row .adm-filter-btn');
-          pendingBtns.forEach(function(btn){
-            if(btn.textContent.trim()==='Pending') btn.click();
+          document.querySelectorAll('.adm-filter-row .adm-filter-btn').forEach(function(btn){
+            if (btn.textContent.trim()==='Pending') btn.click();
           });
         }, 800);
+      } else {
+        var errMsg = (result.body && result.body.message) || 'Failed';
+        toast(errMsg, true);
+        if (btnEl) { btnEl.disabled = false; btnEl.textContent = 'Confirm Reject'; }
       }
-      else toast(d.message||'Failed', true);
-    }).catch(function(){ toast('Error', true); });
+    }).catch(function(e){ toast('Network error: ' + e.message, true); if (btnEl) { btnEl.disabled=false; btnEl.textContent='Confirm Reject'; } });
 }
 
 function renderBlogs(blogs) {
@@ -201,7 +203,7 @@ function renderBlogs(blogs) {
       var ab = document.createElement('button');
       ab.className = 'adm-btn btn-approve';
       ab.textContent = 'Approve';
-      ab.onclick = (function(id){ return function(){ approveContent('blog', id, 'approve'); }; })(b.id);
+      ab.onclick = (function(id, btn){ return function(){ approveContent('blog', id, 'approve', null, btn); }; })(b.id, ab);
       actions.appendChild(ab);
     }
     if (b.status !== 'rejected') {
@@ -223,7 +225,7 @@ function renderBlogs(blogs) {
     ni.className = 'adm-input'; ni.id = 'rn-'+b.id; ni.placeholder = 'Reason (optional)'; ni.style.flex = '1';
     var cb = document.createElement('button');
     cb.className = 'adm-btn btn-reject'; cb.textContent = 'Confirm Reject';
-    cb.onclick = (function(id, nid){ return function(){ approveContent('blog', id, 'reject', nid); }; })(b.id, 'rn-'+b.id);
+    cb.onclick = (function(id, nid, btn){ return function(){ approveContent('blog', id, 'reject', nid, btn); }; })(b.id, 'rn-'+b.id, cb);
     rejectRow.appendChild(ni); rejectRow.appendChild(cb);
     card.appendChild(rejectRow);
     el.appendChild(card);
@@ -257,7 +259,7 @@ function renderTestis(testis) {
     if (t.status !== 'approved') {
       var ab = document.createElement('button');
       ab.className = 'adm-btn btn-approve'; ab.textContent = 'Approve';
-      ab.onclick = (function(id){ return function(){ approveContent('testimonial', id, 'approve'); }; })(t.id);
+      ab.onclick = (function(id, btn){ return function(){ approveContent('testimonial', id, 'approve', null, btn); }; })(t.id, ab);
       actions.appendChild(ab);
     }
     if (t.status !== 'rejected') {
@@ -275,7 +277,7 @@ function renderTestis(testis) {
     ni.className = 'adm-input'; ni.id = 'rn-'+t.id; ni.placeholder = 'Reason (optional)'; ni.style.flex = '1';
     var cb = document.createElement('button');
     cb.className = 'adm-btn btn-reject'; cb.textContent = 'Confirm Reject';
-    cb.onclick = (function(id, nid){ return function(){ approveContent('testimonial', id, 'reject', nid); }; })(t.id, 'rn-'+t.id);
+    cb.onclick = (function(id, nid, btn){ return function(){ approveContent('testimonial', id, 'reject', nid, btn); }; })(t.id, 'rn-'+t.id, cb);
     rejectRow.appendChild(ni); rejectRow.appendChild(cb);
     card.appendChild(rejectRow);
     el.appendChild(card);
@@ -314,7 +316,7 @@ function renderAlbums(albums) {
       var approveBtn = document.createElement('button');
       approveBtn.className = 'adm-btn btn-approve';
       approveBtn.textContent = 'Approve';
-      approveBtn.onclick = (function(type, id){ return function(){ approveContent(type, id, 'approve'); }; })('album', a.id);
+      approveBtn.onclick = (function(type, id, btn){ return function(){ approveContent(type, id, 'approve', null, btn); }; })('album', a.id, approveBtn);
       actions.appendChild(approveBtn);
     }
     if (a.status !== 'rejected') {
@@ -356,7 +358,7 @@ function renderAlbums(albums) {
     var confirmBtn = document.createElement('button');
     confirmBtn.className = 'adm-btn btn-reject';
     confirmBtn.textContent = 'Confirm Reject';
-    confirmBtn.onclick = (function(type, id, noteId){ return function(){ approveContent(type, id, 'reject', noteId); }; })('album', a.id, 'rn-' + a.id);
+    confirmBtn.onclick = (function(type, id, noteId, btn){ return function(){ approveContent(type, id, 'reject', noteId, btn); }; })('album', a.id, 'rn-' + a.id, confirmBtn);
     rejectRow.appendChild(noteInput);
     rejectRow.appendChild(confirmBtn);
     card.appendChild(rejectRow);
