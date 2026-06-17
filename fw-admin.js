@@ -813,7 +813,7 @@ function adminSaveBlog() {
 
 /* ---- Album ---- */
 /* Compress image to max 1200px wide, quality 0.82, returns Blob */
-/* Compress image: resize to maxPx longest side, re-encode JPEG at quality */
+/* Compress image client-side before upload */
 function adminCompressImage(file, maxPx, quality) {
   return new Promise(function(resolve) {
     var url = URL.createObjectURL(file);
@@ -833,38 +833,119 @@ function adminCompressImage(file, maxPx, quality) {
   });
 }
 
-function adminDoUpload(aid, gridEl) {
-  var existing = gridEl ? gridEl.querySelectorAll('.photo-slot').length : 0;
-  var slots = 6 - existing;
-  if (slots <= 0) { toast('Max 6 photos per album reached', true); return; }
+/* Show upload panel with preview + Save button */
+function adminDoUpload(aid, albumTitle) {
+  /* Remove any existing panel */
+  var existing = document.getElementById('fw-upload-panel');
+  if (existing) existing.remove();
 
-  /* Create fresh input every time — safest cross-browser approach */
-  var fi = document.createElement('input');
-  fi.type = 'file'; fi.accept = 'image/*'; fi.multiple = true;
-  fi.style.cssText = 'display:none';
-  document.body.appendChild(fi);
+  var panel = document.createElement('div');
+  panel.id = 'fw-upload-panel';
+  panel.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px)';
 
-  fi.addEventListener('change', function() {
-    var files = Array.from(fi.files || []);
-    document.body.removeChild(fi); /* clean up immediately */
-    if (!files.length) return;
+  panel.innerHTML =
+    '<div style="background:#0f0d0b;border:1px solid rgba(255,255,255,.1);border-radius:4px;width:100%;max-width:640px;padding:28px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">' +
+        '<div>' +
+          '<div style="font-family:var(--headline);font-size:18px;color:#fff;letter-spacing:1px">Upload Photos</div>' +
+          '<div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:2px">' + albumTitle + ' · max 6 photos · auto-compressed</div>' +
+        '</div>' +
+        '<button id="fw-panel-close" style="background:none;border:none;color:rgba(255,255,255,.4);font-size:22px;cursor:pointer;padding:0;line-height:1">&times;</button>' +
+      '</div>' +
+      '<label id="fw-drop-zone" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;border:2px dashed rgba(255,255,255,.15);border-radius:4px;padding:32px 20px;cursor:pointer;transition:border-color .2s;margin-bottom:16px">' +
+        '<div style="font-size:32px">📷</div>' +
+        '<div style="font-size:13px;color:rgba(255,255,255,.5)">Click to select photos</div>' +
+        '<div style="font-size:11px;color:rgba(255,255,255,.25)">JPG, PNG, HEIC — any size, auto-compressed</div>' +
+        '<input id="fw-file-input" type="file" accept="image/*" multiple style="display:none">' +
+      '</label>' +
+      '<div id="fw-preview-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px"></div>' +
+      '<div id="fw-upload-status" style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:12px;min-height:18px"></div>' +
+      '<div style="display:flex;gap:10px">' +
+        '<button id="fw-save-btn" style="display:none;padding:10px 28px;background:var(--rust);border:none;color:#fff;font-family:var(--body);font-size:13px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border-radius:2px">Save Photos</button>' +
+        '<button id="fw-cancel-btn" style="padding:10px 20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);font-family:var(--body);font-size:13px;cursor:pointer;border-radius:2px">Cancel</button>' +
+      '</div>' +
+    '</div>';
 
-    if (files.length > slots) {
-      toast('Only ' + slots + ' slot(s) left — uploading first ' + slots, false);
-      files = files.slice(0, slots);
+  document.body.appendChild(panel);
+
+  var fileInput  = panel.querySelector('#fw-file-input');
+  var dropZone   = panel.querySelector('#fw-drop-zone');
+  var previewGrid= panel.querySelector('#fw-preview-grid');
+  var statusEl   = panel.querySelector('#fw-upload-status');
+  var saveBtn    = panel.querySelector('#fw-save-btn');
+  var cancelBtn  = panel.querySelector('#fw-cancel-btn');
+  var closeBtn   = panel.querySelector('#fw-panel-close');
+  var selectedFiles = [];
+
+  function closePanel() { panel.remove(); }
+  cancelBtn.onclick = closePanel;
+  closeBtn.onclick  = closePanel;
+  panel.addEventListener('click', function(e) { if (e.target === panel) closePanel(); });
+
+  /* Highlight drop zone */
+  dropZone.addEventListener('dragover', function(e) { e.preventDefault(); dropZone.style.borderColor = 'var(--rust)'; });
+  dropZone.addEventListener('dragleave', function() { dropZone.style.borderColor = 'rgba(255,255,255,.15)'; });
+  dropZone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    dropZone.style.borderColor = 'rgba(255,255,255,.15)';
+    handleFiles(Array.from(e.dataTransfer.files).filter(function(f){ return f.type.startsWith('image/'); }));
+  });
+
+  fileInput.addEventListener('change', function() {
+    handleFiles(Array.from(fileInput.files || []));
+    fileInput.value = '';
+  });
+
+  function handleFiles(files) {
+    /* Check existing photos already in album */
+    var existingCount = 0;
+    var albumEl = document.querySelector('[data-album-id="' + aid + '"]');
+    if (albumEl) existingCount = albumEl.querySelectorAll('.photo-slot').length;
+
+    var available = 6 - existingCount - selectedFiles.length;
+    if (available <= 0) { statusEl.textContent = 'Album is full (max 6 photos).'; statusEl.style.color = '#f87171'; return; }
+    if (files.length > available) {
+      statusEl.textContent = 'Only ' + available + ' slot(s) left — first ' + available + ' selected.';
+      statusEl.style.color = 'rgba(255,255,255,.4)';
+      files = files.slice(0, available);
     }
 
-    var done = 0, succeeded = 0;
+    files.forEach(function(file) {
+      selectedFiles.push(file);
+      var thumb = document.createElement('div');
+      thumb.style.cssText = 'aspect-ratio:1;border-radius:3px;overflow:hidden;position:relative;background:rgba(255,255,255,.05)';
+      thumb.innerHTML = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:rgba(255,255,255,.3)">Loading...</div>';
+      previewGrid.appendChild(thumb);
 
-    function uploadOne(file) {
-      /* Always compress — no size gate, handles any size */
+      var objUrl = URL.createObjectURL(file);
+      var img = document.createElement('img');
+      img.onload = function() { URL.revokeObjectURL(objUrl); thumb.innerHTML = ''; thumb.appendChild(img); };
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
+      img.src = objUrl;
+    });
+
+    statusEl.textContent = selectedFiles.length + ' photo(s) selected — click Save to upload.';
+    statusEl.style.color = '#4ade80';
+    saveBtn.style.display = 'block';
+  }
+
+  saveBtn.onclick = function() {
+    if (!selectedFiles.length) return;
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Uploading...';
+    statusEl.textContent = 'Compressing and uploading...';
+    statusEl.style.color = 'rgba(255,255,255,.4)';
+
+    var done = 0, succeeded = 0, total = selectedFiles.length;
+
+    selectedFiles.forEach(function(file, idx) {
       adminCompressImage(file, 1400, 0.85).then(function(blob) {
         var origKB = Math.round(file.size / 1024);
         var compKB = Math.round(blob.size / 1024);
-        console.log('[FW] ' + file.name + ': ' + origKB + 'KB → ' + compKB + 'KB');
+        console.log('[FW] ' + (file.name||'photo') + ': ' + origKB + 'KB → ' + compKB + 'KB');
 
         var fd = new FormData();
-        fd.append('photo', blob, 'photo.jpg');
+        fd.append('photo', blob, 'photo_' + idx + '.jpg');
         fd.append('album_id', aid);
 
         fetch(_admRest + '/admin/upload-album-photo', {
@@ -873,43 +954,39 @@ function adminDoUpload(aid, gridEl) {
           body: fd
         })
           .then(function(r) {
-            if (!r.ok) return r.text().then(function(t) { throw new Error(r.status + ': ' + t.substring(0, 200)); });
+            if (!r.ok) return r.text().then(function(t) { throw new Error(r.status + ': ' + t.substring(0, 300)); });
             return r.json();
           })
           .then(function(res) {
             done++;
-            if (res.success) {
-              succeeded++;
-              var slot = document.createElement('div');
-              slot.className = 'photo-slot';
-              slot.style.cssText = 'aspect-ratio:1;border-radius:3px;overflow:hidden;position:relative';
-              slot.innerHTML = '<img src="' + res.url + '" style="width:100%;height:100%;object-fit:cover;display:block">';
-              var ep = gridEl ? gridEl.querySelector('.album-empty-note') : null;
-              if (ep) ep.remove();
-              if (gridEl) gridEl.appendChild(slot);
-            } else {
-              toast('Upload error: ' + (res.message || 'unknown'), true);
-            }
-            if (done === files.length) {
-              if (succeeded > 0) {
-                toast(succeeded + ' photo(s) uploaded');
-                setTimeout(adminLoadAlbums, 800);
-              }
-            }
+            if (res.success) succeeded++;
+            else console.error('[FW] Server rejected photo:', res);
+            statusEl.textContent = 'Uploading ' + done + '/' + total + '...';
+            if (done === total) finish();
           })
           .catch(function(e) {
             done++;
-            console.error('[FW] Upload failed:', e);
-            toast('Upload failed: ' + e.message, true);
+            console.error('[FW] Upload error:', e);
+            statusEl.textContent = 'Error: ' + e.message;
+            statusEl.style.color = '#f87171';
+            if (done === total) finish();
           });
       });
+    });
+
+    function finish() {
+      if (succeeded === total) {
+        statusEl.textContent = succeeded + ' photo(s) saved successfully!';
+        statusEl.style.color = '#4ade80';
+        setTimeout(function() { closePanel(); adminLoadAlbums(); }, 1000);
+      } else {
+        statusEl.textContent = succeeded + '/' + total + ' uploaded. ' + (total - succeeded) + ' failed.';
+        statusEl.style.color = '#f87171';
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Retry Failed';
+      }
     }
-
-    files.forEach(uploadOne);
-  });
-
-  /* Trigger picker — must happen synchronously in user gesture handler */
-  fi.click();
+  };
 }
 
 function adminLoadAlbums() {
@@ -929,6 +1006,7 @@ function adminLoadAlbums() {
       d.albums.forEach(function(a) {
         var card = document.createElement('div');
         card.style.cssText = 'background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:2px;margin-bottom:14px;overflow:hidden';
+        card.setAttribute('data-album-id', a.id);
 
         var header = document.createElement('div');
         header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 16px;gap:12px;flex-wrap:wrap';
@@ -996,7 +1074,7 @@ function adminLoadAlbums() {
           grid.appendChild(empty);
         }
 
-        addBtn.addEventListener('click', (function(aid, g){ return function(){ adminDoUpload(aid, g); }; })(a.id, grid));
+        addBtn.addEventListener('click', (function(aid, t){ return function(){ adminDoUpload(aid, t); }; })(a.id, a.title||'Album'));
 
         card.appendChild(header);
         card.appendChild(grid);
