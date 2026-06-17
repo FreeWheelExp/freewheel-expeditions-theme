@@ -233,7 +233,7 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
         trip: album.trip_name || '',
         city: album.member_city || '',
         member: album.member_name,
-        role: album.member_role || 'FW Explorer',
+        badge: album.member_badge || 'Explorer',
         instagram: album.member_instagram || '',
         photo: album.member_photo || '',
         photos: photos
@@ -242,19 +242,17 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
         '<div class="alb-photos">' + photoSlots + '</div>' +
         '<div class="alb-info">' +
           '<div class="alb-title">' + album.title + '</div>' +
-          '<div class="alb-meta" style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:6px">' +
+          '<div class="alb-meta" style="display:flex;align-items:center;gap:8px;margin-top:8px">' +
             (album.member_photo
-              ? '<img src="' + album.member_photo + '" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(193,68,14,.5);flex-shrink:0">'
-              : '<div style="width:26px;height:26px;border-radius:50%;background:rgba(193,68,14,.2);border:1.5px solid rgba(193,68,14,.4);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--rust);font-family:var(--headline);flex-shrink:0;font-weight:700">' + (album.member_name||'?').charAt(0).toUpperCase() + '</div>') +
-            '<div style="display:flex;flex-direction:column;gap:2px;min-width:0">' +
-              '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">' +
-                '<span style="font-size:13px;color:#fff;font-weight:500">' + (album.member_name||'Explorer') + '</span>' +
-                '<span style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);opacity:.85;white-space:nowrap">' + (album.member_role||'FW Explorer') + '</span>' +
+              ? '<img src="' + album.member_photo + '" style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(193,68,14,.5);flex-shrink:0">'
+              : '<div style="width:28px;height:28px;border-radius:50%;background:rgba(193,68,14,.2);border:1.5px solid rgba(193,68,14,.4);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--rust);font-family:var(--headline);flex-shrink:0;font-weight:700">' + (album.member_name||'?').charAt(0).toUpperCase() + '</div>') +
+            '<div style="min-width:0">' +
+              '<div style="display:flex;align-items:center;gap:6px">' +
+                '<span style="font-size:13px;color:#fff;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (album.member_name||'Explorer') + '</span>' +
+                '<span style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);white-space:nowrap;flex-shrink:0">' + (album.member_badge||'Explorer') + '</span>' +
               '</div>' +
-              '<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">' +
-                (album.member_city ? '<span style="font-size:11px;color:rgba(255,255,255,.45)">' + album.member_city + '</span>' : '') +
-                (album.member_instagram ? '<a href="https://instagram.com/' + album.member_instagram.replace(/^@/,'') + '" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;color:#c13584;text-decoration:none;white-space:nowrap">&#128247; ' + album.member_instagram + '</a>' : '') +
-              '</div>' +
+              (album.member_city ? '<div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:1px">' + album.member_city + '</div>' : '') +
+              (album.member_instagram ? '<div style="margin-top:4px"><a href="https://instagram.com/' + album.member_instagram.replace(/^@/,'') + '" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:3px;font-size:13px;color:#c13584;text-decoration:none">&#128247; ' + album.member_instagram + '</a></div>' : '') +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -287,13 +285,13 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
               '<div>' +
                 '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">' +
                   '<span style="font-size:14px;color:#fff;font-weight:500">' + (data.member||'Explorer') + '</span>' +
-                  '<span style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);opacity:.85">' + (data.role||'FW Explorer') + '</span>' +
+                  '<span style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber)">' + (data.badge||'Explorer') + '</span>' +
                 '</div>' +
                 '<div style="display:flex;align-items:center;gap:8px;margin-top:3px;flex-wrap:wrap">' +
                   (data.city ? '<span style="font-size:12px;color:rgba(255,255,255,.5)">' + data.city + '</span>' : '') +
                   (data.trip ? '<span style="font-size:12px;color:var(--rust)">' + data.trip + '</span>' : '') +
-                  (data.instagram ? '<a href="https://instagram.com/' + data.instagram.replace(/^@/,'') + '" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#c13584;text-decoration:none;padding:2px 8px;background:rgba(193,53,132,.1);border:1px solid rgba(193,53,132,.25);border-radius:10px">&#128247; ' + data.instagram + '</a>' : '') +
                 '</div>' +
+                (data.instagram ? '<div style="margin-top:4px"><a href="https://instagram.com/' + data.instagram.replace(/^@/,'') + '" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;font-size:13px;color:#c13584;text-decoration:none">&#128247; ' + data.instagram + '</a></div>' : '') +
               '</div>' +
             '</div>' +
             '<div style="position:relative;display:inline-block;max-width:100%">' +
