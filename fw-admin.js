@@ -990,10 +990,10 @@ function adminDoUpload(aid, albumTitle) {
           })
           .catch(function(e) {
             console.error('[FW] photo ' + (idx+1) + ' failed:', e.message);
+            /* Keep error visible for 2s before moving to next */
             statusEl.textContent = 'Photo ' + (idx+1) + ' failed: ' + e.message;
             statusEl.style.color = '#f87171';
-            /* Continue with next photo even if one fails */
-            uploadNext(idx + 1);
+            setTimeout(function() { uploadNext(idx + 1); }, 2000);
           });
       });
     }
