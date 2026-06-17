@@ -3208,40 +3208,87 @@ function fw_admin_upload_album_photo( $request ) {
     $user = fw_admin_auth( $request );
     if ( is_wp_error( $user ) ) return $user;
 
+    /* Validate file */
     if ( empty( $_FILES['photo'] ) || $_FILES['photo']['error'] !== UPLOAD_ERR_OK ) {
-        return new WP_Error( 'no_file', 'No file uploaded.', array( 'status' => 400 ) );
+        $err = $_FILES['photo']['error'] ?? 'missing';
+        return new WP_Error( 'no_file', 'File upload error: ' . $err, array( 'status' => 400 ) );
     }
     $album_id = sanitize_text_field( $_POST['album_id'] ?? '' );
     if ( ! $album_id ) return new WP_Error( 'missing', 'Album ID required.', array( 'status' => 400 ) );
 
-    $h = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
+    /* Unique sort_order: index * 1000 + random — no race even on retry */
+    $sort_order = isset( $_POST['sort_order'] )
+        ? ( intval( $_POST['sort_order'] ) * 1000 + mt_rand( 0, 999 ) )
+        : mt_rand( 0, 999999 );
 
-    /* Use client-supplied sort_order if present (sequential uploads send index 0,1,2…)
-       Otherwise fall back to a unique microsecond-based value to avoid race conditions */
-    /* sort_order: client index × 10000 + microseconds → unique even on retry */
-    $sort_order = isset( $_POST['sort_order'] ) ? ( intval( $_POST['sort_order'] ) * 10000 + ( intval( round( microtime(true) * 10000 ) ) % 10000 ) ) : intval( round( microtime(true) * 10000 ) );
-
-    $path = 'albums/' . $user['id'] . '/' . $album_id . '/' . time() . '_' . mt_rand(1000,9999);
-    $url  = fw_upload_image( $_FILES['photo'], $path );
-    if ( is_wp_error( $url ) ) {
-        return new WP_Error( 'upload_fail', $url->get_error_message(), array( 'status' => 500 ) );
+    /* Read file — client already compressed via canvas, so skip server GD entirely */
+    $tmp      = $_FILES['photo']['tmp_name'];
+    $filedata = file_get_contents( $tmp );
+    if ( $filedata === false || strlen( $filedata ) === 0 ) {
+        return new WP_Error( 'empty_file', 'Uploaded file is empty.', array( 'status' => 400 ) );
     }
 
-    $caption    = sanitize_text_field( $_POST['caption'] ?? '' );
-    $h_json     = array_merge( $h, array( 'Content-Type' => 'application/json', 'Prefer' => 'return=representation' ) );
-    $db_resp    = wp_remote_post( FW_SUPABASE_URL . '/rest/v1/fw_album_photos', array(
+    /* Detect MIME from actual bytes */
+    $finfo    = finfo_open( FILEINFO_MIME_TYPE );
+    $mimetype = finfo_file( $finfo, $tmp );
+    finfo_close( $finfo );
+    $allowed = array( 'image/jpeg', 'image/png', 'image/webp', 'image/gif' );
+    if ( ! in_array( $mimetype, $allowed ) ) {
+        return new WP_Error( 'bad_type', 'Invalid image type: ' . $mimetype, array( 'status' => 400 ) );
+    }
+    $ext = ( $mimetype === 'image/png' ) ? 'png' : ( ( $mimetype === 'image/webp' ) ? 'webp' : 'jpg' );
+
+    /* Upload directly to Supabase storage — no server-side compression */
+    $storage_path = 'albums/' . $user['id'] . '/' . $album_id . '/' . time() . '_' . mt_rand( 1000, 9999 ) . '.' . $ext;
+    $sb_headers   = array(
+        'apikey'        => FW_SUPABASE_SERVICE,
+        'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE,
+        'Content-Type'  => $mimetype,
+        'x-upsert'      => 'true',
+    );
+
+    $storage_resp = wp_remote_request(
+        FW_SUPABASE_URL . '/storage/v1/object/avatars/' . $storage_path,
+        array( 'method' => 'POST', 'headers' => $sb_headers, 'body' => $filedata, 'timeout' => 30 )
+    );
+
+    if ( is_wp_error( $storage_resp ) ) {
+        return new WP_Error( 'storage_fail', 'Storage request failed: ' . $storage_resp->get_error_message(), array( 'status' => 500 ) );
+    }
+    $storage_code = wp_remote_retrieve_response_code( $storage_resp );
+    if ( $storage_code >= 300 ) {
+        $storage_body = wp_remote_retrieve_body( $storage_resp );
+        return new WP_Error( 'storage_fail', 'Storage rejected upload (' . $storage_code . '): ' . substr( $storage_body, 0, 300 ), array( 'status' => 500 ) );
+    }
+
+    $public_url = FW_SUPABASE_URL . '/storage/v1/object/public/avatars/' . $storage_path;
+
+    /* Insert into fw_album_photos */
+    $caption  = sanitize_text_field( $_POST['caption'] ?? '' );
+    $h_svc    = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
+    $h_json   = array_merge( $h_svc, array( 'Content-Type' => 'application/json', 'Prefer' => 'return=minimal' ) );
+    $db_resp  = wp_remote_post( FW_SUPABASE_URL . '/rest/v1/fw_album_photos', array(
         'headers'     => $h_json,
-        'body'        => wp_json_encode( array( 'album_id' => $album_id, 'photo_url' => $url, 'sort_order' => $sort_order, 'caption' => $caption ) ),
-        'timeout'     => 15, 'data_format' => 'body',
+        'body'        => wp_json_encode( array(
+            'album_id'   => $album_id,
+            'photo_url'  => $public_url,
+            'sort_order' => $sort_order,
+            'caption'    => $caption,
+        )),
+        'timeout'     => 15,
+        'data_format' => 'body',
     ));
 
     $db_code = wp_remote_retrieve_response_code( $db_resp );
     if ( is_wp_error( $db_resp ) || $db_code >= 300 ) {
         $db_body = wp_remote_retrieve_body( $db_resp );
-        return new WP_Error( 'db_fail', 'Photo saved to storage but DB insert failed (' . $db_code . '): ' . substr($db_body,0,200), array( 'status' => 500 ) );
+        return new WP_Error( 'db_fail',
+            'Stored at ' . $public_url . ' but DB insert failed (' . $db_code . '): ' . substr( $db_body, 0, 300 ),
+            array( 'status' => 500 )
+        );
     }
 
-    return rest_ensure_response( array( 'success' => true, 'url' => $url ) );
+    return rest_ensure_response( array( 'success' => true, 'url' => $public_url ) );
 }
 
 /* /admin/delete-album — delete album + all its photos */
