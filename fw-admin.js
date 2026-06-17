@@ -334,9 +334,9 @@ function renderAlbums(albums) {
       var strip = document.createElement('div');
       strip.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;padding-top:12px;margin-top:10px;border-top:1px solid rgba(255,255,255,.06)';
       photos.forEach(function(p) {
-        if (!p.photo_url) return;
+        if (!p.url) return;
         var img = document.createElement('img');
-        img.src = p.photo_url;
+        img.src = p.url;
         img.style.cssText = 'width:80px;height:80px;object-fit:cover;border-radius:2px';
         img.loading = 'lazy';
         strip.appendChild(img);
@@ -1078,7 +1078,7 @@ function adminLoadAlbums() {
           var slot = document.createElement('div');
           slot.className = 'photo-slot';
           slot.style.cssText = 'aspect-ratio:1;border-radius:3px;overflow:hidden';
-          slot.innerHTML = '<img src="' + p.photo_url + '" style="width:100%;height:100%;object-fit:cover;display:block">';
+          slot.innerHTML = '<img src="' + p.url + '" style="width:100%;height:100%;object-fit:cover;display:block">';
           grid.appendChild(slot);
         });
         if (!(a.photos||[]).length) {
