@@ -436,6 +436,17 @@ function fw_validate_token( $request ) {
     if ( empty( $body['id'] ) ) {
         return new WP_Error( 'unauthorized', 'Invalid or expired session. Please log in again.', array( 'status' => 401 ) );
     }
+
+    /* SECURITY: a blocked account must not be able to act through an already-issued
+       token — re-check is_suspended on every request, not just at login. */
+    $sus = json_decode( wp_remote_retrieve_body( wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_members?id=eq.' . rawurlencode( $body['id'] ) . '&select=is_suspended',
+        array( 'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE ), 'timeout' => 8 )
+    )), true );
+    if ( ! empty( $sus[0]['is_suspended'] ) ) {
+        return new WP_Error( 'account_blocked', 'Your account has been blocked. Contact support.', array( 'status' => 403 ) );
+    }
+
     return $body;
 }
 
@@ -3270,7 +3281,7 @@ function fw_admin_auth( $request ) {
     if ( is_wp_error( $user ) ) return $user;
 
     $member_resp = wp_remote_get(
-        FW_SUPABASE_URL . '/rest/v1/fw_members?id=eq.' . rawurlencode( $user['id'] ) . '&select=role',
+        FW_SUPABASE_URL . '/rest/v1/fw_members?id=eq.' . rawurlencode( $user['id'] ) . '&select=role,is_suspended',
         array( 'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE ), 'timeout' => 10 )
     );
     if ( is_wp_error( $member_resp ) ) return new WP_Error( 'auth_fail', 'Auth service error.', array( 'status' => 503 ) );
@@ -3278,6 +3289,10 @@ function fw_admin_auth( $request ) {
     $rows = json_decode( wp_remote_retrieve_body( $member_resp ), true );
     if ( empty( $rows[0]['role'] ) || ! in_array( $rows[0]['role'], array( 'admin', 'super_admin', 'moderator' ) ) ) {
         return new WP_Error( 'forbidden', 'Admin access required.', array( 'status' => 403 ) );
+    }
+    /* SECURITY: a blocked staff account loses admin access immediately, even with a live token */
+    if ( ! empty( $rows[0]['is_suspended'] ) ) {
+        return new WP_Error( 'account_blocked', 'Your account has been blocked.', array( 'status' => 403 ) );
     }
     $user['role'] = $rows[0]['role'];
     return $user;
