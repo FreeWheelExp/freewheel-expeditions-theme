@@ -583,6 +583,10 @@ async function verifySignupOtp(){
     if(!session) throw new Error('Verification succeeded but no session returned. Please log in.');
 
     var profile=window._pendingProfile||{};
+    try {
+      var refFromUrl = new URLSearchParams(window.location.search).get('ref');
+      if (refFromUrl) profile.ref_code = refFromUrl.trim().toUpperCase();
+    } catch(e){}
     localStorage.setItem('fw_session',JSON.stringify({
       access_token:session.access_token,refresh_token:session.refresh_token,
       user_id:session.user.id,email:session.user.email,
