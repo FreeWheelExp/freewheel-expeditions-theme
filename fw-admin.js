@@ -1104,7 +1104,6 @@ function adminLoadAlbums() {
 
 function adminCreateAlbum() {
   var title    = document.getElementById('adminAlbumTitle').value.trim();
-  var tripName = document.getElementById('adminAlbumTripName').value.trim();
   var isPublic = document.getElementById('adminAlbumIsPublic').checked;
   var msg      = document.getElementById('adminAlbumFormMsg');
   if (!title) { msg.textContent = 'Album title is required.'; msg.style.color = '#f87171'; return; }
@@ -1112,7 +1111,7 @@ function adminCreateAlbum() {
   fetch(_admRest + '/admin/create-album', {
     method: 'POST',
     headers: { 'Authorization': 'Bearer ' + _admToken, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title: title, trip_name: tripName, is_public: isPublic })
+    body: JSON.stringify({ title: title, is_public: isPublic })
   })
     .then(function(r){
       if (!r.ok) return r.text().then(function(t){ throw new Error(r.status + ': ' + t); });
@@ -1122,7 +1121,7 @@ function adminCreateAlbum() {
       if (d.success) {
         msg.textContent = 'Album created! Loading...'; msg.style.color = '#4ade80';
         document.getElementById('adminAlbumTitle').value = '';
-        document.getElementById('adminAlbumTripName').value = '';
+
         document.getElementById('adminAlbumIsPublic').checked = false;
         document.getElementById('adminAlbumForm').style.display = 'none';
         adminLoadAlbums();
