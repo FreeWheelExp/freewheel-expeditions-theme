@@ -179,12 +179,24 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
   #albumMarqueeTrack .alb-meta{font-size:11px;color:rgba(255,255,255,.4);letter-spacing:.5px}
   </style>
 
+  <style>
+  @keyframes fw-scroll-left {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  #albumMarqueeTrack {
+    animation: fw-scroll-left 40s linear infinite;
+  }
+  #albumMarqueeTrack:hover {
+    animation-play-state: paused;
+  }
+  </style>
+
   <script>
   (function() {
     var REST = (window.FW_AUTH && FW_AUTH.rest_url) || '/wp-json/freewheel/v1';
-    var track, animId, paused = false, offset = 0, speed = 0.6;
 
-    fetch(REST + '/fw-public-albums?limit=5')
+    fetch(REST + '/fw-public-albums?limit=10')
       .then(function(r){ return r.json(); })
       .then(function(d){
         document.getElementById('albumCarouselLoading').style.display = 'none';
@@ -200,22 +212,18 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
       });
 
     function buildCarousel(albums) {
-      track = document.getElementById('albumMarqueeTrack');
+      var track   = document.getElementById('albumMarqueeTrack');
       var marquee = document.getElementById('albumMarquee');
 
-      /* Build cards and duplicate for infinite loop */
+      /* Duplicate cards — CSS animation goes 0% to -50%, so 2x width = seamless */
       var cards = albums.map(makeCard).join('');
-      track.innerHTML = cards + cards + cards; /* triple for seamless loop */
+      track.innerHTML = cards + cards;
+
+      /* Speed: fewer cards = faster animation so it feels right */
+      var duration = Math.max(20, albums.length * 5);
+      track.style.animationDuration = duration + 's';
 
       marquee.style.display = 'block';
-
-      /* Drag to pause */
-      marquee.addEventListener('mouseenter', function(){ paused = true; });
-      marquee.addEventListener('mouseleave', function(){ paused = false; });
-      marquee.addEventListener('touchstart',  function(){ paused = true;  }, {passive:true});
-      marquee.addEventListener('touchend',    function(){ paused = false; }, {passive:true});
-
-      animate();
     }
 
     function makeCard(album) {
@@ -321,16 +329,6 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
       if (e.key==='ArrowRight' && window.lbNext) lbNext();
     });
 
-    function animate() {
-      if (!paused) {
-        offset += speed;
-        /* Reset when first set of cards scrolled out */
-        var singleSetWidth = track.scrollWidth / 3;
-        if (offset >= singleSetWidth) offset = 0;
-        track.style.transform = 'translateX(-' + offset + 'px)';
-      }
-      animId = requestAnimationFrame(animate);
-    }
   })();
   </script>
 
