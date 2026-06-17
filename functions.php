@@ -3218,9 +3218,10 @@ function fw_admin_upload_album_photo( $request ) {
 
     /* Use client-supplied sort_order if present (sequential uploads send index 0,1,2…)
        Otherwise fall back to a unique microsecond-based value to avoid race conditions */
-    $sort_order = isset( $_POST['sort_order'] ) ? intval( $_POST['sort_order'] ) : intval( round( microtime(true) * 1000 ) );
+    /* sort_order: client index × 10000 + microseconds → unique even on retry */
+    $sort_order = isset( $_POST['sort_order'] ) ? ( intval( $_POST['sort_order'] ) * 10000 + ( intval( round( microtime(true) * 10000 ) ) % 10000 ) ) : intval( round( microtime(true) * 10000 ) );
 
-    $path = 'albums/' . $album_id . '/' . time() . '_' . mt_rand(1000,9999);
+    $path = 'albums/' . $user['id'] . '/' . $album_id . '/' . time() . '_' . mt_rand(1000,9999);
     $url  = fw_upload_image( $_FILES['photo'], $path );
     if ( is_wp_error( $url ) ) {
         return new WP_Error( 'upload_fail', $url->get_error_message(), array( 'status' => 500 ) );
