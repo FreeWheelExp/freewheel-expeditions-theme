@@ -437,7 +437,67 @@ echo '<script type="application/ld+json">' . json_encode($schema_exp, JSON_UNESC
           $wa_num_book  = $wa_num;
           $wa_text_book = 'Hi FreeWheel! 👋 I want to book the *' . $title . '* expedition.' . ($dates ? ' Dates: ' . $dates . '.' : '') . ' Please share booking details.';
           $exp_post_id  = get_the_ID();
+          $is_full      = ( $m('fw_waitlist_mode') === '1' );
         ?>
+
+        <?php if ( $is_full ): ?>
+        <!-- WAITLIST MODE -->
+        <div style="text-align:center;padding:6px 0 10px">
+          <span style="display:inline-block;padding:5px 14px;background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.3);color:#f87171;font-family:var(--headline);font-size:12px;letter-spacing:2px;border-radius:2px">FULLY BOOKED</span>
+        </div>
+        <p style="font-size:13px;color:rgba(255,255,255,.55);text-align:center;line-height:1.6;margin:10px 0 18px">This expedition is full. Join the waitlist and we'll reach out the moment a seat opens up.</p>
+
+        <div style="margin-bottom:14px">
+          <label style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.45);display:block;margin-bottom:6px">Seats Wanted</label>
+          <div style="display:flex;align-items:center;gap:10px">
+            <button onclick="fwWlSeatChange(-1)" style="width:36px;height:36px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:18px;cursor:pointer;border-radius:2px">−</button>
+            <span id="wlSeatCount" style="font-family:var(--headline);font-size:28px;color:#fff;min-width:30px;text-align:center">1</span>
+            <button onclick="fwWlSeatChange(1)" style="width:36px;height:36px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:18px;cursor:pointer;border-radius:2px">+</button>
+          </div>
+        </div>
+
+        <div id="wlGate" style="display:none;padding:12px;background:rgba(193,68,14,.1);border:1px solid rgba(193,68,14,.3);border-radius:2px;font-size:13px;color:rgba(255,255,255,.7);margin-bottom:12px;text-align:center">
+          Please <a id="wlLoginLink" href="/login/" style="color:var(--rust)">log in</a> to join the waitlist.
+        </div>
+
+        <button id="wlJoinBtn" onclick="fwJoinWaitlist()" style="display:none;width:100%;padding:14px;background:var(--rust);border:none;color:#fff;font-family:var(--headline);font-size:16px;letter-spacing:2px;cursor:pointer;border-radius:2px">JOIN WAITLIST</button>
+        <div id="wlMsg" style="font-size:12px;text-align:center;margin-top:10px"></div>
+
+        <script>
+        (function(){
+          var _wlSeats = 1, _wlPostId = '<?php echo esc_js($exp_post_id); ?>';
+          window.fwWlSeatChange = function(d){ _wlSeats = Math.max(1, Math.min(10, _wlSeats+d)); document.getElementById('wlSeatCount').textContent = _wlSeats; };
+          function wlInit(){
+            var session=null; try{session=JSON.parse(localStorage.getItem('fw_session')||'null');}catch(e){}
+            var isLoggedIn = session && session.access_token && (!session.expires_at || session.expires_at > Date.now());
+            if (!isLoggedIn) {
+              document.getElementById('wlGate').style.display='block';
+              document.getElementById('wlLoginLink').href=(window.FW_AUTH?FW_AUTH.login_url:'/login/')+'?redirect='+encodeURIComponent(window.location.href);
+            } else {
+              document.getElementById('wlJoinBtn').style.display='block';
+            }
+          }
+          window.fwJoinWaitlist = async function(){
+            var session=null; try{session=JSON.parse(localStorage.getItem('fw_session')||'null');}catch(e){}
+            if (!session || !session.access_token) return;
+            var btn=document.getElementById('wlJoinBtn'), msg=document.getElementById('wlMsg');
+            btn.disabled=true; btn.textContent='Joining…';
+            try{
+              var r=await fetch((window.FW_AUTH?FW_AUTH.rest_url:'/wp-json/freewheel/v1')+'/fw-join-waitlist',{
+                method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+                body:JSON.stringify({expedition_id:_wlPostId, seats_wanted:_wlSeats})
+              });
+              var d=await r.json();
+              if(!r.ok) throw new Error(d.message||'Could not join waitlist.');
+              btn.style.background='#16a34a'; btn.textContent='✓ ON THE WAITLIST'; btn.disabled=true;
+              msg.textContent=d.message||"You're on the list — we'll email you when a seat opens up."; msg.style.color='#4ade80';
+            }catch(err){ msg.textContent=err.message; msg.style.color='#f87171'; btn.disabled=false; btn.textContent='JOIN WAITLIST'; }
+          };
+          wlInit();
+        })();
+        </script>
+
+        <?php else: ?>
 
         <!-- Seats selector -->
         <div style="margin-bottom:14px">
@@ -620,6 +680,8 @@ async function fwExpRzpPay(){
         }catch(err){msg.textContent=err.message||'Something went wrong.';btn.disabled=false;btn.textContent='PAY & BOOK NOW';}
       }
       </script>
+
+      <?php endif; ?>
 
     <div id="sidebarSub" style="background:linear-gradient(135deg,var(--teal),#1a5a50);padding:20px">
       <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:6px">Member Perk</div>
