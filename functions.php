@@ -974,6 +974,11 @@ add_action( 'rest_api_init', function() {
     register_rest_route( 'freewheel/v1', '/fw-resubmit-testi',    array( 'methods' => 'POST', 'callback' => 'fw_member_resubmit_testi','permission_callback' => '__return_true' ));
     register_rest_route( 'freewheel/v1', '/fw-referral-stats',    array( 'methods' => 'GET',  'callback' => 'fw_referral_stats',       'permission_callback' => '__return_true' ));
     register_rest_route( 'freewheel/v1', '/fw-public-profile',    array( 'methods' => 'GET',  'callback' => 'fw_public_profile',       'permission_callback' => '__return_true' ));
+    register_rest_route( 'freewheel/v1', '/fw-join-waitlist',     array( 'methods' => 'POST', 'callback' => 'fw_join_waitlist',        'permission_callback' => '__return_true' ));
+    register_rest_route( 'freewheel/v1', '/fw-my-waitlist',       array( 'methods' => 'GET',  'callback' => 'fw_my_waitlist',          'permission_callback' => '__return_true' ));
+    register_rest_route( 'freewheel/v1', '/fw-leave-waitlist',    array( 'methods' => 'POST', 'callback' => 'fw_leave_waitlist',       'permission_callback' => '__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/waitlist',       array( 'methods' => 'GET',  'callback' => 'fw_admin_get_waitlist',   'permission_callback' => '__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/waitlist-action',array( 'methods' => 'POST', 'callback' => 'fw_admin_waitlist_action','permission_callback' => '__return_true' ));
 });
 
 /* ── Helper: compress image to WebP, max 1920px, return temp path ── */
@@ -2036,6 +2041,14 @@ function fw_exp_slots_cb($post) {
             <label>Slots Filled</label>
             <input type="number" name="fw_filled_slots" value="<?php echo esc_attr($filled); ?>">
         </div>
+        <div class="fw-f">
+            <label>Booking Status</label>
+            <select name="fw_waitlist_mode">
+                <option value="" <?php selected($m('fw_waitlist_mode'),''); ?>>Open for Booking</option>
+                <option value="1" <?php selected($m('fw_waitlist_mode'),'1'); ?>>Full — Show Waitlist</option>
+            </select>
+            <p class="fw-tip">Switch to "Full" manually once the WhatsApp group fills up — the booking button on the live page becomes "Join Waitlist."</p>
+        </div>
     </div>
     <div class="fw-f" style="margin-top:10px">
         <label>Cancellation Policy (one point per line)</label>
@@ -2393,7 +2406,7 @@ function freewheel_save_all_meta($post_id) {
     }
 
     if ($type === 'fw_expedition' && isset($_POST['fw_exp_nonce']) && wp_verify_nonce($_POST['fw_exp_nonce'],'fw_save_exp')) {
-        $tf = array('fw_status','fw_destination','fw_dates','fw_month','fw_duration','fw_region','fw_difficulty','fw_subtitle','fw_overview','fw_highlights','fw_badge','fw_hero_emoji','fw_inclusions','fw_exclusions','fw_cancellation','fw_things_carry','fw_whatsapp','fw_price_unit','fw_qr_image');
+        $tf = array('fw_status','fw_destination','fw_dates','fw_month','fw_duration','fw_region','fw_difficulty','fw_subtitle','fw_overview','fw_highlights','fw_badge','fw_hero_emoji','fw_inclusions','fw_exclusions','fw_cancellation','fw_things_carry','fw_whatsapp','fw_price_unit','fw_qr_image','fw_waitlist_mode');
         $nf = array('fw_price','fw_couple_price','fw_seat_price','fw_max_slots','fw_filled_slots','fw_order');
         foreach ($tf as $f) { if (isset($_POST[$f])) update_post_meta($post_id,$f,sanitize_textarea_field($_POST[$f])); }
         foreach ($nf as $f) { if (isset($_POST[$f])) update_post_meta($post_id,$f,intval($_POST[$f])); }
@@ -3185,7 +3198,8 @@ function fw_count_rows( $url ) {
 
 /* ---- fw_admin_site_stats ---- */
 function fw_admin_site_stats( $request ) {
-    if ( ! fw_is_admin( $request ) ) return fw_admin_deny();
+    $caller = fw_admin_auth( $request );
+    if ( is_wp_error( $caller ) ) return $caller;
     $base = FW_SUPABASE_URL . '/rest/v1/';
     $total_members   = fw_count_rows( $base . 'fw_members?select=id' );
     $blocked_members = fw_count_rows( $base . 'fw_members?select=id&is_suspended=eq.true' );
@@ -3235,17 +3249,55 @@ function fw_admin_site_stats( $request ) {
     $expeditions = array();
     foreach ( $exp_map as $name => $cnt ) { $expeditions[] = array( 'trip_name' => $name, 'count' => $cnt ); }
     usort( $expeditions, function( $a, $b ) { return $b['count'] - $a['count']; } );
+
+    /* Revenue — sum of paid bookings + orders (stored in paise, convert to rupees) */
+    $booking_amts = json_decode( wp_remote_retrieve_body( wp_remote_get(
+        $base . 'fw_bookings?select=amount_paid&status=eq.confirmed',
+        array( 'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE ), 'timeout' => 10 )
+    )), true );
+    $order_amts = json_decode( wp_remote_retrieve_body( wp_remote_get(
+        $base . 'fw_orders?select=amount&status=eq.paid',
+        array( 'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE ), 'timeout' => 10 )
+    )), true );
+    $booking_revenue = 0; foreach ( (array) $booking_amts as $b ) { $booking_revenue += intval( $b['amount_paid'] ?? 0 ); }
+    $order_revenue   = 0; foreach ( (array) $order_amts as $o )   { $order_revenue   += intval( $o['amount'] ?? 0 ); }
+    $total_revenue_rupees = round( ( $booking_revenue + $order_revenue ) / 100 );
+
+    /* Pending content — quick triage count */
+    $pending_blogs = fw_count_rows( $base . 'fw_blogs?select=id&status=eq.pending' );
+    $pending_albums= fw_count_rows( $base . 'fw_albums?select=id&status=eq.pending' );
+    $pending_testis= fw_count_rows( $base . 'fw_testimonials?select=id&status=eq.pending' );
+
+    /* Growth — new members in the last 30 days */
+    $since = date( 'c', strtotime( '-30 days' ) );
+    $new_members_30d = fw_count_rows( $base . 'fw_members?select=id&created_at=gte.' . rawurlencode( $since ) );
+
+    /* Referral program totals */
+    $total_referred  = fw_count_rows( $base . 'fw_members?select=id&referred_by=not.is.null' );
+    $referrals_credited = fw_count_rows( $base . 'fw_members?select=id&referral_bonus_given=eq.true' );
+
+    /* Waitlist */
+    $waitlist_waiting = fw_count_rows( $base . 'fw_waitlist?select=id&status=eq.waiting' );
+
     return rest_ensure_response( array(
         'success' => true,
         'stats'   => array(
             'total_members'         => $total_members,
             'active_members'        => $total_members - $blocked_members,
             'blocked_members'       => $blocked_members,
+            'new_members_30d'       => $new_members_30d,
             'total_bookings'        => $total_bookings,
             'total_orders'          => $total_orders,
+            'total_revenue'         => $total_revenue_rupees,
             'published_blogs'       => $published_blogs,
             'published_albums'      => $published_albums,
             'approved_testimonials' => $approved_testis,
+            'pending_blogs'         => $pending_blogs,
+            'pending_albums'        => $pending_albums,
+            'pending_testimonials'  => $pending_testis,
+            'total_referred'        => $total_referred,
+            'referrals_credited'    => $referrals_credited,
+            'waitlist_waiting'      => $waitlist_waiting,
             'roles'                 => $roles,
             'merchandise'           => $merchandise,
             'expeditions'           => $expeditions,
@@ -3763,5 +3815,173 @@ function fw_public_profile( $request ) {
         'tier'    => $tier,
         'albums'  => $albums,
         'blogs'   => $blogs,
+    ));
+}
+
+/* ── Waitlist: member joins ── */
+function fw_join_waitlist( $request ) {
+    $user = fw_validate_token( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $p     = $request->get_json_params() ?: array();
+    $exp_id = absint( $p['expedition_id'] ?? 0 );
+    $seats  = max( 1, intval( $p['seats_wanted'] ?? 1 ) );
+    if ( ! $exp_id || ! get_post( $exp_id ) ) return new WP_Error( 'invalid', 'Expedition not found.', array( 'status' => 400 ) );
+
+    $h = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
+
+    /* Don't double-join — check for an existing active entry */
+    $existing = json_decode( wp_remote_retrieve_body( wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_waitlist?expedition_id=eq.' . $exp_id . '&user_id=eq.' . rawurlencode($user['id']) . '&status=in.(waiting,notified)&select=id',
+        array( 'headers' => $h, 'timeout' => 8 )
+    )), true );
+    if ( ! empty( $existing ) ) {
+        return rest_ensure_response( array( 'success' => true, 'message' => 'You are already on the waitlist for this trip.' ) );
+    }
+
+    $resp = wp_remote_post( FW_SUPABASE_URL . '/rest/v1/fw_waitlist', array(
+        'headers'     => array_merge( $h, array( 'Content-Type' => 'application/json', 'Prefer' => 'return=minimal' ) ),
+        'body'        => wp_json_encode( array(
+            'expedition_id' => $exp_id,
+            'user_id'       => $user['id'],
+            'seats_wanted'  => $seats,
+            'status'        => 'waiting',
+        )),
+        'timeout'     => 10, 'data_format' => 'body',
+    ));
+    if ( is_wp_error( $resp ) || wp_remote_retrieve_response_code( $resp ) >= 300 ) {
+        return new WP_Error( 'fail', 'Could not join waitlist.', array( 'status' => 500 ) );
+    }
+    return rest_ensure_response( array( 'success' => true ) );
+}
+
+/* ── Waitlist: member's own entries ── */
+function fw_my_waitlist( $request ) {
+    $user = fw_validate_token( $request );
+    if ( is_wp_error( $user ) ) return $user;
+    $h = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
+    $rows = json_decode( wp_remote_retrieve_body( wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_waitlist?user_id=eq.' . rawurlencode($user['id']) . '&status=in.(waiting,notified)&order=created_at.desc',
+        array( 'headers' => $h, 'timeout' => 10 )
+    )), true );
+    if ( ! is_array( $rows ) ) $rows = array();
+    foreach ( $rows as &$r ) {
+        $post = get_post( (int) $r['expedition_id'] );
+        $r['expedition_title'] = $post ? html_entity_decode( get_the_title( $post ) ) : 'Unknown trip';
+    }
+    unset( $r );
+    return rest_ensure_response( array( 'success' => true, 'waitlist' => $rows ) );
+}
+
+/* ── Waitlist: member leaves ── */
+function fw_leave_waitlist( $request ) {
+    $user = fw_validate_token( $request );
+    if ( is_wp_error( $user ) ) return $user;
+    $p  = $request->get_json_params() ?: array();
+    $id = sanitize_text_field( $p['id'] ?? '' );
+    if ( ! $id ) return new WP_Error( 'missing', 'Waitlist entry ID required.', array( 'status' => 400 ) );
+    $h = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
+    wp_remote_request( FW_SUPABASE_URL . '/rest/v1/fw_waitlist?id=eq.' . rawurlencode($id) . '&user_id=eq.' . rawurlencode($user['id']),
+        array( 'method' => 'DELETE', 'headers' => $h, 'timeout' => 10 ) );
+    return rest_ensure_response( array( 'success' => true ) );
+}
+
+/* ── Admin/Moderator: view waitlist (grouped by expedition) ── */
+function fw_admin_get_waitlist( $request ) {
+    $caller = fw_admin_auth( $request );
+    if ( is_wp_error( $caller ) ) return $caller;
+    $h = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
+
+    $rows = json_decode( wp_remote_retrieve_body( wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_waitlist?status=in.(waiting,notified)&order=created_at.asc',
+        array( 'headers' => $h, 'timeout' => 10 )
+    )), true );
+    if ( ! is_array( $rows ) ) $rows = array();
+
+    $user_ids = array_unique( array_column( $rows, 'user_id' ) );
+    $members  = array();
+    if ( $user_ids ) {
+        $filter = implode( ',', array_map( 'rawurlencode', $user_ids ) );
+        $m_rows = json_decode( wp_remote_retrieve_body( wp_remote_get(
+            FW_SUPABASE_URL . '/rest/v1/fw_members?id=in.(' . $filter . ')&select=id,first_name,last_name,email,phone',
+            array( 'headers' => $h, 'timeout' => 10 )
+        )), true );
+        if ( is_array( $m_rows ) ) foreach ( $m_rows as $m ) { $members[ $m['id'] ] = $m; }
+    }
+
+    foreach ( $rows as &$r ) {
+        $post = get_post( (int) $r['expedition_id'] );
+        $r['expedition_title'] = $post ? html_entity_decode( get_the_title( $post ) ) : 'Unknown trip';
+        $mem = $members[ $r['user_id'] ] ?? array();
+        $r['member_name']  = trim( ( $mem['first_name'] ?? '' ) . ' ' . ( $mem['last_name'] ?? '' ) ) ?: 'Unknown';
+        $r['member_email'] = $mem['email'] ?? '';
+        $r['member_phone'] = $mem['phone'] ?? '';
+    }
+    unset( $r );
+
+    return rest_ensure_response( array( 'success' => true, 'waitlist' => $rows ) );
+}
+
+/* ── Admin/Moderator: notify / convert / remove a waitlist entry ── */
+function fw_admin_waitlist_action( $request ) {
+    $caller = fw_admin_auth( $request );
+    if ( is_wp_error( $caller ) ) return $caller;
+    $p      = $request->get_json_params() ?: array();
+    $id     = sanitize_text_field( $p['id'] ?? '' );
+    $action = sanitize_text_field( $p['action'] ?? '' );
+    if ( ! $id || ! in_array( $action, array( 'notify', 'convert', 'remove' ), true ) ) {
+        return new WP_Error( 'invalid', 'Valid id and action required.', array( 'status' => 400 ) );
+    }
+    $h = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
+
+    $row = json_decode( wp_remote_retrieve_body( wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_waitlist?id=eq.' . rawurlencode($id) . '&select=*',
+        array( 'headers' => $h, 'timeout' => 8 )
+    )), true );
+    if ( empty( $row[0] ) ) return new WP_Error( 'not_found', 'Waitlist entry not found.', array( 'status' => 404 ) );
+    $entry = $row[0];
+
+    if ( $action === 'remove' || $action === 'convert' ) {
+        $new_status = $action === 'convert' ? 'converted' : 'removed';
+        wp_remote_request( FW_SUPABASE_URL . '/rest/v1/fw_waitlist?id=eq.' . rawurlencode($id), array(
+            'method' => 'PATCH', 'headers' => array_merge( $h, array( 'Content-Type' => 'application/json', 'Prefer' => 'return=minimal' ) ),
+            'body' => wp_json_encode( array( 'status' => $new_status ) ), 'timeout' => 8,
+        ));
+        fw_log_admin_action( $caller, 'waitlist_' . $new_status, 'waitlist', $id, '' );
+        return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    /* Notify — email the member that a slot has opened up */
+    $post  = get_post( (int) $entry['expedition_id'] );
+    $title = $post ? html_entity_decode( get_the_title( $post ) ) : 'your trip';
+    $mem = json_decode( wp_remote_retrieve_body( wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_members?id=eq.' . rawurlencode($entry['user_id']) . '&select=email,first_name',
+        array( 'headers' => $h, 'timeout' => 8 )
+    )), true );
+    if ( ! empty( $mem[0]['email'] ) ) {
+        fw_send_waitlist_slot_email( $mem[0]['email'], $mem[0]['first_name'] ?? 'there', $title );
+    }
+    wp_remote_request( FW_SUPABASE_URL . '/rest/v1/fw_waitlist?id=eq.' . rawurlencode($id), array(
+        'method' => 'PATCH', 'headers' => array_merge( $h, array( 'Content-Type' => 'application/json', 'Prefer' => 'return=minimal' ) ),
+        'body' => wp_json_encode( array( 'status' => 'notified', 'notified_at' => date('c') ) ), 'timeout' => 8,
+    ));
+    fw_log_admin_action( $caller, 'waitlist_notified', 'waitlist', $id, $title );
+    return rest_ensure_response( array( 'success' => true ) );
+}
+
+/* ── Waitlist slot-open email ── */
+function fw_send_waitlist_slot_email( $email, $first_name, $trip_title ) {
+    $brevo_api_key = defined('FW_BREVO_API_KEY') ? FW_BREVO_API_KEY : '';
+    if ( ! $brevo_api_key ) return;
+    $html = '<div style="font-family:Arial,sans-serif;background:#0f0d0b;padding:40px;color:#fff;text-align:center"><h2 style="color:#e8a020">A Slot Just Opened, ' . esc_html($first_name) . '!</h2><p style="color:rgba(255,255,255,.7);font-size:15px;line-height:1.7">A seat has opened up on <strong>' . esc_html($trip_title) . '</strong> — you were next on the waitlist. Reply to this email or message us on WhatsApp to grab it before it\'s gone.</p><p style="margin-top:30px;color:rgba(255,255,255,.4);font-size:12px">FreeWheel Expeditions</p></div>';
+    wp_remote_post( 'https://api.brevo.com/v3/smtp/email', array(
+        'headers' => array( 'api-key' => $brevo_api_key, 'Content-Type' => 'application/json', 'Accept' => 'application/json' ),
+        'body' => wp_json_encode( array(
+            'sender'      => array( 'name' => 'FreeWheel Expeditions', 'email' => 'hello@freewheelexpeditions.in' ),
+            'to'          => array( array( 'email' => $email, 'name' => $first_name ) ),
+            'subject'     => 'A slot just opened on ' . $trip_title . ' 🏔️',
+            'htmlContent' => $html,
+        )),
+        'timeout' => 15, 'data_format' => 'body',
     ));
 }
