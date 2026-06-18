@@ -219,34 +219,6 @@ async function handleSub(){
 }
 
 
-/* -- BOOKING MODAL -- */
-var curTrip='',curPrice=0,payMode='full';
-function openBookNow(name,price,month){
-  curTrip=name;curPrice=price;
-  document.getElementById('bTag').textContent='Book Expedition';
-  document.getElementById('bName').textContent=name;
-  document.getElementById('bMeta').textContent=month+' ? ?'+price.toLocaleString('en-IN')+' per person';
-  document.getElementById('bConfTrip').textContent=name;
-  ['sp1','sp2','sp3'].forEach(function(id){document.getElementById(id).classList.remove('visible')});
-  document.getElementById('sp1').classList.add('visible');
-  ['st1','st2','st3'].forEach(function(id){var el=document.getElementById(id);el.classList.remove('active','done')});
-  document.getElementById('st1').classList.add('active');
-  payMode='full';
-  document.getElementById('pFull').classList.add('selected');
-  document.getElementById('pPart').classList.remove('selected');
-  updAmt();
-  document.getElementById('bookingOverlay').classList.add('open');
-  document.body.style.overflow='hidden';
-}
-function selPay(m){payMode=m;document.getElementById('pFull').classList.toggle('selected',m==='full');document.getElementById('pPart').classList.toggle('selected',m==='partial');updAmt();}
-function updAmt(){var a=payMode==='full'?curPrice:Math.round(curPrice*0.5);var n=payMode==='full'?'Full trip amount':'50% deposit ? rest due 30 days before trip';document.getElementById('bPayAmt').textContent='?'+a.toLocaleString('en-IN');document.getElementById('bPayNote').textContent=n;}
-function goStep(n){
-  if(n===2){if(!document.getElementById('bFirst').value||!document.getElementById('bEmail').value){alert('Please fill your name and email to continue.');return;}updAmt();}
-  if(n===3){if(!document.getElementById('bUTR').value){alert('Please enter the UTR / transaction reference after making the payment.');return;}}
-  ['sp1','sp2','sp3'].forEach(function(id,i){document.getElementById(id).classList.toggle('visible',i+1===n)});
-  ['st1','st2','st3'].forEach(function(id,i){var el=document.getElementById(id);el.classList.remove('active','done');if(i+1<n)el.classList.add('done');else if(i+1===n)el.classList.add('active');});
-
-}
 /* -- MODAL & NAV UTILITIES -- */
 function closeModal(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';}
 function closeIfOutside(e,id){if(e.target===document.getElementById(id))closeModal(id);}
