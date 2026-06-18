@@ -90,9 +90,14 @@ function loadAll() {
   loadMembers();
   try {
     var _s = JSON.parse(localStorage.getItem('fw_session')||'null');
-    if (_s && _s.role === 'super_admin') {
+    var isStaff = _s && (_s.role === 'super_admin' || _s.role === 'moderator' || _s.role === 'admin');
+    if (isStaff) {
       var tabEl = document.getElementById('tabStats');
       if (tabEl) { tabEl.style.display = 'block'; loadStats(); }
+      var wlTabEl = document.getElementById('tabWaitlist');
+      if (wlTabEl) { wlTabEl.style.display = 'block'; loadWaitlist(); }
+    }
+    if (_s && _s.role === 'super_admin') {
       var logTabEl = document.getElementById('tabActivityLog');
       if (logTabEl) logTabEl.style.display = 'block';
     }
@@ -585,6 +590,7 @@ function admTab(id, btn) {
   document.getElementById('panel-'+id).classList.add('active');
   if (id === 'create') adminCreateTab('blog');
   if (id === 'activitylog') loadActivityLog();
+  if (id === 'waitlist') loadWaitlist();
 }
 
 function loadActivityLog() {
@@ -743,6 +749,13 @@ function loadStats() {
     ss('statTotalMembers',s.total_members); ss('statActiveMembers',s.active_members); ss('statBlockedMembers',s.blocked_members);
     ss('statTotalBookings',s.total_bookings); ss('statTotalOrders',s.total_orders);
     ss('statTotalBlogs',s.published_blogs); ss('statTotalAlbums',s.published_albums); ss('statTotalTestis',s.approved_testimonials);
+    var revEl = document.getElementById('statRevenue'); if (revEl) revEl.textContent = '₹' + (s.total_revenue||0).toLocaleString('en-IN');
+    ss('statNewMembers30d', s.new_members_30d);
+    ss('statTotalReferred', s.total_referred);
+    ss('statReferralsCredited', s.referrals_credited);
+    ss('statWaitlistWaiting', s.waitlist_waiting);
+    var pendingTotal = (s.pending_blogs||0) + (s.pending_albums||0) + (s.pending_testimonials||0);
+    ss('statPendingContent', pendingTotal);
     var merch=s.merchandise||[];
     document.getElementById('statMerchandise').innerHTML=merch.length?'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">'+merch.map(function(m){return '<div class="adm-stat-box"><div class="adm-stat-n" style="font-size:26px">'+m.count+'</div><div class="adm-stat-l">'+m.product_name+'</div></div>';}).join('')+'</div>':'<div class="adm-empty">No orders yet.</div>';
     var exps=s.expeditions||[];
@@ -750,6 +763,56 @@ function loadStats() {
     var roles=s.roles||[];
     document.getElementById('statRoles').innerHTML=roles.map(function(r){return '<div class="adm-stat-box" style="min-width:120px"><div class="adm-stat-n" style="font-size:26px">'+r.count+'</div><div class="adm-stat-l">'+r.role+'</div></div>';}).join('');
   }).catch(function(){});
+}
+
+/* ── Waitlist ── */
+function loadWaitlist() {
+  var el = document.getElementById('waitlistList');
+  if (!el) return;
+  el.innerHTML = '<div class="adm-spinner">Loading...</div>';
+  fetch(_admRest + '/admin/waitlist', { headers: h() })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d.success || !d.waitlist || !d.waitlist.length) { el.innerHTML = '<div class="adm-empty">No one on the waitlist right now.</div>'; return; }
+      /* Group by expedition */
+      var groups = {};
+      d.waitlist.forEach(function(w) {
+        var key = w.expedition_title || 'Unknown trip';
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(w);
+      });
+      var html = '';
+      Object.keys(groups).forEach(function(tripName) {
+        var entries = groups[tripName];
+        html += '<div style="margin-bottom:24px"><div style="font-family:var(--headline);font-size:16px;color:#fff;letter-spacing:.5px;margin-bottom:10px">' + tripName + ' <span style="font-size:12px;color:rgba(255,255,255,.35);font-family:var(--body)">(' + entries.length + ' waiting)</span></div>';
+        entries.forEach(function(w) {
+          var statusColor = w.status === 'notified' ? '#e8a020' : '#4ade80';
+          var statusLabel = w.status === 'notified' ? 'Notified' : 'Waiting';
+          html += '<div class="adm-card" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:6px">' +
+            '<div style="flex:1;min-width:160px"><div style="font-size:13px;color:#fff">' + w.member_name + '</div><div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">' + (w.member_email||'') + (w.member_phone?' · '+w.member_phone:'') + '</div></div>' +
+            '<div style="font-size:12px;color:rgba(255,255,255,.5)">' + w.seats_wanted + ' seat(s)</div>' +
+            '<span class="adm-badge" style="background:'+statusColor+'18;color:'+statusColor+';border:1px solid '+statusColor+'40">' + statusLabel + '</span>' +
+            '<div style="display:flex;gap:6px">' +
+              (w.status === 'waiting' ? '<button class="adm-btn btn-approve" data-id="'+w.id+'" onclick="waitlistAction(this.dataset.id,\\'notify\\')">Notify</button>' : '') +
+              '<button class="adm-btn btn-approve" data-id="'+w.id+'" onclick="waitlistAction(this.dataset.id,\\'convert\\')">Mark Booked</button>' +
+              '<button class="adm-btn btn-reject" data-id="'+w.id+'" onclick="waitlistAction(this.dataset.id,\\'remove\\')">Remove</button>' +
+            '</div>' +
+          '</div>';
+        });
+        html += '</div>';
+      });
+      el.innerHTML = html;
+    })
+    .catch(function(){ el.innerHTML = '<div class="adm-empty">Failed to load.</div>'; });
+}
+
+function waitlistAction(id, action) {
+  var msgs = { notify: 'Send a "slot opened" email to this person?', convert: 'Mark this entry as booked and remove from waitlist?', remove: 'Remove this person from the waitlist?' };
+  if (!confirm(msgs[action] || 'Are you sure?')) return;
+  fetch(_admRest + '/admin/waitlist-action', { method: 'POST', headers: Object.assign({'Content-Type':'application/json'}, h()), body: JSON.stringify({ id: id, action: action }) })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if (d.success) { toast('Done.'); loadWaitlist(); } else alert(d.message || 'Failed.'); })
+    .catch(function(){ alert('Network error.'); });
 }
 
 /* ── Admin Create Content ── */
