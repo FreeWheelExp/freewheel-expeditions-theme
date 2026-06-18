@@ -339,17 +339,22 @@ function freewheel_enqueue_assets() {
     wp_enqueue_style('freewheel-fonts',
         'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap', array(), null);
     wp_enqueue_style('freewheel-main', get_template_directory_uri().'/fw-styles.css', array(), '5.1');
-    // Supabase JS: must load in HEAD because page-dashboard.php and page-register.php
-    // call supabase.createClient() in inline <script> blocks within the page body.
-    // Moving this to footer (true) would break auth — keep as false (head).
-    wp_enqueue_script('supabase-js', 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', array(), null, false);
-    if ( is_page('merchandise') ) {
+    // Supabase JS SDK is only needed on pages that call supabase.createClient() directly
+    // (login, register, dashboard, edit-profile). Every other page reads the cached
+    // session token from localStorage via plain fetch() and doesn't need this ~100KB+ SDK —
+    // loading it everywhere was costing every visitor a render-blocking script for nothing.
+    // Must stay in HEAD (false) on the pages that do need it, since those call
+    // supabase.createClient() in inline <script> blocks within the page body.
+    if ( is_page_template( array( 'page-login.php', 'page-register.php', 'page-dashboard.php', 'page-edit-profile.php', 'page-connect.php' ) ) ) {
+        wp_enqueue_script('supabase-js', 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', array(), null, false);
+    }
+    if ( is_page_template('page-merchandise.php') || is_singular('fw_expedition') ) {
         wp_enqueue_script('razorpay-checkout', get_template_directory_uri() . '/checkout.js', array(), null, false);
     }
 
-/* Force Razorpay script in head as fallback - merchandise page only */
+/* Force Razorpay script in head as fallback - merchandise + expedition pages */
 add_action( 'wp_head', function() {
-    if ( ! is_page('merchandise') ) return;
+    if ( ! is_page_template('page-merchandise.php') && ! is_singular('fw_expedition') ) return;
     echo '<script src="https://freewheelexpeditions.in/wp-content/themes/freewheel-expeditions-theme/checkout.js"></script>' . "\n";
     echo '<script>if(typeof Razorpay==="undefined"){document.write(\'<script src="https://checkout.razorpay.com/v1/checkout.js"><\/script>\');}</script>' . "\n";
 }, 2 );
