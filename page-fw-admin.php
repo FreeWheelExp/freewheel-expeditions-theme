@@ -111,6 +111,7 @@ get_header();
       <button class="adm-tab" onclick="admTab('users',this)">Members</button>
       <button class="adm-tab" onclick="admTab('create',this)">Create Content</button>
       <button class="adm-tab" id="tabStats" style="display:none" onclick="admTab('stats',this)">Site Stats</button>
+      <button class="adm-tab" id="tabWaitlist" style="display:none" onclick="admTab('waitlist',this)">Waitlist</button>
       <button class="adm-tab" id="tabActivityLog" style="display:none" onclick="admTab('activitylog',this)">Activity Log</button>
     </div>
 
@@ -226,18 +227,24 @@ get_header();
       <div id="membersList"><div class="adm-empty">Loading members…</div></div>
     </div>
 
-    <!-- ── SITE STATS (super_admin only) ── -->
+    <!-- ── SITE STATS ── -->
     <div id="panel-stats" class="adm-panel">
       <div class="adm-section-title">Site Statistics</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:28px">
+        <div class="adm-stat-box" style="border-color:rgba(232,160,32,.35)"><div class="adm-stat-n" id="statRevenue" style="color:var(--amber)">₹0</div><div class="adm-stat-l">Total Revenue</div></div>
         <div class="adm-stat-box" style="border-color:rgba(193,68,14,.3)"><div class="adm-stat-n" id="statTotalMembers" style="color:var(--rust)">-</div><div class="adm-stat-l">Total Members</div></div>
+        <div class="adm-stat-box" style="border-color:rgba(74,222,128,.2)"><div class="adm-stat-n" id="statNewMembers30d" style="color:#4ade80">-</div><div class="adm-stat-l">New Members (30d)</div></div>
         <div class="adm-stat-box" style="border-color:rgba(74,222,128,.2)"><div class="adm-stat-n" id="statActiveMembers" style="color:#4ade80">-</div><div class="adm-stat-l">Active Members</div></div>
         <div class="adm-stat-box" style="border-color:rgba(248,113,113,.2)"><div class="adm-stat-n" id="statBlockedMembers" style="color:#f87171">-</div><div class="adm-stat-l">Blocked Members</div></div>
         <div class="adm-stat-box"><div class="adm-stat-n" id="statTotalBookings">-</div><div class="adm-stat-l">Total Bookings</div></div>
         <div class="adm-stat-box"><div class="adm-stat-n" id="statTotalOrders">-</div><div class="adm-stat-l">Merch Orders</div></div>
+        <div class="adm-stat-box" style="border-color:rgba(124,58,237,.3)"><div class="adm-stat-n" id="statWaitlistWaiting" style="color:#a78bfa">-</div><div class="adm-stat-l">On Waitlist</div></div>
+        <div class="adm-stat-box" style="border-color:rgba(232,160,32,.3)"><div class="adm-stat-n" id="statPendingContent" style="color:var(--amber)">-</div><div class="adm-stat-l">Pending Review</div></div>
         <div class="adm-stat-box"><div class="adm-stat-n" id="statTotalBlogs">-</div><div class="adm-stat-l">Published Blogs</div></div>
         <div class="adm-stat-box"><div class="adm-stat-n" id="statTotalAlbums">-</div><div class="adm-stat-l">Published Albums</div></div>
         <div class="adm-stat-box"><div class="adm-stat-n" id="statTotalTestis">-</div><div class="adm-stat-l">Testimonials</div></div>
+        <div class="adm-stat-box"><div class="adm-stat-n" id="statTotalReferred">-</div><div class="adm-stat-l">Total Referrals</div></div>
+        <div class="adm-stat-box" style="border-color:rgba(74,222,128,.2)"><div class="adm-stat-n" id="statReferralsCredited" style="color:#4ade80">-</div><div class="adm-stat-l">Referrals Credited</div></div>
       </div>
       <div class="adm-section-title">Merchandise Orders by Product</div>
       <div id="statMerchandise"><div class="adm-empty">Loading...</div></div>
@@ -245,6 +252,13 @@ get_header();
       <div id="statExpeditions"><div class="adm-empty">Loading...</div></div>
       <div class="adm-section-title" style="margin-top:24px">Role Distribution</div>
       <div id="statRoles" style="display:flex;gap:12px;flex-wrap:wrap"></div>
+    </div>
+
+    <!-- ── WAITLIST ── -->
+    <div id="panel-waitlist" class="adm-panel">
+      <div class="adm-section-title">Expedition Waitlist</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.35);margin-bottom:18px">Mark an expedition "Full — Show Waitlist" in its editor to start collecting names here.</div>
+      <div id="waitlistList"><div class="adm-spinner">Loading...</div></div>
     </div>
 
     <!-- Create Content Panel -->
