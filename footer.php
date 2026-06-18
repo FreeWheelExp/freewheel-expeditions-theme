@@ -22,53 +22,6 @@
   </div>
 </footer>
 
-<div class="overlay" id="bookingOverlay" onclick="closeIfOutside(event,'bookingOverlay')">
-  <div class="modal" id="bookingModal" onclick="event.stopPropagation()">
-    <button class="modal-close" onclick="closeModal('bookingOverlay')">✕</button>
-    <div class="modal-head">
-      <span class="modal-trip-tag" id="bTag">Book Expedition</span>
-      <div class="modal-title" id="bName">–</div>
-      <div class="modal-sub" id="bMeta">–</div>
-    </div>
-    <div class="modal-body">
-      <div class="step-tabs"><div class="stab active" id="st1">01 Details</div><div class="stab" id="st2">02 Payment</div><div class="stab" id="st3">03 Done</div></div>
-      <div class="step-panel visible" id="sp1">
-        <div class="fg-row"><div class="fg"><label>First Name</label><input type="text" id="bFirst" placeholder="Rahul"></div><div class="fg"><label>Last Name</label><input type="text" id="bLast" placeholder="Sharma"></div></div>
-        <div class="fg"><label>Email</label><input type="email" id="bEmail" placeholder="rahul@email.com"></div>
-        <div class="fg"><label>Phone</label><input type="tel" id="bPhone" placeholder="+91 98765 43210"></div>
-        <div class="fg"><label>Number of Travellers</label><select id="bTrav"><option>1 Person</option><option>2 Persons</option><option>3 Persons</option><option>4 Persons</option></select></div>
-        <div class="fg"><label>Vehicle Type</label><select id="bVeh"><option>Self Drive – Own SUV</option><option>Self Drive – Own Sedan/Hatchback</option><option>Seat Sharing (with vehicle)</option></select></div>
-        <button class="m-btn" onclick="goStep(2)">Continue to Payment →</button>
-        <p class="m-note">100% refund available up to 30 days before departure. By proceeding you agree to our booking terms.</p>
-      </div>
-      <div class="step-panel" id="sp2">
-        <div class="trip-price-summary"><div><div class="tps-label">Amount Due</div><div style="font-size:11px;color:#8a7052;font-weight:300;margin-top:2px" id="bPayNote">–</div></div><div class="tps-amount" id="bPayAmt">–</div></div>
-        <p style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#8a7052;font-weight:600;margin-bottom:10px">Choose Payment Option</p>
-        <div class="payment-opts">
-          <div class="pay-opt selected" id="pFull" onclick="selPay('full')"><div class="pay-opt-pct">100%</div><div class="pay-opt-label">Full Payment</div><div class="pay-opt-note">Pay everything now</div></div>
-          <div class="pay-opt" id="pPart" onclick="selPay('partial')"><div class="pay-opt-pct">50%</div><div class="pay-opt-label">Partial Payment</div><div class="pay-opt-note">Rest due 30 days before trip</div></div>
-        </div>
-        <div class="upi-box">
-          <div class="upi-label">UPI ID</div>
-          <span class="upi-id">freewheel@ybl</span>
-          <table class="bank-table"><tr><td>Account Name</td><td>FreeWheel Expeditions</td></tr><tr><td>Account No.</td><td>XXXX XXXX 1234</td></tr><tr><td>IFSC Code</td><td>HDFC0001234</td></tr><tr><td>Bank</td><td>HDFC Bank</td></tr></table>
-          <div class="qr-box"><div class="qr-ico">⬛</div><div class="qr-txt">Scan to Pay</div></div>
-        </div>
-        <div class="fg"><label>UTR / Transaction Reference</label><input type="text" id="bUTR" placeholder="Enter after making payment"></div>
-        <button class="m-btn" onclick="goStep(3)">Confirm Booking →</button>
-        <p class="m-note">Enter the UTR number after payment. We verify within 4 hours and send confirmation by email.</p>
-      </div>
-      <div class="step-panel" id="sp3">
-        <div class="success-box">
-          <span class="success-ico">🎉</span>
-          <div class="success-h">Booking Received!</div>
-          <p class="success-p">Thank you! We've received your booking request for <strong id="bConfTrip">–</strong>.<br><br>Our team will verify your payment and send a confirmation email within 4 hours.<br><br>Questions? WhatsApp us at <strong>+91 78178 38060</strong></p>
-        </div>
-        <button class="m-btn" onclick="closeModal('bookingOverlay')">Close</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 <div class="overlay" id="regOverlay" onclick="closeIfOutside(event,'regOverlay')">
   <div class="modal" style="max-width:560px" onclick="event.stopPropagation()">
