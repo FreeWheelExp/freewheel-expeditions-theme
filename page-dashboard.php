@@ -270,6 +270,12 @@ body{font-family:var(--body);background:#0a0805!important;color:#fff;overflow-x:
       <div id="tripHistory"></div>
     </div>
 
+    <!-- Waitlist -->
+    <div class="dash-section" id="myWaitlistSection" style="display:none">
+      <div class="dash-section-title">My Waitlist</div>
+      <div id="myWaitlistList"></div>
+    </div>
+
     <!-- Orders -->
     <div class="dash-section">
       <div class="dash-section-title">Merchandise Orders</div>
@@ -491,7 +497,7 @@ window.addEventListener('load', function() {
     }
 
     /* Load remaining data in parallel — each failure is isolated */
-    var [creditData, bookData, orderData, albumData, blogData, testiData, refData] = await Promise.all([
+    var [creditData, bookData, orderData, albumData, blogData, testiData, refData, wlData] = await Promise.all([
       safeFetch(_rest + '/fw-credit-history',   { headers: h }),
       safeFetch(_rest + '/fw-get-bookings',     { headers: h }),
       safeFetch(_rest + '/fw-get-orders',       { headers: h }),
@@ -499,11 +505,40 @@ window.addEventListener('load', function() {
       safeFetch(_rest + '/fw-get-blogs',        { headers: h }),
       safeFetch(_rest + '/fw-get-testimonials', { headers: h }),
       safeFetch(_rest + '/fw-referral-stats',   { headers: h }),
+      safeFetch(_rest + '/fw-my-waitlist',      { headers: h }),
     ]);
 
     render(profData, creditData, bookData, orderData, albumData, blogData, testiData);
     renderReferral(refData);
+    renderWaitlist(wlData);
   }
+
+  function renderWaitlist(wlData) {
+    var section = document.getElementById('myWaitlistSection');
+    var list = document.getElementById('myWaitlistList');
+    if (!wlData || !wlData.success || !wlData.waitlist || !wlData.waitlist.length) { if (section) section.style.display = 'none'; return; }
+    section.style.display = 'block';
+    list.innerHTML = wlData.waitlist.map(function(w) {
+      var statusColor = w.status === 'notified' ? '#e8a020' : 'rgba(255,255,255,.4)';
+      var statusLabel = w.status === 'notified' ? 'A seat opened up — check your email!' : 'Waiting for a seat';
+      return '<div class="fw-wl-card" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:8px;padding:14px 16px;background:#0f0d0b;border:1px solid rgba(255,255,255,.08);border-radius:3px">' +
+        '<div style="flex:1;min-width:160px"><div style="font-size:14px;color:#fff">' + w.expedition_title + '</div><div style="font-size:12px;margin-top:3px;color:' + statusColor + '">' + statusLabel + '</div></div>' +
+        '<div style="font-size:12px;color:rgba(255,255,255,.4)">' + w.seats_wanted + ' seat(s)</div>' +
+        '<button data-id="' + w.id + '" onclick="fwLeaveWaitlist(this.dataset.id, this)" style="padding:7px 14px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);color:#f87171;font-size:11px;cursor:pointer;border-radius:2px">Leave Waitlist</button>' +
+      '</div>';
+    }).join('');
+  }
+
+  window.fwLeaveWaitlist = async function(id, btn) {
+    if (!confirm('Leave the waitlist for this trip?')) return;
+    btn.disabled = true;
+    try {
+      var r = await fetch(_rest + '/fw-leave-waitlist', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _token }, body: JSON.stringify({ id: id }) });
+      var d = await r.json();
+      if (d.success) { toast('Left the waitlist.'); btn.closest('.fw-wl-card').remove(); }
+      else { toast(d.message || 'Failed', true); btn.disabled = false; }
+    } catch(e) { toast('Network error', true); btn.disabled = false; }
+  };
 
   function renderReferral(refData) {
     if (!refData || !refData.success) return;
