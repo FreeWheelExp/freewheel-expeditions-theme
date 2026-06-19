@@ -345,7 +345,7 @@ function freewheel_enqueue_assets() {
     // loading it everywhere was costing every visitor a render-blocking script for nothing.
     // Must stay in HEAD (false) on the pages that do need it, since those call
     // supabase.createClient() in inline <script> blocks within the page body.
-    if ( is_page_template( array( 'page-login.php', 'page-register.php', 'page-dashboard.php', 'page-edit-profile.php', 'page-connect.php' ) ) ) {
+    if ( is_page_template( array( 'page-login.php', 'page-register.php', 'page-dashboard.php', 'page-edit-profile.php', 'page-connect.php', 'page-reset-password.php' ) ) ) {
         wp_enqueue_script('supabase-js', 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', array(), null, false);
     }
     if ( is_page_template('page-merchandise.php') || is_singular('fw_expedition') ) {
