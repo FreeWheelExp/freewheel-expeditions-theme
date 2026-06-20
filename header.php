@@ -207,6 +207,14 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
 
 /* ── HERO ── */
 
+.fw-skip-link{
+  position:absolute;left:-9999px;top:0;z-index:10000;
+  padding:12px 20px;background:#c1440e;color:#fff;
+  font-family:var(--body);font-size:14px;font-weight:600;
+  text-decoration:none;border-radius:0 0 4px 0;
+}
+.fw-skip-link:focus{left:0;}
+
 </style>
 
 <script>
@@ -314,6 +322,8 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
 </head>
 <body <?php body_class(); ?>>
 
+<a href="#main-content" class="fw-skip-link">Skip to main content</a>
+
 <?php wp_body_open(); ?>
 <script>
 /* Inline mobile menu — works before fw-scripts.js loads */
@@ -350,7 +360,7 @@ function closeModal(id){
     <span></span><span></span><span></span>
   </button>
   <ul class="nav-links">
-    <li><a href="<?php echo home_url('/'); ?>#about">About</a></li>
+    <li><a href="<?php echo home_url('/'); ?>#about" aria-label="Learn more about FreeWheel Expeditions">About</a></li>
     <li><a href="<?php echo home_url('/'); ?>#upcoming">Expeditions</a></li>
     <li><a href="<?php echo home_url('/merchandise/'); ?>">Merchandise</a></li>
     <li><a href="<?php echo home_url('/community/'); ?>">Community</a></li>
@@ -550,6 +560,8 @@ function fwSuccessClose(){
   if(ov){ov.style.display='none';document.body.style.overflow='';}
 }
 </script>
+
+<span id="main-content"></span>
 
 
 
