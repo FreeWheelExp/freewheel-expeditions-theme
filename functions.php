@@ -2678,14 +2678,14 @@ function fw_expedition_card($pid){
     $badge_h = $badge?'<div style="position:absolute;top:12px;left:12px;background:#c1440e;color:#fff;font-size:9px;letter-spacing:2px;text-transform:uppercase;padding:4px 10px;z-index:5;font-family:var(--body);font-weight:500">'.esc_html($badge).'</div>':'';
     $photo_h = $thumb?'<img src="'.esc_url($thumb).'" alt="'.esc_attr($title).'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1">':'';
     return '<div class="trip-card">
-        <div class="tc-top" style="background:'.$grad.'">
+        <div class="tc-top" onclick="window.location.href=\'' . esc_url( $link ) . '\'" style="background:'.$grad.';cursor:pointer">
           '.$photo_h.'
           <div class="tc-art" style="position:relative;z-index:2">'.esc_html($emoji).'</div>
           <div class="tc-grad" style="position:relative;z-index:3"></div>
           '.$badge_h.'
         </div>
         <div class="tc-body">
-          <div class="tc-title">'.esc_html($title).'</div>
+          <div class="tc-title" onclick="window.location.href=\'' . esc_url( $link ) . '\'" style="cursor:pointer">'.esc_html($title).'</div>
           <div class="tc-dur" style="color:var(--amber);font-size:13px;font-weight:500;margin:4px 0 4px">'.esc_html($dur).'</div>
           '.($m('fw_dates')?'<div style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:10px;letter-spacing:.5px">📅 '.esc_html($m('fw_dates')).'</div>':'').'
           <div class="tc-dets"><div class="tc-det">📍 '.esc_html($dest).'</div><div class="tc-det">🚙 Self Drive</div></div>
