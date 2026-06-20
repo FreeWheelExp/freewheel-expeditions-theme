@@ -523,7 +523,7 @@ nav{padding-left:max(5vw,env(safe-area-inset-left));padding-right:max(5vw,env(sa
         ?>
         <div class="album-block<?php echo $alb !== $albums[0] ? ' collapsed' : ''; ?>" id="album-<?php echo esc_attr($slug); ?>">
           <!-- collapsed preview bar (visible only when collapsed) -->
-          <div class="album-collapsed-bar" onclick="fwExpandAlbum('<?php echo esc_attr($slug); ?>')">
+          <div class="album-collapsed-bar" onclick="fwExpandAlbum('<?php echo esc_attr($slug); ?>')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();fwExpandAlbum('<?php echo esc_attr($slug); ?>');}" role="button" tabindex="0" aria-expanded="<?php echo $alb === $albums[0] ? 'true' : 'false'; ?>" aria-label="<?php echo esc_attr('Toggle album: ' . $title); ?>">
             <div class="album-collapsed-left">
               <div>
                 <div style="display:flex;align-items:center;gap:12px">
@@ -533,7 +533,7 @@ nav{padding-left:max(5vw,env(safe-area-inset-left));padding-right:max(5vw,env(sa
                 <div class="album-collapsed-meta"><?php echo esc_html($date); ?><?php if($location): ?> · <?php echo esc_html($location); ?><?php endif; ?><?php if($total_pre): ?> · <?php echo $total_pre; ?> photos<?php endif; ?></div>
               </div>
             </div>
-            <div class="album-collapsed-arrow">▼</div>
+            <div class="album-collapsed-arrow" aria-hidden="true">▼</div>
           </div>
           <div class="album-hero">
             <div class="album-hero-bg" style="background:#1a1410">
@@ -826,16 +826,23 @@ if (!empty($_fw_testis)):
 function fwExpandAlbum(slug) {
   var target = document.getElementById('album-' + slug);
   if (!target) return;
+  var bar = target.querySelector('.album-collapsed-bar');
   var isCollapsed = target.classList.contains('collapsed');
   if (!isCollapsed) {
     /* clicking open album collapses it */
     target.classList.add('collapsed');
+    if (bar) bar.setAttribute('aria-expanded', 'false');
     fwUpdateSidebarActive(null);
     return;
   }
   /* collapse all, expand clicked */
-  document.querySelectorAll('.album-block').forEach(function(b){ b.classList.add('collapsed'); });
+  document.querySelectorAll('.album-block').forEach(function(b){
+    b.classList.add('collapsed');
+    var bBar = b.querySelector('.album-collapsed-bar');
+    if (bBar) bBar.setAttribute('aria-expanded', 'false');
+  });
   target.classList.remove('collapsed');
+  if (bar) bar.setAttribute('aria-expanded', 'true');
   fwUpdateSidebarActive(slug);
   setTimeout(function(){ target.scrollIntoView({behavior:'smooth',block:'start'}); }, 60);
 }
