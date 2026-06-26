@@ -46,9 +46,9 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
 .foot-logo{display:flex;align-items:center;gap:8px}
 .foot-logo img{height:30px;border-radius:50%;border:1px solid rgba(255,255,255,.2)}
 .foot-brand{font-family:var(--headline);font-size:15px;color:#fff;letter-spacing:2px}
-.foot-copy{font-size:11px;color:rgba(255,255,255,.22)}
+.foot-copy{font-size:11px;color:rgba(255,255,255,.45)}
 .foot-links{display:flex;gap:20px}
-.foot-links a{font-size:11px;color:rgba(255,255,255,.3);text-decoration:none;letter-spacing:1px;text-transform:uppercase;transition:color .2s}
+.foot-links a{font-size:11px;color:rgba(255,255,255,.45);text-decoration:none;letter-spacing:1px;text-transform:uppercase;transition:color .2s}
 .foot-links a:hover{color:var(--amber)}
 .btn-solid{display:inline-block;padding:14px 36px;background:var(--rust);color:#fff;text-decoration:none;font-family:var(--headline);font-size:20px;letter-spacing:2px;border:none;cursor:pointer;transition:background .2s,transform .15s;border-radius:2px}
 .btn-solid:hover{background:#a03508;transform:translateY(-2px)}
@@ -74,7 +74,7 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
 .join-p{font-size:14px;font-weight:300;color:rgba(255,255,255,.5);line-height:1.7;margin-bottom:28px}
 .wa-join-btn{display:inline-flex;align-items:center;gap:10px;padding:16px 40px;background:#25d366;color:#fff;text-decoration:none;font-family:var(--headline);font-size:22px;letter-spacing:2px;border-radius:2px;transition:background .2s,transform .15s}
 .wa-join-btn:hover{background:#1da851;transform:translateY(-2px)}
-.join-note{font-size:11px;color:rgba(255,255,255,.25);margin-top:16px;letter-spacing:1px}
+.join-note{font-size:11px;color:rgba(255,255,255,.45);margin-top:16px;letter-spacing:1px}
 
 /* ── WHAT IS COMMUNITY ── */
 .what-section{padding:96px 5vw;background:#080604}
@@ -87,7 +87,7 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
 .comm-stats{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:rgba(255,255,255,.06)}
 .cstat{background:#0a0805;padding:28px 22px;text-align:center}
 .cstat-n{font-family:var(--headline);font-size:52px;color:var(--amber);line-height:1;margin-bottom:6px}
-.cstat-l{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.35)}
+.cstat-l{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.5)}
 
 /* ── PERKS ── */
 .perks-section{padding:80px 5vw;background:var(--ink)}
@@ -110,7 +110,7 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
 .testi-card:hover{border-top-color:var(--rust)}
 .testi-quote{font-size:15px;font-weight:300;font-style:italic;color:rgba(255,255,255,.6);line-height:1.8;margin-bottom:20px}
 .testi-quote::before{content:'"';font-family:var(--headline);font-size:48px;color:rgba(193,68,14,.3);line-height:0;vertical-align:-.4em;margin-right:4px}
-.testi-name{font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35)}
+.testi-name{font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.5)}
 .testi-trip{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--rust);margin-top:3px}
 
 /* ── BOTTOM CTA ── */
@@ -148,7 +148,7 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
 
     <!-- Loading state -->
     <div id="albumCarouselWrap" style="position:relative">
-      <div id="albumCarouselLoading" style="text-align:center;padding:40px;color:rgba(255,255,255,.3);font-size:12px;letter-spacing:2px;text-transform:uppercase">Loading albums...</div>
+      <div id="albumCarouselLoading" style="text-align:center;padding:40px;color:rgba(255,255,255,.45);font-size:12px;letter-spacing:2px;text-transform:uppercase">Loading albums...</div>
 
       <!-- Marquee track (populated by JS) -->
       <div id="albumMarquee" style="display:none;overflow:hidden;cursor:grab;user-select:none">
@@ -162,8 +162,8 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
 
     <div id="albumCarouselEmpty" style="display:none;text-align:center;padding:40px 24px">
       <div style="font-size:32px;margin-bottom:12px">📷</div>
-      <div style="font-size:14px;color:rgba(255,255,255,.35);margin-bottom:8px">No public albums yet — be the first to share yours!</div>
-      <div style="font-size:12px;color:rgba(255,255,255,.2)">Register, upload your trip album and tick 'Share publicly' to appear here.</div>
+      <div style="font-size:14px;color:rgba(255,255,255,.5);margin-bottom:8px">No public albums yet — be the first to share yours!</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.45)">Register, upload your trip album and tick 'Share publicly' to appear here.</div>
       <a href="<?php echo esc_url(home_url('/register/')); ?>" style="display:inline-block;margin-top:16px;padding:10px 22px;background:var(--rust);color:#fff;text-decoration:none;font-family:var(--headline);font-size:14px;letter-spacing:1px;border-radius:2px">Register &amp; Share</a>
     </div>
   </section>
@@ -176,7 +176,7 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
   #albumMarqueeTrack .alb-photos .alb-photo-empty{background:rgba(255,255,255,.04)}
   #albumMarqueeTrack .alb-info{padding:14px 16px}
   #albumMarqueeTrack .alb-title{font-family:var(--headline);font-size:16px;color:#fff;letter-spacing:.5px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  #albumMarqueeTrack .alb-meta{font-size:11px;color:rgba(255,255,255,.4);letter-spacing:.5px}
+  #albumMarqueeTrack .alb-meta{font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.5px}
   </style>
 
   <style>
@@ -252,7 +252,7 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
         photos: photos
       }));
       var avatarHtml = album.member_photo
-        ? '<img src="' + album.member_photo + '" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(193,68,14,.5);flex-shrink:0">'
+        ? '<img src="' + album.member_photo + '" alt="' + firstName + '" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(193,68,14,.5);flex-shrink:0">'
         : '<div style="width:34px;height:34px;border-radius:50%;background:rgba(193,68,14,.2);border:1.5px solid rgba(193,68,14,.4);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--rust);font-family:var(--headline);font-weight:700;flex-shrink:0">' + firstName.charAt(0) + '</div>';
       var nameLink = profileUrl
         ? '<a href="' + profileUrl + '" onclick="event.stopPropagation()" style="color:#fff;text-decoration:none">' + firstName + '</a>'
@@ -265,7 +265,7 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
             avatarHtml +
             '<div style="min-width:0">' +
               '<div style="font-size:12px;color:#fff;font-weight:600;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
-                nameLink + (memberNum ? ' <span style="color:rgba(255,255,255,.3);font-weight:400">' + memberNum + '</span>' : '') + ' <span style="color:rgba(255,255,255,.25);font-weight:400">—</span> <span style="color:var(--amber);letter-spacing:1px">' + badge + '</span>' +
+                nameLink + (memberNum ? ' <span style="color:rgba(255,255,255,.45);font-weight:400">' + memberNum + '</span>' : '') + ' <span style="color:rgba(255,255,255,.45);font-weight:400">—</span> <span style="color:var(--amber);letter-spacing:1px">' + badge + '</span>' +
               '</div>' +
               (album.member_instagram ? '<div style="margin-top:5px"><a href="https://instagram.com/' + album.member_instagram.replace(/^@/,'') + '" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="font-size:12px;color:#c13584;text-decoration:none;display:flex;align-items:center;gap:3px">&#128247; ' + album.member_instagram + '</a></div>' : '') +
             '</div>' +
@@ -296,23 +296,23 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
           '<div style="max-width:900px;width:100%;text-align:center">' +
             '<div style="font-family:var(--headline);font-size:22px;color:#fff;margin-bottom:6px">' + data.title + '</div>' +
             '<div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">' +
-              (data.photo ? '<img src="' + data.photo + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid rgba(193,68,14,.4)">' : '<div style="width:36px;height:36px;border-radius:50%;background:rgba(193,68,14,.2);border:2px solid rgba(193,68,14,.4);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--rust);font-family:var(--headline);font-weight:700">' + (data.member||'?').charAt(0) + '</div>') +
+              (data.photo ? '<img src="' + data.photo + '" alt="' + (data.member||'Member') + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid rgba(193,68,14,.4)">' : '<div style="width:36px;height:36px;border-radius:50%;background:rgba(193,68,14,.2);border:2px solid rgba(193,68,14,.4);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--rust);font-family:var(--headline);font-weight:700">' + (data.member||'?').charAt(0) + '</div>') +
               '<div>' +
                 '<div style="font-size:13px;font-weight:600;letter-spacing:.5px;color:#fff">' +
-                  data.member + ' <span style="color:rgba(255,255,255,.25);font-weight:400">—</span> <span style="color:var(--amber);letter-spacing:1px">' + (data.badge||'EXPLORER') + '</span>' +
+                  data.member + ' <span style="color:rgba(255,255,255,.45);font-weight:400">—</span> <span style="color:var(--amber);letter-spacing:1px">' + (data.badge||'EXPLORER') + '</span>' +
                 '</div>' +
                 (data.instagram ? '<div style="margin-top:5px"><a href="https://instagram.com/' + data.instagram.replace(/^@/,'') + '" target="_blank" rel="noopener" style="font-size:13px;color:#c13584;text-decoration:none;display:flex;align-items:center;gap:4px">&#128247; ' + data.instagram + '</a></div>' : '') +
               '</div>' +
             '</div>' +
             '<div style="position:relative;display:inline-block;max-width:100%">' +
               (photos.length > 1 ? '<button onclick="lbPrev()" style="position:absolute;left:-50px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.1);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer">&#8249;</button>' : '') +
-              '<img id="lbImg" src="' + p.url + '" style="max-width:100%;max-height:70vh;object-fit:contain;border-radius:4px;display:block">' +
+              '<img id="lbImg" src="' + p.url + '" alt="' + (p.caption || data.title || 'Trip photo') + '" style="max-width:100%;max-height:70vh;object-fit:contain;border-radius:4px;display:block">' +
               (photos.length > 1 ? '<button onclick="lbNext()" style="position:absolute;right:-50px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.1);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer">&#8250;</button>' : '') +
             '</div>' +
             (p.caption ? '<div style="font-size:13px;color:rgba(255,255,255,.6);margin-top:12px">' + p.caption + '</div>' : '') +
-            '<div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:8px">' + (currentIdx+1) + ' / ' + photos.length + '</div>' +
+            '<div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:8px">' + (currentIdx+1) + ' / ' + photos.length + '</div>' +
             (photos.length > 1 ? '<div style="display:flex;gap:6px;justify-content:center;margin-top:16px">' +
-              photos.map(function(ph,i){ return '<div onclick="lbGoto('+i+')" style="width:48px;height:48px;border-radius:2px;overflow:hidden;cursor:pointer;opacity:'+(i===currentIdx?'1':'.4')+';border:2px solid '+(i===currentIdx?'var(--rust)':'transparent')+'"><img src="'+ph.url+'" style="width:100%;height:100%;object-fit:cover"></div>'; }).join('') +
+              photos.map(function(ph,i){ return '<div onclick="lbGoto('+i+')" style="width:48px;height:48px;border-radius:2px;overflow:hidden;cursor:pointer;opacity:'+(i===currentIdx?'1':'.4')+';border:2px solid '+(i===currentIdx?'var(--rust)':'transparent')+'"><img src="'+ph.url+'" alt="Thumbnail '+(i+1)+'" style="width:100%;height:100%;object-fit:cover"></div>'; }).join('') +
             '</div>' : '') +
           '</div>';
 
@@ -392,7 +392,7 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
         <div class="cstat"><div class="cstat-n">3L+</div><div class="cstat-l">Kms Driven</div></div>
       </div>
       <div style="margin-top:2px;background:#0a0805;padding:24px;border-left:3px solid var(--teal)">
-        <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:8px">Active On</div>
+        <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:8px">Active On</div>
         <div style="display:flex;gap:16px;flex-wrap:wrap">
           <a href="https://wa.me/917817838060" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#25d366;text-decoration:none" target="_blank">💬 WhatsApp</a>
           <a href="https://instagram.com/freewheelexpeditions" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#c13584;text-decoration:none" target="_blank">📸 Instagram</a>
@@ -460,7 +460,7 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
       ✉️ Subscribe &amp; Unlock
     </button>
   </div>
-  <div style="font-size:12px;color:rgba(255,255,255,.3);margin-top:20px;letter-spacing:1px">Both are free · No spam, ever</div>
+  <div style="font-size:12px;color:rgba(255,255,255,.45);margin-top:20px;letter-spacing:1px">Both are free · No spam, ever</div>
 </section>
 
 <style>
@@ -500,7 +500,7 @@ function closeMenu(){var m=document.getElementById('mobileMenu');if(m)m.classLis
 <!-- SUBSCRIPTION MODAL -->
 <div id="subOverlay" onclick="if(event.target===this)closeSubModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
   <div style="background:#1a1208;border:1px solid rgba(255,255,255,.12);border-top:3px solid var(--rust,#c1440e);border-radius:4px;width:100%;max-width:440px;padding:36px 32px;position:relative">
-    <button onclick="closeSubModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:rgba(255,255,255,.4);font-size:22px;cursor:pointer;line-height:1">×</button>
+    <button onclick="closeSubModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:rgba(255,255,255,.5);font-size:22px;cursor:pointer;line-height:1">×</button>
     <div style="font-size:32px;margin-bottom:10px;text-align:center">🏔️</div>
     <h3 style="font-family:var(--headline,'sans-serif');font-size:22px;color:#fff;letter-spacing:1.5px;text-align:center;margin:0 0 6px">MEMBERSHIP PERKS</h3>
     <p style="font-size:12px;color:rgba(255,255,255,.45);text-align:center;margin:0 0 24px;line-height:1.6">Subscribe for exclusive discounts, early access & road dispatches. We'll verify your email with a quick OTP.</p>
