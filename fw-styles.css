@@ -2,6 +2,40 @@
    FREEWHEEL EXPEDITIONS — MASTER STYLESHEET v2.0
    ═══════════════════════════════════════ */
 
+/* ── Accessibility: visible keyboard focus on every interactive element ──
+   Covers inline-styled buttons too, since outline isn't something inline
+   style="" attributes typically set, so this cascades everywhere without
+   needing to touch hundreds of individual elements. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible,
+[onclick]:focus-visible {
+  outline: 2px solid var(--amber, #e8a020) !important;
+  outline-offset: 2px !important;
+  border-radius: 2px;
+}
+
+/* Skip-to-content link — hidden until keyboard-focused */
+.fw-skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: #c1440e;
+  color: #fff;
+  padding: 12px 20px;
+  z-index: 99999;
+  font-family: var(--body, sans-serif);
+  font-size: 14px;
+  text-decoration: none;
+  border-radius: 0 0 4px 0;
+}
+.fw-skip-link:focus {
+  left: 0;
+}
+
 /* Kill conflicting plugin/theme elements */
 .site-header, #masthead, .main-header,
 .elementor-location-header,
