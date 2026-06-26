@@ -13,7 +13,7 @@ get_header();
 .adm-title{font-family:var(--headline);font-size:32px;color:#fff;letter-spacing:2px}
 .adm-title span{color:var(--rust)}
 .adm-tabs{display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:28px;overflow-x:auto}
-.adm-tab{padding:12px 20px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s;background:none;border-top:none;border-left:none;border-right:none;font-family:var(--body)}
+.adm-tab{padding:12px 20px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.5);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s;background:none;border-top:none;border-left:none;border-right:none;font-family:var(--body)}
 .adm-tab.active{color:#fff;border-bottom-color:var(--rust)}
 .adm-tab:hover{color:rgba(255,255,255,.8)}
 .adm-panel{display:none}
@@ -36,10 +36,10 @@ get_header();
 .adm-input{width:100%;padding:9px 12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:var(--body);font-size:13px;border-radius:2px;outline:none}
 .adm-input:focus{border-color:rgba(193,68,14,.5)}
 .adm-select{width:100%;padding:9px 12px;background:#0f0d0b;border:1px solid rgba(255,255,255,.12);color:#fff;font-family:var(--body);font-size:13px;border-radius:2px;outline:none;cursor:pointer}
-.adm-label{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:5px;display:block}
+.adm-label{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:5px;display:block}
 .adm-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .adm-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-.adm-meta{font-size:12px;color:rgba(255,255,255,.35);margin-top:6px}
+.adm-meta{font-size:12px;color:rgba(255,255,255,.5);margin-top:6px}
 .adm-text{font-size:13px;color:rgba(255,255,255,.7);line-height:1.6}
 .adm-section-title{font-family:var(--headline);font-size:18px;color:#fff;letter-spacing:1px;margin-bottom:16px;display:flex;align-items:center;gap:10px}
 .adm-count{background:var(--rust);color:#fff;font-size:10px;padding:2px 8px;border-radius:10px;font-family:var(--body)}
@@ -48,13 +48,13 @@ get_header();
 .adm-stats-row{display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap}
 .adm-stat-box{background:#0f0d0b;border:1px solid rgba(255,255,255,.08);border-radius:3px;padding:18px 22px;flex:1;min-width:120px}
 .adm-stat-n{font-family:var(--headline);font-size:36px;color:var(--amber)}
-.adm-stat-l{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);margin-top:4px}
+.adm-stat-l{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-top:4px}
 .adm-filter-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
 .adm-filter-btn{padding:6px 14px;font-size:10px;letter-spacing:1px;text-transform:uppercase;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);cursor:pointer;border-radius:2px;font-family:var(--body)}
 .adm-filter-btn.active{background:rgba(193,68,14,.2);border-color:var(--rust);color:#fff}
 .adm-reject-row{display:none;margin-top:10px;gap:8px}
 .adm-reject-row.open{display:flex}
-.adm-empty{color:rgba(255,255,255,.3);font-size:13px;padding:30px;text-align:center}
+.adm-empty{color:rgba(255,255,255,.45);font-size:13px;padding:30px;text-align:center}
 .adm-booking-form{background:#0f0d0b;border:1px solid rgba(193,68,14,.25);border-radius:3px;padding:24px;margin-bottom:20px;display:none}
 .adm-booking-form.open{display:block}
 .adm-toast{position:fixed;bottom:24px;right:24px;background:#0f0d0b;border:1px solid rgba(255,255,255,.2);color:#fff;padding:12px 20px;border-radius:3px;font-size:13px;z-index:9999;display:none}
@@ -62,7 +62,7 @@ get_header();
 .adm-toast.err{border-color:#f87171;color:#f87171}
 .adm-user-row{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.06)}
 .adm-user-avatar{width:38px;height:38px;border-radius:50%;background:rgba(193,68,14,.2);border:2px solid rgba(193,68,14,.4);display:flex;align-items:center;justify-content:center;font-family:var(--headline);font-size:14px;color:var(--rust);flex-shrink:0}
-.adm-spinner{text-align:center;padding:40px;color:rgba(255,255,255,.3);font-size:13px;letter-spacing:2px}
+.adm-spinner{text-align:center;padding:40px;color:rgba(255,255,255,.45);font-size:13px;letter-spacing:2px}
 @media(max-width:700px){.adm-grid-2,.adm-grid-3{grid-template-columns:1fr}.adm-title{font-size:24px}}
 </style>
 
@@ -71,7 +71,7 @@ get_header();
   <div style="text-align:center;padding:40px">
     <div style="font-size:48px;margin-bottom:16px">🔒</div>
     <div style="font-family:var(--headline);font-size:24px;color:#fff;margin-bottom:8px">Admin Access Only</div>
-    <div style="font-size:13px;color:rgba(255,255,255,.4);margin-bottom:24px">You must be a FreeWheel admin to view this page.</div>
+    <div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:24px">You must be a FreeWheel admin to view this page.</div>
     <a href="<?php echo esc_url(home_url('/login/')); ?>" style="display:inline-block;padding:12px 28px;background:var(--rust);color:#fff;text-decoration:none;font-family:var(--headline);font-size:16px;letter-spacing:2px;border-radius:2px">LOG IN</a>
   </div>
 </div>
@@ -88,7 +88,7 @@ get_header();
         </div>
         <div>
           <div class="adm-title" style="margin:0">FW <span id="admRoleLabel">Admin</span></div>
-          <div id="admWelcome" style="font-size:11px;color:rgba(255,255,255,.35);margin-top:2px;letter-spacing:1px"></div>
+          <div id="admWelcome" style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;letter-spacing:1px"></div>
         </div>
       </div>
 
@@ -257,7 +257,7 @@ get_header();
     <!-- ── WAITLIST ── -->
     <div id="panel-waitlist" class="adm-panel">
       <div class="adm-section-title">Expedition Waitlist</div>
-      <div style="font-size:12px;color:rgba(255,255,255,.35);margin-bottom:18px">Mark an expedition "Full — Show Waitlist" in its editor to start collecting names here.</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:18px">Mark an expedition "Full — Show Waitlist" in its editor to start collecting names here.</div>
       <div id="waitlistList"><div class="adm-spinner">Loading...</div></div>
     </div>
 
@@ -291,7 +291,7 @@ get_header();
           <div id="adminBlogBody" contenteditable="true" data-placeholder="Write your blog here..."
             style="min-height:260px;padding:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:0 0 2px 2px;color:rgba(255,255,255,.85);font-family:var(--body);font-size:15px;line-height:1.7;outline:none">
             <style>
-              #adminBlogBody[data-placeholder]:empty:before{content:attr(data-placeholder);color:rgba(255,255,255,.25);pointer-events:none;display:block}
+              #adminBlogBody[data-placeholder]:empty:before{content:attr(data-placeholder);color:rgba(255,255,255,.45);pointer-events:none;display:block}
               #adminBlogBody h2{font-family:var(--headline);font-size:26px;color:#fff;letter-spacing:1px;margin:20px 0 8px}
               #adminBlogBody h3{font-family:var(--headline);font-size:20px;color:#fff;letter-spacing:.5px;margin:16px 0 6px}
               #adminBlogBody p{margin:0 0 12px}
@@ -303,11 +303,11 @@ get_header();
           <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
             <input type="file" id="adminBlogCoverInput" accept="image/*" style="display:none" onchange="adminUploadBlogCover(this)">
             <button onclick="document.getElementById('adminBlogCoverInput').click()" style="padding:8px 16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;font-family:var(--body);font-size:13px;cursor:pointer;border-radius:2px">Upload Cover</button>
-            <span id="adminBlogCoverName" style="font-size:12px;color:rgba(255,255,255,.4)"></span>
+            <span id="adminBlogCoverName" style="font-size:12px;color:rgba(255,255,255,.5)"></span>
             <input type="hidden" id="adminBlogCoverUrl" value="">
           </div>
           <div style="margin-top:6px">
-            <label style="font-size:12px;color:rgba(255,255,255,.4);letter-spacing:1px">STATUS</label><br>
+            <label style="font-size:12px;color:rgba(255,255,255,.5);letter-spacing:1px">STATUS</label><br>
             <select id="adminBlogStatus" style="margin-top:4px;padding:7px 12px;background:#1a1410;border:1px solid rgba(255,255,255,.15);color:#fff;font-family:var(--body);font-size:13px;border-radius:2px;outline:none">
               <option value="published">Published</option>
               <option value="draft">Draft</option>
@@ -315,7 +315,7 @@ get_header();
           </div>
           <div style="margin-top:16px;display:flex;gap:10px">
             <button onclick="adminSaveBlog()" style="padding:10px 24px;background:var(--rust);border:none;color:#fff;font-family:var(--body);font-size:13px;letter-spacing:1px;cursor:pointer;border-radius:2px">Save Blog</button>
-            <button onclick="document.getElementById('adminBlogEditor').style.display='none'" style="padding:10px 20px;background:rgba(255,255,255,.06);border:none;color:rgba(255,255,255,.4);font-family:var(--body);font-size:13px;cursor:pointer;border-radius:2px">Cancel</button>
+            <button onclick="document.getElementById('adminBlogEditor').style.display='none'" style="padding:10px 20px;background:rgba(255,255,255,.06);border:none;color:rgba(255,255,255,.5);font-family:var(--body);font-size:13px;cursor:pointer;border-radius:2px">Cancel</button>
           </div>
           <div id="adminBlogMsg" style="font-size:12px;margin-top:10px"></div>
         </div>
@@ -336,7 +336,7 @@ get_header();
           </div>
           <div style="display:flex;gap:10px">
             <button onclick="adminCreateAlbum()" style="padding:10px 24px;background:var(--rust);border:none;color:#fff;font-family:var(--body);font-size:13px;letter-spacing:1px;cursor:pointer;border-radius:2px">Create Album</button>
-            <button onclick="document.getElementById('adminAlbumForm').style.display='none'" style="padding:10px 20px;background:rgba(255,255,255,.06);border:none;color:rgba(255,255,255,.4);font-family:var(--body);font-size:13px;cursor:pointer;border-radius:2px">Cancel</button>
+            <button onclick="document.getElementById('adminAlbumForm').style.display='none'" style="padding:10px 20px;background:rgba(255,255,255,.06);border:none;color:rgba(255,255,255,.5);font-family:var(--body);font-size:13px;cursor:pointer;border-radius:2px">Cancel</button>
           </div>
           <div id="adminAlbumFormMsg" style="font-size:12px;margin-top:10px;color:#f87171"></div>
         </div>
@@ -345,7 +345,7 @@ get_header();
 
     <!-- Activity Log Panel (Super Admin only) -->
     <div id="panel-activitylog" class="adm-panel">
-      <div class="adm-section-title">Admin Activity Log <span style="font-size:11px;color:rgba(255,255,255,.3);font-weight:400;text-transform:none;letter-spacing:0">— last 200 actions</span></div>
+      <div class="adm-section-title">Admin Activity Log <span style="font-size:11px;color:rgba(255,255,255,.45);font-weight:400;text-transform:none;letter-spacing:0">— last 200 actions</span></div>
       <div id="activityLogList"><div class="adm-spinner">Loading...</div></div>
     </div>
 
