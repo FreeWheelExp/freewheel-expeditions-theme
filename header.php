@@ -325,6 +325,7 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
 <a href="#main-content" class="fw-skip-link">Skip to main content</a>
 
 <?php wp_body_open(); ?>
+<a href="#main-content" class="fw-skip-link">Skip to main content</a>
 <script>
 /* Inline mobile menu — works before fw-scripts.js loads */
 function toggleMobileMenu(){
@@ -440,7 +441,7 @@ function fwSearchRun(q){
 
 <!-- Search Overlay -->
 <div id="fwSearchOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(8,5,3,.97);padding:80px 5vw 40px;flex-direction:column;backdrop-filter:blur(8px)">
-  <button onclick="fwSearchClose()" style="position:absolute;top:20px;right:24px;background:rgba(255,255,255,.1);border:none;color:#fff;width:40px;height:40px;font-size:20px;cursor:pointer;border-radius:2px">✕</button>
+  <button onclick="fwSearchClose()" aria-label="Close search" style="position:absolute;top:20px;right:24px;background:rgba(255,255,255,.1);border:none;color:#fff;width:40px;height:40px;font-size:20px;cursor:pointer;border-radius:2px">✕</button>
   <div style="max-width:640px;margin:0 auto;width:100%">
     <div style="font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--amber);margin-bottom:16px">Search</div>
     <input id="fwSearchBox" type="text" placeholder="Search expeditions, guides, blogs..." oninput="fwSearchRun(this.value)" onkeydown="if(event.key==='Escape')fwSearchClose()"
