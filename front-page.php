@@ -289,47 +289,6 @@ nav{padding-left:max(5vw,env(safe-area-inset-left));padding-right:max(5vw,env(sa
   </div>
 </section>
 
-<!-- ABOUT -->
-<section class="about" id="about">
-  <div class="about-inner">
-    <div>
-      <div class="sec-tag">Who We Are</div>
-      <h2 class="sec-h2">We live for the<br><em>open road</em></h2>
-      <p class="about-p">FreeWheel Expeditions isn&#8217;t about ticking destinations off a list &#8212; it&#8217;s about chasing the road.</p>
-      <p class="about-p">We build self-drive adventures for those who feel alive behind the wheel. Dust, altitude, river crossings, unpredictable roads &#8212; that&#8217;s where the real stories begin.</p>
-      <p class="about-p">You drive your own machine, alongside a convoy of like-minded explorers. No rush, no pressure &#8212; just the freedom to experience the journey your way, backed by a crew that&#8217;s got your back at every turn.</p>
-      <p class="about-p">This isn&#8217;t luxury travel. This is real roads, real challenges, and real moments you&#8217;ll never forget.</p>
-      <p class="about-p" style="font-style:italic;color:var(--amber);font-weight:500">If the road calls you &#8212; you already know where you belong.</p>
-      <div class="vals">
-        <div class="val"><div class="val-ico">🗺️</div><div class="val-n">Curated Routes</div><div class="val-d">Every road chosen for maximum awe</div></div>
-        <div class="val"><div class="val-ico">🚙</div><div class="val-n">Self Drive</div><div class="val-d">Your vehicle, your pace, total freedom</div></div>
-        <div class="val"><div class="val-ico">🏕️</div><div class="val-n">Expert Support</div><div class="val-d">24/7 on-ground team throughout</div></div>
-        <div class="val"><div class="val-ico">🤝</div><div class="val-n">Community</div><div class="val-d">Bonds that outlast the journey</div></div>
-      </div>
-    </div>
-    <div class="about-vis">
-      <!-- ══ ABOUT SECTION IMAGE ══
-           To add your own photo:
-           1. Upload photo to WordPress Media Library
-           2. Copy the URL
-           3. Replace the src below with your URL
-           Recommended: 800×600px landscape photo of your convoy/team
-      ══════════════════════════════ -->
-      <div class="about-img-wrap" style="position:relative;border-radius:4px;overflow:hidden;aspect-ratio:4/3;background:#1a1410">
-        <img id="aboutPhoto"
-             src="<?php echo get_template_directory_uri(); ?>/images/front-page-1.png"
-             alt="FreeWheel Expeditions — The Convoy"
-             style="width:100%;height:100%;object-fit:cover;object-position:center;display:block">
-        <!-- Overlay accent bar -->
-        <div style="position:absolute;bottom:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--rust),var(--amber))"></div>
-        <!-- Floating label -->
-        <div style="position:absolute;top:16px;left:16px;background:rgba(0,0,0,.6);padding:6px 14px;border-left:3px solid var(--amber);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--amber);font-family:var(--body);font-weight:500">The Convoy</div>
-      </div>
-      <div class="about-acc"></div>
-    </div>
-  </div>
-</section>
-
 <!-- UPCOMING EXPEDITIONS -->
 <section class="upcoming" id="upcoming">
   <div class="sec-header">
@@ -475,6 +434,51 @@ nav{padding-left:max(5vw,env(safe-area-inset-left));padding-right:max(5vw,env(sa
 
 </section>
 
+<!-- ABOUT -->
+<section class="about" id="about">
+  <div class="about-inner">
+    <div>
+      <div class="sec-tag">Who We Are</div>
+      <h2 class="sec-h2">We live for the<br><em>open road</em></h2>
+      <p class="about-p">We build self-drive expeditions for people who feel alive behind the wheel &#8212; dust, altitude, river crossings, and roads that don&#8217;t behave.</p>
+      <p class="about-p">You drive your own machine, alongside a convoy of explorers just like you. No script, no fixed itinerary &#8212; just real roads, real challenges, and a crew that&#8217;s got your back at every turn.</p>
+      <p class="about-p" style="font-style:italic;color:var(--amber);font-weight:500">If the road calls you &#8212; you already know where you belong.</p>
+      <div class="vals">
+        <div class="val"><div class="val-ico">🗺️</div><div class="val-n">Curated Routes</div><div class="val-d">Every road chosen for maximum awe</div></div>
+        <div class="val"><div class="val-ico">🚙</div><div class="val-n">Self Drive</div><div class="val-d">Your vehicle, your pace, total freedom</div></div>
+        <div class="val"><div class="val-ico">🏕️</div><div class="val-n">Expert Support</div><div class="val-d">24/7 on-ground team throughout</div></div>
+        <div class="val"><div class="val-ico">🤝</div><div class="val-n">Community</div><div class="val-d">Bonds that outlast the journey</div></div>
+      </div>
+      <div style="margin-top:28px">
+        <a href="#upcoming" class="btn-solid" style="display:inline-flex;align-items:center;gap:8px">
+          View Upcoming Expeditions
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      </div>
+    </div>
+    <div class="about-vis">
+      <!-- ══ ABOUT SECTION IMAGE ══
+           To add your own photo:
+           1. Upload photo to WordPress Media Library
+           2. Copy the URL
+           3. Replace the src below with your URL
+           Recommended: 800×600px landscape photo of your convoy/team
+      ══════════════════════════════ -->
+      <div class="about-img-wrap" style="position:relative;border-radius:4px;overflow:hidden;aspect-ratio:4/3;background:#1a1410">
+        <img id="aboutPhoto"
+             src="<?php echo get_template_directory_uri(); ?>/images/front-page-1.png"
+             alt="FreeWheel Expeditions — The Convoy"
+             style="width:100%;height:100%;object-fit:cover;object-position:center;display:block">
+        <!-- Overlay accent bar -->
+        <div style="position:absolute;bottom:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--rust),var(--amber))"></div>
+        <!-- Floating label -->
+        <div style="position:absolute;top:16px;left:16px;background:rgba(0,0,0,.6);padding:6px 14px;border-left:3px solid var(--amber);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--amber);font-family:var(--body);font-weight:500">The Convoy</div>
+      </div>
+      <div class="about-acc"></div>
+    </div>
+  </div>
+</section>
+
 <!-- PAST EXPEDITIONS -->
 <section class="past" id="past">
   <div class="past-inner">
@@ -616,30 +620,17 @@ nav{padding-left:max(5vw,env(safe-area-inset-left));padding-right:max(5vw,env(sa
     </div>
     <?php endif; ?>
 
+    <div style="text-align:center;margin-top:40px">
+      <p style="font-size:16px;color:rgba(255,255,255,.6);margin-bottom:16px;font-style:italic">Loved the journey? Join the next one.</p>
+      <a href="#upcoming" class="btn-solid" style="display:inline-flex;align-items:center;gap:8px">
+        Book Your Seat
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+
   </div>
 </section>
 
-
-
-<!-- LOYALTY -->
-<section class="loyalty">
-  <div class="sec-tag" style="color:rgba(255,255,255,.6)">Exclusive Members Program</div>
-  <h2 style="font-family:var(--headline);font-size:clamp(36px,5vw,60px);color:#fff;letter-spacing:1px;margin-bottom:10px">Why Register?</h2>
-  <p style="font-size:15px;color:rgba(255,255,255,.55);font-weight:300;max-width:500px;margin:0 auto;line-height:1.7">Create a free account and unlock perks that grow with every expedition you take.</p>
-  <div class="benefits">
-    <div class="ben hl"><span class="ben-ico">🏷️</span><div class="ben-n">5% Off Trip 2+</div><div class="ben-d">Every booking after your first earns a guaranteed 5% discount — applied automatically</div></div>
-    <div class="ben"><span class="ben-ico">🎽</span><div class="ben-n">Merchandise</div><div class="ben-d">Exclusive FreeWheel gear unlocked at trip milestones</div></div>
-    <div class="ben"><span class="ben-ico">⚡</span><div class="ben-n">Early Access</div><div class="ben-d">First dibs on new expedition slots before public release</div></div>
-    <div class="ben"><span class="ben-ico">🏆</span><div class="ben-n">Loyalty Tiers</div><div class="ben-d">Explorer → Pioneer → Legend — bigger perks as you rack up expeditions</div></div>
-  </div>
-  <div style="margin-top:36px;display:flex;flex-direction:column;align-items:center;gap:14px">
-    <a href="<?php echo home_url('/community/'); ?>" class="btn-solid" style="font-size:20px;padding:16px 48px;display:inline-flex;align-items:center;gap:10px">
-      Join the Community
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-    </a>
-    <div style="font-size:12px;color:rgba(255,255,255,.6);letter-spacing:1px">Free to join · No credit card needed</div>
-  </div>
-</section>
 
 
 <?php
@@ -702,6 +693,13 @@ if (!empty($_fw_testis)):
         <?php endforeach; ?>
       </div>
       <?php endif; ?>
+    </div>
+    <div style="text-align:center;margin-top:44px">
+      <p style="font-size:16px;color:rgba(255,255,255,.6);margin-bottom:16px;font-style:italic">Ready for your own story?</p>
+      <a href="#upcoming" class="btn-solid" style="display:inline-flex;align-items:center;gap:8px">
+        View Upcoming Expeditions
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
     </div>
   </div>
 </section>
@@ -809,6 +807,27 @@ if (!empty($_fw_testis)):
 })();
 </script>
 <?php endif; ?>
+
+<!-- LOYALTY -->
+<section class="loyalty">
+  <div class="sec-tag" style="color:rgba(255,255,255,.6)">Exclusive Members Program</div>
+  <h2 style="font-family:var(--headline);font-size:clamp(36px,5vw,60px);color:#fff;letter-spacing:1px;margin-bottom:10px">Why Register?</h2>
+  <p style="font-size:15px;color:rgba(255,255,255,.55);font-weight:300;max-width:500px;margin:0 auto;line-height:1.7">Create a free account and unlock perks that grow with every expedition you take.</p>
+  <div class="benefits">
+    <div class="ben hl"><span class="ben-ico">🏷️</span><div class="ben-n">5% Off Trip 2+</div><div class="ben-d">Every booking after your first earns a guaranteed 5% discount — applied automatically</div></div>
+    <div class="ben"><span class="ben-ico">🎽</span><div class="ben-n">Merchandise</div><div class="ben-d">Exclusive FreeWheel gear unlocked at trip milestones</div></div>
+    <div class="ben"><span class="ben-ico">⚡</span><div class="ben-n">Early Access</div><div class="ben-d">First dibs on new expedition slots before public release</div></div>
+    <div class="ben"><span class="ben-ico">🏆</span><div class="ben-n">Loyalty Tiers</div><div class="ben-d">Explorer → Pioneer → Legend — bigger perks as you rack up expeditions</div></div>
+  </div>
+  <div style="margin-top:36px;display:flex;flex-direction:column;align-items:center;gap:14px">
+    <a href="<?php echo home_url('/community/'); ?>" class="btn-solid" style="font-size:20px;padding:16px 48px;display:inline-flex;align-items:center;gap:10px">
+      Join the Community
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </a>
+    <div style="font-size:12px;color:rgba(255,255,255,.6);letter-spacing:1px">Free to join · No credit card needed</div>
+  </div>
+</section>
+
 
 <!-- LIGHTBOX -->
 <div id="fwLb" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.96);align-items:center;justify-content:center;flex-direction:column" onclick="if(event.target===this)fwLbClose()">
