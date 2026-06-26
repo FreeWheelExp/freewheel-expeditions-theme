@@ -53,7 +53,7 @@ body{font-family:var(--body);background:#0a0805!important;color:#fff;overflow-x:
 .dstat{flex:1;min-width:110px;padding:22px 24px;border-right:1px solid rgba(255,255,255,.07);text-align:center}
 .dstat:last-child{border-right:none}
 .dstat-n{font-family:var(--headline);font-size:40px;color:var(--amber);line-height:1;margin-bottom:4px}
-.dstat-l{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.4)}
+.dstat-l{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.5)}
 
 /* ── LOYALTY ── */
 .loyalty-band{background:linear-gradient(135deg,var(--teal),#1a5a50);padding:14px 5vw}
@@ -92,20 +92,20 @@ body{font-family:var(--body);background:#0a0805!important;color:#fff;overflow-x:
 .thc-top{display:grid;grid-template-columns:64px 1fr auto;align-items:center}
 .thc-num{font-family:var(--headline);font-size:36px;color:rgba(193,68,14,.25);text-align:center;padding:16px;border-right:1px solid rgba(255,255,255,.05);line-height:1}
 .thc-body{padding:16px 20px}
-.thc-date{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:3px}
+.thc-date{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:3px}
 .thc-name{font-family:var(--headline);font-size:20px;color:#fff;letter-spacing:1px;margin-bottom:6px}
 .thc-tags{display:flex;gap:6px;flex-wrap:wrap}
-.thc-tag{font-size:10px;padding:3px 9px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.4);border-radius:2px}
+.thc-tag{font-size:10px;padding:3px 9px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.5);border-radius:2px}
 .thc-right{padding:16px 18px;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
 .thc-status{font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:4px 10px;border-radius:20px;font-weight:600}
 .thc-status.done{background:rgba(42,122,110,.2);color:var(--teal);border:1px solid rgba(42,122,110,.3)}
 .thc-status.upcoming{background:rgba(193,68,14,.15);color:var(--rust);border:1px solid rgba(193,68,14,.3)}
-.album-toggle{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.3);cursor:pointer;background:none;border:none;padding:0;transition:color .2s}
+.album-toggle{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.45);cursor:pointer;background:none;border:none;padding:0;transition:color .2s}
 .album-toggle:hover{color:var(--amber)}
 
 /* ── TRIP ALBUM ── */
 .trip-album{display:none;padding:16px 20px;border-top:1px solid rgba(255,255,255,.06);background:#080604}
-.album-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:12px}
+.album-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:12px}
 .album-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
 .album-slot{aspect-ratio:1;border-radius:3px;overflow:hidden;position:relative;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.1);cursor:pointer;transition:border-color .2s}
 .album-slot:hover{border-color:var(--amber)}
@@ -113,19 +113,19 @@ body{font-family:var(--body);background:#0a0805!important;color:#fff;overflow-x:
 .album-slot-empty{display:flex;align-items:center;justify-content:center;height:100%;font-size:22px;opacity:.25}
 .album-slot-overlay{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;font-size:16px}
 .album-slot:hover .album-slot-overlay{opacity:1}
-.album-upload-note{font-size:11px;color:rgba(255,255,255,.2);margin-top:8px;font-weight:300}
+.album-upload-note{font-size:11px;color:rgba(255,255,255,.45);margin-top:8px;font-weight:300}
 
 /* ── ORDERS ── */
 .order-card{background:#0a0805;border:1px solid rgba(255,255,255,.06);border-radius:4px;padding:18px 22px;margin-bottom:8px;display:flex;align-items:center;gap:18px}
 .order-icon{font-size:32px;flex-shrink:0}
 .order-body{flex:1}
 .order-name{font-family:var(--headline);font-size:18px;color:#fff;letter-spacing:.5px;margin-bottom:3px}
-.order-meta{font-size:12px;color:rgba(255,255,255,.3);font-weight:300}
+.order-meta{font-size:12px;color:rgba(255,255,255,.45);font-weight:300}
 .order-price{font-family:var(--headline);font-size:22px;color:var(--amber)}
 .empty-state{background:#0a0805;border:1px dashed rgba(255,255,255,.07);border-radius:4px;padding:48px;text-align:center}
 .empty-icon{font-size:48px;opacity:.2;display:block;margin-bottom:12px}
-.empty-h{font-family:var(--headline);font-size:22px;color:rgba(255,255,255,.3);letter-spacing:1px;margin-bottom:6px}
-.empty-p{font-size:13px;color:rgba(255,255,255,.2);font-weight:300}
+.empty-h{font-family:var(--headline);font-size:22px;color:rgba(255,255,255,.45);letter-spacing:1px;margin-bottom:6px}
+.empty-p{font-size:13px;color:rgba(255,255,255,.45);font-weight:300}
 
 /* ── TOAST ── */
 .fw-toast{position:fixed;bottom:24px;right:24px;background:#1a1208;border-left:3px solid var(--teal);padding:14px 20px;font-size:13px;color:#fff;border-radius:2px;z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s;max-width:280px}
@@ -192,9 +192,9 @@ body{font-family:var(--body);background:#0a0805!important;color:#fff;overflow-x:
         <div class="dstat-l">Total Credits</div>
         <div id="creditStatDetail" style="display:none;position:absolute;top:100%;left:50%;transform:translateX(-50%);width:280px;background:#0a1a0a;border:1px solid rgba(34,197,94,.4);border-radius:4px;padding:18px;z-index:100;margin-top:8px;text-align:left">
           <div style="font-family:var(--headline);font-size:24px;color:#4ade80;margin-bottom:4px" id="creditValueStat">&#8377;0.00</div>
-          <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:12px">Redeemable value</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:12px">Redeemable value</div>
           <div style="font-size:12px;color:rgba(255,255,255,.7);line-height:1.6;margin-bottom:10px" id="creditRedeemNote">Loading...</div>
-          <div style="font-size:10px;color:rgba(255,255,255,.3);line-height:1.7">1 credit = &#8377;0.25 &middot; Min. 400 credits to redeem &middot; Credits valid 12 months</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.45);line-height:1.7">1 credit = &#8377;0.25 &middot; Min. 400 credits to redeem &middot; Credits valid 12 months</div>
         </div>
       </div>
       <div class="dstat">
@@ -208,7 +208,7 @@ body{font-family:var(--body);background:#0a0805!important;color:#fff;overflow-x:
   <!-- Titles Track -->
   <div style="padding:16px 0 20px;background:#0a0805;border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05)">
     <div style="max-width:100%;padding:0 5vw">
-      <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:14px">Your Expedition Title</div>
+      <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:14px">Your Expedition Title</div>
       <div id="titlesTrackBanner" style="display:flex;gap:0;width:100%;justify-content:space-between;align-items:flex-start"></div>
     </div>
   </div>
@@ -216,14 +216,14 @@ body{font-family:var(--body);background:#0a0805!important;color:#fff;overflow-x:
   <!-- Refer & Earn -->
   <div style="padding:24px 5vw 28px;background:#0f0d0b;border-bottom:1px solid rgba(255,255,255,.06)">
     <div style="max-width:760px">
-      <div class="dash-section-title" style="margin-bottom:6px">Refer &amp; Earn <span style="font-size:13px;color:rgba(255,255,255,.35);font-family:var(--body);letter-spacing:0;font-weight:300">100 credits for you, 100 for them — once their first trip is done</span></div>
+      <div class="dash-section-title" style="margin-bottom:6px">Refer &amp; Earn <span style="font-size:13px;color:rgba(255,255,255,.5);font-family:var(--body);letter-spacing:0;font-weight:300">100 credits for you, 100 for them — once their first trip is done</span></div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px">
         <div id="referralLinkBox" style="flex:1;min-width:240px;padding:11px 14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:2px;color:rgba(255,255,255,.6);font-size:13px;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Loading…</div>
         <button onclick="copyReferralLink()" style="padding:11px 22px;background:var(--rust);border:none;color:#fff;font-family:var(--headline);font-size:13px;letter-spacing:1px;cursor:pointer;border-radius:2px;white-space:nowrap">COPY LINK</button>
       </div>
       <div style="display:flex;gap:24px;margin-top:16px;flex-wrap:wrap">
-        <div><div style="font-family:var(--headline);font-size:22px;color:var(--amber)" id="refTotalCount">0</div><div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35)">Friends Joined</div></div>
-        <div><div style="font-family:var(--headline);font-size:22px;color:#4ade80" id="refCreditedCount">0</div><div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35)">Credits Earned From</div></div>
+        <div><div style="font-family:var(--headline);font-size:22px;color:var(--amber)" id="refTotalCount">0</div><div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.5)">Friends Joined</div></div>
+        <div><div style="font-family:var(--headline);font-size:22px;color:#4ade80" id="refCreditedCount">0</div><div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.5)">Credits Earned From</div></div>
       </div>
     </div>
   </div>
@@ -237,12 +237,12 @@ body{font-family:var(--body);background:#0a0805!important;color:#fff;overflow-x:
       <div style="font-family:var(--headline);font-size:22px;color:#fff;letter-spacing:1px;margin-bottom:20px">Edit Profile</div>
       <div style="background:#0f0d0b;border:1px solid rgba(193,68,14,.3);border-radius:2px;padding:28px">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-          <div><label style="font-size:10px;letter-spacing:1px;color:rgba(255,255,255,.4);text-transform:uppercase;display:block;margin-bottom:5px">First Name</label><input type="text" id="epFirst" style="width:100%;box-sizing:border-box;padding:11px 13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:var(--body);font-size:14px;border-radius:2px;outline:none"></div>
-          <div><label style="font-size:10px;letter-spacing:1px;color:rgba(255,255,255,.4);text-transform:uppercase;display:block;margin-bottom:5px">Last Name</label><input type="text" id="epLast" style="width:100%;box-sizing:border-box;padding:11px 13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:var(--body);font-size:14px;border-radius:2px;outline:none"></div>
-          <div><label style="font-size:10px;letter-spacing:1px;color:rgba(255,255,255,.4);text-transform:uppercase;display:block;margin-bottom:5px">City</label><input type="text" id="epCity" style="width:100%;box-sizing:border-box;padding:11px 13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:var(--body);font-size:14px;border-radius:2px;outline:none"></div>
-          <div><label style="font-size:10px;letter-spacing:1px;color:rgba(255,255,255,.4);text-transform:uppercase;display:block;margin-bottom:5px">State</label><input type="text" id="epState" style="width:100%;box-sizing:border-box;padding:11px 13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:var(--body);font-size:14px;border-radius:2px;outline:none"></div>
-          <div><label style="font-size:10px;letter-spacing:1px;color:rgba(255,255,255,.4);text-transform:uppercase;display:block;margin-bottom:5px">Country</label><input type="text" id="epCountry" style="width:100%;box-sizing:border-box;padding:11px 13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:var(--body);font-size:14px;border-radius:2px;outline:none"></div>
-          <div style="grid-column:1/-1"><label style="font-size:10px;letter-spacing:1px;color:rgba(255,255,255,.4);text-transform:uppercase;display:block;margin-bottom:5px">Instagram Handle <span style="color:rgba(255,255,255,.25);font-weight:300;font-size:9px">(optional · e.g. @yourusername)</span></label><input type="text" id="epInstagram" placeholder="@yourusername" style="width:100%;box-sizing:border-box;padding:11px 13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:var(--body);font-size:14px;border-radius:2px;outline:none"></div>
+          <div><label style="font-size:10px;letter-spacing:1px;color:rgba(255,255,255,.5);text-transform:uppercase;display:block;margin-bottom:5px">First Name</label><input type="text" id="epFirst" style="width:100%;box-sizing:border-box;padding:11px 13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:var(--body);font-size:14px;border-radius:2px;outline:none"></div>
+          <div><label style="font-size:10px;letter-spacing:1px;color:rgba(255,255,255,.5);text-transform:uppercase;display:block;margin-bottom:5px">Last Name</label><input type="text" id="epLast" style="width:100%;box-sizing:border-box;padding:11px 13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:var(--body);font-size:14px;border-radius:2px;outline:none"></div>
+          <div><label style="font-size:10px;letter-spacing:1px;color:rgba(255,255,255,.5);text-transform:uppercase;display:block;margin-bottom:5px">City</label><input type="text" id="epCity" style="width:100%;box-sizing:border-box;padding:11px 13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:var(--body);font-size:14px;border-radius:2px;outline:none"></div>
+          <div><label style="font-size:10px;letter-spacing:1px;color:rgba(255,255,255,.5);text-transform:uppercase;display:block;margin-bottom:5px">State</label><input type="text" id="epState" style="width:100%;box-sizing:border-box;padding:11px 13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:var(--body);font-size:14px;border-radius:2px;outline:none"></div>
+          <div><label style="font-size:10px;letter-spacing:1px;color:rgba(255,255,255,.5);text-transform:uppercase;display:block;margin-bottom:5px">Country</label><input type="text" id="epCountry" style="width:100%;box-sizing:border-box;padding:11px 13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:var(--body);font-size:14px;border-radius:2px;outline:none"></div>
+          <div style="grid-column:1/-1"><label style="font-size:10px;letter-spacing:1px;color:rgba(255,255,255,.5);text-transform:uppercase;display:block;margin-bottom:5px">Instagram Handle <span style="color:rgba(255,255,255,.45);font-weight:300;font-size:9px">(optional · e.g. @yourusername)</span></label><input type="text" id="epInstagram" placeholder="@yourusername" style="width:100%;box-sizing:border-box;padding:11px 13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:var(--body);font-size:14px;border-radius:2px;outline:none"></div>
         </div>
         <div style="display:flex;gap:10px;margin-top:8px">
           <button onclick="saveProfile()" style="padding:11px 24px;background:var(--rust);border:none;color:#fff;font-family:var(--headline);font-size:14px;letter-spacing:1px;cursor:pointer;border-radius:2px">SAVE CHANGES</button>
@@ -284,7 +284,7 @@ body{font-family:var(--body);background:#0a0805!important;color:#fff;overflow-x:
 
     <!-- ALBUMS -->
     <div class="dash-section">
-      <div class="dash-section-title">My Trip Albums <span style="font-size:13px;color:rgba(255,255,255,.35);font-family:var(--body);letter-spacing:0;font-weight:300">Max 6 photos per album · Earns 50 credits on approval</span></div>
+      <div class="dash-section-title">My Trip Albums <span style="font-size:13px;color:rgba(255,255,255,.5);font-family:var(--body);letter-spacing:0;font-weight:300">Max 6 photos per album · Earns 50 credits on approval</span></div>
       <div id="albumList"></div>
       <div style="margin-top:20px">
         <button onclick="openNewAlbum()" style="display:inline-flex;align-items:center;gap:8px;padding:11px 22px;background:var(--rust);border:none;color:#fff;font-family:var(--headline);font-size:14px;letter-spacing:1px;cursor:pointer;border-radius:2px">+ CREATE NEW ALBUM</button>
@@ -312,7 +312,7 @@ body{font-family:var(--body);background:#0a0805!important;color:#fff;overflow-x:
 
     <!-- TESTIMONIALS -->
     <div class="dash-section">
-      <div class="dash-section-title">Write a Testimonial <span style="font-size:13px;color:rgba(255,255,255,.35);font-family:var(--body);letter-spacing:0;font-weight:300">Earns 75 credits on approval</span></div>
+      <div class="dash-section-title">Write a Testimonial <span style="font-size:13px;color:rgba(255,255,255,.5);font-family:var(--body);letter-spacing:0;font-weight:300">Earns 75 credits on approval</span></div>
       <div id="testimonialList"></div>
       <div style="margin-top:20px;background:#0f0d0b;border:1px solid rgba(255,255,255,.1);padding:24px;border-radius:2px">
         <div style="font-size:12px;letter-spacing:2px;color:var(--rust);text-transform:uppercase;margin-bottom:16px">Share Your Experience</div>
@@ -320,10 +320,10 @@ body{font-family:var(--body);background:#0a0805!important;color:#fff;overflow-x:
           <input type="text" id="testiTrip" placeholder="Trip name (e.g. Winter Spiti 2026)" style="width:100%;box-sizing:border-box;padding:11px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:var(--body);font-size:14px;border-radius:2px;outline:none">
         </div>
         <div style="margin-bottom:14px">
-          <div style="font-size:11px;color:rgba(255,255,255,.4);letter-spacing:1px;margin-bottom:8px">RATING</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.5);letter-spacing:1px;margin-bottom:8px">RATING</div>
           <div id="starRating" style="display:flex;gap:6px">
             <?php foreach([1,2,3,4,5] as $s): ?>
-            <button onclick="setRating(<?php echo $s; ?>)" class="star-btn" data-star="<?php echo $s; ?>" style="background:none;border:none;font-size:28px;cursor:pointer;color:rgba(255,255,255,.2);padding:0;transition:color .15s">★</button>
+            <button onclick="setRating(<?php echo $s; ?>)" class="star-btn" data-star="<?php echo $s; ?>" style="background:none;border:none;font-size:28px;cursor:pointer;color:rgba(255,255,255,.45);padding:0;transition:color .15s">★</button>
             <?php endforeach; ?>
           </div>
           <input type="hidden" id="testiRating" value="5">
@@ -338,7 +338,7 @@ body{font-family:var(--body);background:#0a0805!important;color:#fff;overflow-x:
 
     <!-- BLOGS -->
     <div class="dash-section">
-      <div class="dash-section-title">My Blogs <span style="font-size:13px;color:rgba(255,255,255,.35);font-family:var(--body);letter-spacing:0;font-weight:300">Earns 100 credits on approval</span></div>
+      <div class="dash-section-title">My Blogs <span style="font-size:13px;color:rgba(255,255,255,.5);font-family:var(--body);letter-spacing:0;font-weight:300">Earns 100 credits on approval</span></div>
       <div id="blogList"></div>
       <div style="margin-top:20px">
         <button onclick="openBlogEditor()" style="display:inline-flex;align-items:center;gap:8px;padding:11px 22px;background:var(--rust);border:none;color:#fff;font-family:var(--headline);font-size:14px;letter-spacing:1px;cursor:pointer;border-radius:2px">+ WRITE NEW BLOG</button>
@@ -375,7 +375,7 @@ body{font-family:var(--body);background:#0a0805!important;color:#fff;overflow-x:
             style="width:100%;box-sizing:border-box;min-height:320px;padding:14px 16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-top:none;color:#fff;font-family:var(--body);font-size:14px;line-height:1.85;border-radius:0 0 2px 2px;outline:none;overflow-y:auto;word-break:break-word">
           </div>
           <style>
-            #blogBody[data-placeholder]:empty:before{content:attr(data-placeholder);color:rgba(255,255,255,.25);pointer-events:none;display:block}
+            #blogBody[data-placeholder]:empty:before{content:attr(data-placeholder);color:rgba(255,255,255,.45);pointer-events:none;display:block}
             #blogBody h2{font-family:var(--headline);font-size:26px;color:#fff;letter-spacing:1px;margin:20px 0 8px}
             #blogBody h3{font-family:var(--headline);font-size:20px;color:#fff;letter-spacing:.5px;margin:16px 0 6px}
             #blogBody p{margin:0 0 12px}
@@ -388,7 +388,7 @@ body{font-family:var(--body);background:#0a0805!important;color:#fff;overflow-x:
           </style>
         </div>
         <div style="margin-bottom:16px">
-          <div style="font-size:11px;color:rgba(255,255,255,.4);letter-spacing:1px;margin-bottom:8px">COVER IMAGE (optional)</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.5);letter-spacing:1px;margin-bottom:8px">COVER IMAGE (optional)</div>
           <input type="file" id="blogCoverInput" accept="image/*" style="display:none" onchange="uploadBlogCover(this)">
           <div id="blogCoverPreview" style="margin-bottom:10px"></div>
           <button onclick="document.getElementById('blogCoverInput').click()" style="padding:8px 16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;font-family:var(--body);font-size:13px;cursor:pointer;border-radius:2px">Upload Cover Image</button>
@@ -397,7 +397,7 @@ body{font-family:var(--body);background:#0a0805!important;color:#fff;overflow-x:
         <div style="display:flex;gap:10px;flex-wrap:wrap">
           <button onclick="saveBlog('draft')" style="padding:10px 20px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;font-family:var(--headline);font-size:14px;letter-spacing:1px;cursor:pointer;border-radius:2px">SAVE DRAFT</button>
           <button onclick="saveBlog('pending')" style="padding:10px 20px;background:var(--rust);border:none;color:#fff;font-family:var(--headline);font-size:14px;letter-spacing:1px;cursor:pointer;border-radius:2px">SUBMIT FOR REVIEW</button>
-          <button onclick="document.getElementById('blogEditor').style.display='none'" style="padding:10px 20px;background:rgba(255,255,255,.06);border:none;color:rgba(255,255,255,.4);font-family:var(--body);font-size:14px;cursor:pointer;border-radius:2px">Cancel</button>
+          <button onclick="document.getElementById('blogEditor').style.display='none'" style="padding:10px 20px;background:rgba(255,255,255,.06);border:none;color:rgba(255,255,255,.5);font-family:var(--body);font-size:14px;cursor:pointer;border-radius:2px">Cancel</button>
         </div>
         <div id="blogMsg" style="font-size:12px;margin-top:10px"></div>
       </div>
@@ -420,7 +420,7 @@ window.addEventListener('load', function() {
       '<div style="text-align:center;padding:60px 24px">'+
       '<div style="font-size:56px;margin-bottom:16px">🔒</div>'+
       '<div style="font-family:var(--headline);font-size:28px;color:#fff;margin-bottom:10px">'+(msg||'Login Required')+'</div>'+
-      '<div style="font-size:14px;color:rgba(255,255,255,.4);margin-bottom:28px">Please log in to view your dashboard.</div>'+
+      '<div style="font-size:14px;color:rgba(255,255,255,.5);margin-bottom:28px">Please log in to view your dashboard.</div>'+
       '<a href="'+(window.FW_AUTH&&FW_AUTH.login_url||'/login/')+'" style="display:inline-block;padding:13px 32px;background:var(--rust);color:#fff;text-decoration:none;font-family:var(--headline);font-size:18px;letter-spacing:1px;border-radius:2px">LOG IN</a>'+
       '</div>';
   }
@@ -523,7 +523,7 @@ window.addEventListener('load', function() {
       var statusLabel = w.status === 'notified' ? 'A seat opened up — check your email!' : 'Waiting for a seat';
       return '<div class="fw-wl-card" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:8px;padding:14px 16px;background:#0f0d0b;border:1px solid rgba(255,255,255,.08);border-radius:3px">' +
         '<div style="flex:1;min-width:160px"><div style="font-size:14px;color:#fff">' + w.expedition_title + '</div><div style="font-size:12px;margin-top:3px;color:' + statusColor + '">' + statusLabel + '</div></div>' +
-        '<div style="font-size:12px;color:rgba(255,255,255,.4)">' + w.seats_wanted + ' seat(s)</div>' +
+        '<div style="font-size:12px;color:rgba(255,255,255,.5)">' + w.seats_wanted + ' seat(s)</div>' +
         '<button data-id="' + w.id + '" onclick="fwLeaveWaitlist(this.dataset.id, this)" style="padding:7px 14px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);color:#f87171;font-size:11px;cursor:pointer;border-radius:2px">Leave Waitlist</button>' +
       '</div>';
     }).join('');
@@ -608,7 +608,7 @@ window.addEventListener('load', function() {
     }
 
     var avEl = document.getElementById('userAvatarEl');
-    if(av) { avEl.innerHTML='<img src="'+av+'" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--amber)">'; }
+    if(av) { avEl.innerHTML='<img src="'+av+'" alt="Your profile photo" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--amber)">'; }
     else   { avEl.textContent=(fn.charAt(0)+(ln?ln.charAt(0):'')).toUpperCase(); }
 
     /* Stats */
@@ -658,7 +658,7 @@ window.addEventListener('load', function() {
     var el = document.getElementById('creditHistory');
     if (!el) return;
     if (!history.length) {
-      el.innerHTML='<div style="color:rgba(255,255,255,.35);font-size:13px;padding:20px 0">No credit transactions yet.</div>'; return;
+      el.innerHTML='<div style="color:rgba(255,255,255,.5);font-size:13px;padding:20px 0">No credit transactions yet.</div>'; return;
     }
     var reasonMap = {
       registration:'Welcome Bonus', trip_completed:'Trip Completed',
@@ -672,8 +672,8 @@ window.addEventListener('load', function() {
       var expiry= c.expires_at ? ' · Expires '+new Date(c.expires_at).toLocaleDateString('en-IN',{month:'short',year:'numeric'}) : '';
       return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06)">'+
         '<div>'+
-          '<div style="font-size:13px;color:#fff">'+(reasonMap[c.reason]||c.reason)+(c.note?' — <span style="color:rgba(255,255,255,.4)">'+c.note+'</span>':'')+'</div>'+
-          '<div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:2px">'+date+expiry+'</div>'+
+          '<div style="font-size:13px;color:#fff">'+(reasonMap[c.reason]||c.reason)+(c.note?' — <span style="color:rgba(255,255,255,.5)">'+c.note+'</span>':'')+'</div>'+
+          '<div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">'+date+expiry+'</div>'+
         '</div>'+
         '<div style="font-family:var(--headline);font-size:20px;color:'+(isPos?'#4ade80':'#f87171')+'">'+
           (isPos?'+':'')+c.amount+
@@ -701,7 +701,7 @@ window.addEventListener('load', function() {
           '</div>'+
           '<div class="thc-right">'+
             '<span class="thc-status" style="color:'+(statusColors[status]||'#fff')+';background:rgba(255,255,255,.06);padding:4px 10px;border-radius:12px;font-size:11px;letter-spacing:1px;text-transform:uppercase">'+status.replace('_',' ')+'</span>'+
-            (t.amount_total?'<div style="font-size:12px;color:rgba(255,255,255,.4);margin-top:6px">₹'+t.amount_total.toLocaleString('en-IN')+(t.discount_pct?' ('+t.discount_pct+'% off)':'')+'</div>':'')+
+            (t.amount_total?'<div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:6px">₹'+t.amount_total.toLocaleString('en-IN')+(t.discount_pct?' ('+t.discount_pct+'% off)':'')+'</div>':'')+
           '</div>'+
         '</div>'+
       '</div>';
@@ -788,7 +788,7 @@ window.addEventListener('load', function() {
       var r=await fetch(FW_AUTH.rest_url+'/fw-upload-avatar',{method:'POST',headers:{'Authorization':'Bearer '+token},body:formData});
       var d=await r.json();
       if(!r.ok) throw new Error(d.message||'Upload failed');
-      document.getElementById('userAvatarEl').innerHTML='<img src="'+d.url+'" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--amber)">';
+      document.getElementById('userAvatarEl').innerHTML='<img src="'+d.url+'" alt="Your profile photo" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--amber)">';
       toast('Profile photo updated ✅');
     } catch(err){ toast(err.message||'Upload failed',true); }
   };
@@ -826,7 +826,7 @@ window.addEventListener('load', function() {
   window.openPhoto=function(url){
     var ov=document.createElement('div');
     ov.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.93);display:flex;align-items:center;justify-content:center;cursor:pointer';
-    ov.innerHTML='<img src="'+url+'" style="max-width:92vw;max-height:92vh;object-fit:contain;border-radius:3px">';
+    ov.innerHTML='<img src="'+url+'" alt="Enlarged photo" style="max-width:92vw;max-height:92vh;object-fit:contain;border-radius:3px">';
     ov.onclick=function(){document.body.removeChild(ov);};
     document.body.appendChild(ov);
   };
@@ -844,7 +844,7 @@ window.addEventListener('load', function() {
     var el = document.getElementById('albumList');
     if (!el) return;
     if (!albums.length) {
-      el.innerHTML = '<div style="color:rgba(255,255,255,.35);font-size:13px;padding:10px 0">No albums yet. Create your first trip album below.</div>';
+      el.innerHTML = '<div style="color:rgba(255,255,255,.5);font-size:13px;padding:10px 0">No albums yet. Create your first trip album below.</div>';
       return;
     }
     var statusColor = {pending:'#e8a020', published:'#4ade80', rejected:'#f87171'};
@@ -863,14 +863,14 @@ window.addEventListener('load', function() {
       var cells = '';
       for (var i = 0; i < 6; i++) {
         if (photos[i]) {
-          cells += '<div style="aspect-ratio:1;overflow:hidden;border-radius:2px"><img src="'+photos[i].url+'" style="width:100%;height:100%;object-fit:cover;display:block" loading="lazy"></div>';
+          cells += '<div style="aspect-ratio:1;overflow:hidden;border-radius:2px"><img src="'+photos[i].url+'" alt="Album photo '+(i+1)+'" style="width:100%;height:100%;object-fit:cover;display:block" loading="lazy"></div>';
         } else {
-          cells += '<div style="aspect-ratio:1;background:rgba(255,255,255,.04);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:18px;color:rgba(255,255,255,.1)">+</div>';
+          cells += '<div style="aspect-ratio:1;background:rgba(255,255,255,.04);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:18px;color:rgba(255,255,255,.45)">+</div>';
         }
       }
 
       var coverHtml = cover
-        ? '<img src="'+cover+'" style="width:52px;height:52px;object-fit:cover;border-radius:2px;flex-shrink:0">'
+        ? '<img src="'+cover+'" alt="Cover" style="width:52px;height:52px;object-fit:cover;border-radius:2px;flex-shrink:0">'
         : '<div style="width:52px;height:52px;background:rgba(255,255,255,.06);border-radius:2px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px">&#128247;</div>';
 
       var addBtn = photoCount < 6
@@ -893,14 +893,14 @@ window.addEventListener('load', function() {
           coverHtml+
           '<div style="flex:1;min-width:0">'+
             '<div style="font-size:15px;color:#fff;margin-bottom:3px">'+a.title+'</div>'+
-            '<div style="font-size:12px;color:rgba(255,255,255,.4)">'+
+            '<div style="font-size:12px;color:rgba(255,255,255,.5)">'+
               '<span style="color:'+(statusColor[a.status]||'#fff')+';font-weight:500">'+(statusLabel[a.status]||a.status)+'</span>'+
               ' &middot; '+photoCount+'/6 photos'+
             '</div>'+
           '</div>'+
           '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">'+
             (a.status !== 'rejected' ? addBtn : '')+
-            '<span id="'+panelId+'-arrow" style="color:rgba(255,255,255,.25);font-size:16px">&#9660;</span>'+
+            '<span id="'+panelId+'-arrow" style="color:rgba(255,255,255,.45);font-size:16px">&#9660;</span>'+
           '</div>'+
         '</div>'+
         '<div id="'+panelId+'" style="display:none;border-top:1px solid rgba(255,255,255,.06);padding:4px">'+
@@ -1055,7 +1055,7 @@ window.addEventListener('load', function() {
     var el = document.getElementById('blogList');
     if (!el) return;
     if (!blogs.length) {
-      el.innerHTML = '<div style="color:rgba(255,255,255,.35);font-size:13px;padding:10px 0">No blogs yet. Share your road story below.</div>';
+      el.innerHTML = '<div style="color:rgba(255,255,255,.5);font-size:13px;padding:10px 0">No blogs yet. Share your road story below.</div>';
       return;
     }
     var statusColor = {draft:'rgba(255,255,255,.4)', pending:'#e8a020', published:'#4ade80', rejected:'#f87171'};
@@ -1066,7 +1066,7 @@ window.addEventListener('load', function() {
       var div = document.createElement('div');
       div.style.cssText = 'background:#0f0d0b;border:1px solid rgba(255,255,255,.08);padding:16px 20px;border-radius:2px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px';
       var inner = '<div style="flex:1"><div style="font-size:15px;color:#fff;margin-bottom:4px">' + b.title + '</div>' +
-        '<div style="font-size:12px;color:rgba(255,255,255,.4)"><span style="color:' + (statusColor[b.status]||'#fff') + '">' + (statusLabel[b.status]||b.status) + '</span>' +
+        '<div style="font-size:12px;color:rgba(255,255,255,.5)"><span style="color:' + (statusColor[b.status]||'#fff') + '">' + (statusLabel[b.status]||b.status) + '</span>' +
         (b.rejection_note ? ' &middot; <span style="color:#f87171">' + b.rejection_note + '</span>' : '') + '</div></div>';
       div.innerHTML = inner;
       var btnWrap = document.createElement('div');
@@ -1095,7 +1095,7 @@ window.addEventListener('load', function() {
     var el = document.getElementById('testimonialList');
     if (!el) return;
     if (!testis.length) {
-      el.innerHTML = '<div style="color:rgba(255,255,255,.35);font-size:13px;padding:10px 0">No testimonials yet.</div>';
+      el.innerHTML = '<div style="color:rgba(255,255,255,.5);font-size:13px;padding:10px 0">No testimonials yet.</div>';
       return;
     }
     var statusColor = {pending:'#e8a020', approved:'#4ade80', rejected:'#f87171'};
@@ -1251,18 +1251,18 @@ window.addEventListener('load', function() {
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">' +
           '<div>' +
             '<div style="font-family:var(--headline);font-size:18px;color:#fff;letter-spacing:1px">Upload Photos</div>' +
-            '<div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:2px">' + (albumTitle||'Album') + ' · max 6 photos · auto-compressed</div>' +
+            '<div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">' + (albumTitle||'Album') + ' · max 6 photos · auto-compressed</div>' +
           '</div>' +
-          '<button id="fw-mp-close" style="background:none;border:none;color:rgba(255,255,255,.4);font-size:22px;cursor:pointer;padding:0">&times;</button>' +
+          '<button id="fw-mp-close" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:22px;cursor:pointer;padding:0">&times;</button>' +
         '</div>' +
         '<label id="fw-mp-drop" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;border:2px dashed rgba(255,255,255,.15);border-radius:4px;padding:32px 20px;cursor:pointer;margin-bottom:16px">' +
           '<div style="font-size:32px">📷</div>' +
           '<div style="font-size:13px;color:rgba(255,255,255,.5)">Click to select photos</div>' +
-          '<div style="font-size:11px;color:rgba(255,255,255,.25)">Any size — auto-compressed</div>' +
+          '<div style="font-size:11px;color:rgba(255,255,255,.45)">Any size — auto-compressed</div>' +
           '<input id="fw-mp-input" type="file" accept="image/*" multiple style="display:none">' +
         '</label>' +
         '<div id="fw-mp-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px"></div>' +
-        '<div id="fw-mp-status" style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:12px;min-height:18px"></div>' +
+        '<div id="fw-mp-status" style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:12px;min-height:18px"></div>' +
         '<div style="display:flex;gap:10px">' +
           '<button id="fw-mp-save" style="display:none;padding:10px 28px;background:var(--rust);border:none;color:#fff;font-family:var(--body);font-size:13px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border-radius:2px">Save Photos</button>' +
           '<button id="fw-mp-cancel" style="padding:10px 20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);font-family:var(--body);font-size:13px;cursor:pointer;border-radius:2px">Cancel</button>' +
@@ -1376,7 +1376,7 @@ window.addEventListener('load', function() {
     if (id) {
       fetch(_rest+'/fw-get-blog-content?id='+id,{headers:{'Authorization':'Bearer '+_token}})
         .then(function(r){return r.json();})
-        .then(function(d){ if(d.blog){ document.getElementById('blogBody').innerHTML=d.blog.body||''; if(d.blog.cover_image){document.getElementById('blogCoverUrl').value=d.blog.cover_image;document.getElementById('blogCoverPreview').innerHTML='<img src="'+d.blog.cover_image+'" style="width:100%;max-height:200px;object-fit:cover;border-radius:2px;margin-bottom:8px">';} } })
+        .then(function(d){ if(d.blog){ document.getElementById('blogBody').innerHTML=d.blog.body||''; if(d.blog.cover_image){document.getElementById('blogCoverUrl').value=d.blog.cover_image;document.getElementById('blogCoverPreview').innerHTML='<img src="'+d.blog.cover_image+'" alt="Cover preview" style="width:100%;max-height:200px;object-fit:cover;border-radius:2px;margin-bottom:8px">';} } })
         .catch(function(){});
     }
   };
@@ -1447,7 +1447,7 @@ window.addEventListener('load', function() {
       var d = await r.json();
       if (!r.ok) throw new Error(d.message);
       document.getElementById('blogCoverUrl').value=d.url;
-      document.getElementById('blogCoverPreview').innerHTML='<img src="'+d.url+'" style="width:100%;max-height:200px;object-fit:cover;border-radius:2px;margin-bottom:8px">';
+      document.getElementById('blogCoverPreview').innerHTML='<img src="'+d.url+'" alt="Cover preview" style="width:100%;max-height:200px;object-fit:cover;border-radius:2px;margin-bottom:8px">';
       toast('Cover uploaded');
     } catch(e) { toast(e.message||'Failed', true); }
   };
