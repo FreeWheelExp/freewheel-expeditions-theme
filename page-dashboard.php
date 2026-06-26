@@ -1253,7 +1253,7 @@ window.addEventListener('load', function() {
             '<div style="font-family:var(--headline);font-size:18px;color:#fff;letter-spacing:1px">Upload Photos</div>' +
             '<div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">' + (albumTitle||'Album') + ' · max 6 photos · auto-compressed</div>' +
           '</div>' +
-          '<button id="fw-mp-close" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:22px;cursor:pointer;padding:0">&times;</button>' +
+          '<button id="fw-mp-close" aria-label="Close upload dialog" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:22px;cursor:pointer;padding:0">&times;</button>' +
         '</div>' +
         '<label id="fw-mp-drop" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;border:2px dashed rgba(255,255,255,.15);border-radius:4px;padding:32px 20px;cursor:pointer;margin-bottom:16px">' +
           '<div style="font-size:32px">📷</div>' +
