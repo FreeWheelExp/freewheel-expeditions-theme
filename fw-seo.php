@@ -95,6 +95,20 @@ function fw_get_page_seo() {
             'og_image'    => get_template_directory_uri() . '/images/front-page-1.png',
             'og_type'     => 'website',
         ],
+        'all-expeditions' => [
+            'title'       => 'Browse All Expeditions | Filter by Destination, Date & Budget | FreeWheel',
+            'desc'        => 'Search every upcoming FreeWheel self drive expedition by destination, month, or budget. Find your next Himalayan road trip — Leh Ladakh, Spiti, Adi Kailash, Nepal and more.',
+            'url'         => $home . 'all-expeditions/',
+            'og_image'    => get_template_directory_uri() . '/images/front-page-1.png',
+            'og_type'     => 'website',
+        ],
+        'rider' => [
+            'title'       => 'JUNGLI Member Profile | FreeWheel Expeditions Community',
+            'desc'        => 'A FreeWheel JUNGLI rider profile — trip albums, road stories and the loyalty badge earned through real Himalayan self drive expeditions.',
+            'url'         => $home . 'rider/',
+            'og_image'    => get_template_directory_uri() . '/images/front-page-1.png',
+            'og_type'     => 'profile',
+        ],
     ];
     return $map;
 }
@@ -107,10 +121,12 @@ function fw_current_seo() {
     /* Template-based detection for expedition pages */
     $template = get_page_template_slug();
     $tpl_map  = [
-        'page-leh.php'        => 'leh',
-        'page-spiti.php'      => 'spiti',
-        'page-adikailash.php' => 'adikailash',
-        'page-nepal.php'      => 'nepal-mustang',
+        'page-leh.php'             => 'leh',
+        'page-spiti.php'           => 'spiti',
+        'page-adikailash.php'      => 'adikailash',
+        'page-nepal.php'           => 'nepal-mustang',
+        'page-all-expeditions.php' => 'all-expeditions',
+        'page-rider.php'           => 'rider',
     ];
     if ( isset( $tpl_map[ $template ] ) ) {
         $key = $tpl_map[ $template ];
@@ -188,8 +204,16 @@ add_action( 'wp_head', function() {
     echo "<meta name=\"twitter:description\" content=\"{$desc}\">\n";
     echo "<meta name=\"twitter:image\"       content=\"{$image}\">\n";
 
-    /* Robots */
-    if ( is_page(['login','dashboard','register','admin-dashboard','my-account']) ) {
+    /* Robots — private/app pages should never be indexed.
+       Matched by template FILE, not slug guess: these pages use custom
+       "Template Name" assignments in WP Admin, so their actual URL slug
+       could be anything — slug-matching silently misses pages if the
+       slug differs from what was guessed here. */
+    $private_templates = array(
+        'page-login.php', 'page-register.php', 'page-dashboard.php',
+        'page-edit-profile.php', 'page-fw-admin.php',
+    );
+    if ( is_page_template( $private_templates ) ) {
         echo "<meta name=\"robots\" content=\"noindex, nofollow\">\n";
     } else {
         echo "<meta name=\"robots\" content=\"index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1\">\n";
