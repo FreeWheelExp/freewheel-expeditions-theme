@@ -255,7 +255,7 @@ function renderTestis(testis) {
     var info = document.createElement('div');
     info.style.flex = '1';
     info.innerHTML =
-      '<div style="margin-bottom:4px">' + stars(t.rating) + ' <span style="font-size:12px;color:rgba(255,255,255,.4)">' + (t.trip_name||'') + '</span></div>' +
+      '<div style="margin-bottom:4px">' + stars(t.rating) + ' <span style="font-size:12px;color:rgba(255,255,255,.5)">' + (t.trip_name||'') + '</span></div>' +
       '<div class="adm-text" style="margin-bottom:6px">' + t.body + '</div>' +
       '<div class="adm-meta">User: ' + t.user_id.slice(0,8) + '... &middot; ' + fmtDate(t.created_at) + '</div>';
 
@@ -310,7 +310,7 @@ function renderAlbums(albums) {
     info.style.flex = '1';
     info.innerHTML =
       '<div style="font-size:15px;color:#fff;margin-bottom:4px">' + a.title +
-      (a.trip_name ? ' <span style="font-size:12px;color:rgba(255,255,255,.4)">' + a.trip_name + '</span>' : '') +
+      (a.trip_name ? ' <span style="font-size:12px;color:rgba(255,255,255,.5)">' + a.trip_name + '</span>' : '') +
       (a.is_public ? ' <span style="font-size:10px;background:rgba(42,122,110,.25);color:#2dd4bf;padding:2px 8px;border-radius:2px">PUBLIC</span>' : '') +
       '</div>' +
       '<div class="adm-meta">User: ' + a.user_id.slice(0,8) + '... &middot; ' + fmtDate(a.created_at) + ' &middot; ' + photos.length + ' photo(s)</div>';
@@ -398,13 +398,13 @@ function renderBookings(bookings) {
     return '<div class="adm-card">'+
       '<div class="adm-card-head">'+
         '<div style="flex:1">'+
-          '<div style="font-size:15px;color:#fff;margin-bottom:4px">'+b.trip_title+' <span style="font-size:12px;color:rgba(255,255,255,.4)">'+b.trip_dates+'</span></div>'+
+          '<div style="font-size:15px;color:#fff;margin-bottom:4px">'+b.trip_title+' <span style="font-size:12px;color:rgba(255,255,255,.5)">'+b.trip_dates+'</span></div>'+
           '<div class="adm-meta">'+
             (b.contact_name||b.user_id||'Unlinked')+' &middot; '+(b.contact_phone||'—')+' &middot; '+fmtDate(b.created_at)+
             (b.amount_total ? ' &middot; &#8377;'+b.amount_total.toLocaleString('en-IN') : '')+
             (b.payment_ref ? ' &middot; UTR: '+b.payment_ref : '')+
           '</div>'+
-          (b.notes ? '<div style="font-size:12px;color:rgba(255,255,255,.4);margin-top:4px">'+b.notes+'</div>' : '')+
+          (b.notes ? '<div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:4px">'+b.notes+'</div>' : '')+
           (b.user_id ? '' : '<div style="font-size:11px;color:#e8a020;margin-top:4px">&#9888; Not linked to member account</div>')+
         '</div>'+
         '<div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap">'+
@@ -558,7 +558,7 @@ function renderUsers(users) {
       '<div style="flex:1">'+
         '<div style="color:#fff;font-size:14px">'+u.first_name+' '+(u.last_name||'')+'</div>'+
         '<div class="adm-meta">'+u.email+' &middot; '+(u.phone||'—')+' &middot; '+(u.city||'—')+'</div>'+
-        '<div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:2px">'+u.trips_completed+' trips &middot; Member since '+fmtDate(u.created_at)+'</div>'+
+        '<div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px">'+u.trips_completed+' trips &middot; Member since '+fmtDate(u.created_at)+'</div>'+
       '</div>'+
       '<div style="display:flex;gap:8px;align-items:center">'+
         (u.role==='admin' ? '<span class="adm-badge badge-approved">Admin</span>' : '')+
@@ -616,11 +616,11 @@ function loadActivityLog() {
         return '<div style="display:flex;align-items:flex-start;gap:12px;padding:11px 14px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);border-radius:2px;margin-bottom:6px">' +
           '<span style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:'+color+';background:'+color+'18;padding:3px 8px;border-radius:2px;white-space:nowrap;flex-shrink:0">'+label+'</span>' +
           '<div style="flex:1;min-width:0">' +
-            '<div style="font-size:12px;color:rgba(255,255,255,.7)">'+(log.actor_email||'unknown')+' <span style="color:rgba(255,255,255,.3)">('+(log.actor_role||'?')+')</span>' +
-            (log.target_type ? ' &middot; <span style="color:rgba(255,255,255,.4)">'+log.target_type+(log.target_id ? ' #'+String(log.target_id).substring(0,8) : '')+'</span>' : '') + '</div>' +
-            (log.details ? '<div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:3px">'+log.details+'</div>' : '') +
+            '<div style="font-size:12px;color:rgba(255,255,255,.7)">'+(log.actor_email||'unknown')+' <span style="color:rgba(255,255,255,.45)">('+(log.actor_role||'?')+')</span>' +
+            (log.target_type ? ' &middot; <span style="color:rgba(255,255,255,.5)">'+log.target_type+(log.target_id ? ' #'+String(log.target_id).substring(0,8) : '')+'</span>' : '') + '</div>' +
+            (log.details ? '<div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:3px">'+log.details+'</div>' : '') +
           '</div>' +
-          '<span style="font-size:10px;color:rgba(255,255,255,.25);white-space:nowrap;flex-shrink:0">'+fmtDate(log.created_at)+'</span>' +
+          '<span style="font-size:10px;color:rgba(255,255,255,.45);white-space:nowrap;flex-shrink:0">'+fmtDate(log.created_at)+'</span>' +
         '</div>';
       }).join('');
     })
@@ -700,7 +700,7 @@ function renderMembers(members) {
     var isStaff = m.role === 'moderator' || m.role === 'super_admin';
     /* Moderators cannot act on staff accounts at all — render as read-only */
     if ( !isSuperAdmin && isStaff ) {
-      return '<div class="adm-card" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;opacity:.55">'+av+'<div style="flex:1;min-width:160px"><div style="font-size:14px;color:#fff">'+(m.first_name||'')+' '+(m.last_name||'')+'</div><div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">'+m.email+'</div></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+sb+rb+'<span style="font-size:10px;color:rgba(255,255,255,.3)">Staff account — Super Admin only</span></div></div>';
+      return '<div class="adm-card" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;opacity:.55">'+av+'<div style="flex:1;min-width:160px"><div style="font-size:14px;color:#fff">'+(m.first_name||'')+' '+(m.last_name||'')+'</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">'+m.email+'</div></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+sb+rb+'<span style="font-size:10px;color:rgba(255,255,255,.45)">Staff account — Super Admin only</span></div></div>';
     }
 
     var bb = m.is_suspended
@@ -714,7 +714,7 @@ function renderMembers(members) {
 
     var removeBtn = '<button data-uid="'+m.id+'" data-name="'+((m.first_name||'')+' '+(m.last_name||'')).trim().replace(/"/g,'')+'" onclick="removeMember(this.dataset.uid,this.dataset.name)" style="padding:6px 12px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);color:#f87171;font-size:11px;cursor:pointer;border-radius:2px">Remove</button>';
 
-    return '<div class="adm-card" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">'+av+'<div style="flex:1;min-width:160px"><div style="font-size:14px;color:#fff">'+(m.first_name||'')+' '+(m.last_name||'')+'</div><div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">'+m.email+'</div><div style="font-size:11px;color:rgba(255,255,255,.3)">'+(m.phone||'')+(m.city?' - '+m.city:'')+'</div></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+sb+rb+rs+bb+removeBtn+'</div></div>';
+    return '<div class="adm-card" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">'+av+'<div style="flex:1;min-width:160px"><div style="font-size:14px;color:#fff">'+(m.first_name||'')+' '+(m.last_name||'')+'</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">'+m.email+'</div><div style="font-size:11px;color:rgba(255,255,255,.45)">'+(m.phone||'')+(m.city?' - '+m.city:'')+'</div></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+sb+rb+rs+bb+removeBtn+'</div></div>';
   }).join('');
 }
 function filterMembers(q) {
@@ -784,18 +784,18 @@ function loadWaitlist() {
       var html = '';
       Object.keys(groups).forEach(function(tripName) {
         var entries = groups[tripName];
-        html += '<div style="margin-bottom:24px"><div style="font-family:var(--headline);font-size:16px;color:#fff;letter-spacing:.5px;margin-bottom:10px">' + tripName + ' <span style="font-size:12px;color:rgba(255,255,255,.35);font-family:var(--body)">(' + entries.length + ' waiting)</span></div>';
+        html += '<div style="margin-bottom:24px"><div style="font-family:var(--headline);font-size:16px;color:#fff;letter-spacing:.5px;margin-bottom:10px">' + tripName + ' <span style="font-size:12px;color:rgba(255,255,255,.5);font-family:var(--body)">(' + entries.length + ' waiting)</span></div>';
         entries.forEach(function(w) {
           var statusColor = w.status === 'notified' ? '#e8a020' : '#4ade80';
           var statusLabel = w.status === 'notified' ? 'Notified' : 'Waiting';
           html += '<div class="adm-card" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:6px">' +
-            '<div style="flex:1;min-width:160px"><div style="font-size:13px;color:#fff">' + w.member_name + '</div><div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">' + (w.member_email||'') + (w.member_phone?' · '+w.member_phone:'') + '</div></div>' +
+            '<div style="flex:1;min-width:160px"><div style="font-size:13px;color:#fff">' + w.member_name + '</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">' + (w.member_email||'') + (w.member_phone?' · '+w.member_phone:'') + '</div></div>' +
             '<div style="font-size:12px;color:rgba(255,255,255,.5)">' + w.seats_wanted + ' seat(s)</div>' +
             '<span class="adm-badge" style="background:'+statusColor+'18;color:'+statusColor+';border:1px solid '+statusColor+'40">' + statusLabel + '</span>' +
             '<div style="display:flex;gap:6px">' +
-              (w.status === 'waiting' ? '<button class="adm-btn btn-approve" data-id="'+w.id+'" onclick="waitlistAction(this.dataset.id,\\'notify\\')">Notify</button>' : '') +
-              '<button class="adm-btn btn-approve" data-id="'+w.id+'" onclick="waitlistAction(this.dataset.id,\\'convert\\')">Mark Booked</button>' +
-              '<button class="adm-btn btn-reject" data-id="'+w.id+'" onclick="waitlistAction(this.dataset.id,\\'remove\\')">Remove</button>' +
+              (w.status === 'waiting' ? '<button class="adm-btn btn-approve" data-id="'+w.id+'" onclick="waitlistAction(this.dataset.id,\'notify\')">Notify</button>' : '') +
+              '<button class="adm-btn btn-approve" data-id="'+w.id+'" onclick="waitlistAction(this.dataset.id,\'convert\')">Mark Booked</button>' +
+              '<button class="adm-btn btn-reject" data-id="'+w.id+'" onclick="waitlistAction(this.dataset.id,\'remove\')">Remove</button>' +
             '</div>' +
           '</div>';
         });
@@ -849,7 +849,7 @@ function adminLoadBlogs() {
         var row = document.createElement('div');
         row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:2px;margin-bottom:8px;gap:12px';
         row.innerHTML = '<div style="flex:1;min-width:0"><div style="font-size:14px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (b.title || 'Untitled') + '</div>'
-          + '<div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:2px">' + fmtDate(b.created_at) + ' ' + statusBadge(b.status) + '</div></div>'
+          + '<div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">' + fmtDate(b.created_at) + ' ' + statusBadge(b.status) + '</div></div>'
           + '<button style="padding:6px 14px;font-size:11px;letter-spacing:1px;text-transform:uppercase;font-family:var(--body);cursor:pointer;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.6);border-radius:2px">Edit</button>';
         row.querySelector('button').addEventListener('click', (function(blog){ return function(){ adminEditBlog(blog); }; })(b));
         el.appendChild(row);
@@ -973,18 +973,18 @@ function adminDoUpload(aid, albumTitle) {
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">' +
         '<div>' +
           '<div style="font-family:var(--headline);font-size:18px;color:#fff;letter-spacing:1px">Upload Photos</div>' +
-          '<div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:2px">' + albumTitle + ' · max 6 photos · auto-compressed</div>' +
+          '<div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">' + albumTitle + ' · max 6 photos · auto-compressed</div>' +
         '</div>' +
-        '<button id="fw-panel-close" style="background:none;border:none;color:rgba(255,255,255,.4);font-size:22px;cursor:pointer;padding:0;line-height:1">&times;</button>' +
+        '<button id="fw-panel-close" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:22px;cursor:pointer;padding:0;line-height:1">&times;</button>' +
       '</div>' +
       '<label id="fw-drop-zone" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;border:2px dashed rgba(255,255,255,.15);border-radius:4px;padding:32px 20px;cursor:pointer;transition:border-color .2s;margin-bottom:16px">' +
         '<div style="font-size:32px">📷</div>' +
         '<div style="font-size:13px;color:rgba(255,255,255,.5)">Click to select photos</div>' +
-        '<div style="font-size:11px;color:rgba(255,255,255,.25)">JPG, PNG, HEIC — any size, auto-compressed</div>' +
+        '<div style="font-size:11px;color:rgba(255,255,255,.45)">JPG, PNG, HEIC — any size, auto-compressed</div>' +
         '<input id="fw-file-input" type="file" accept="image/*" multiple style="display:none">' +
       '</label>' +
       '<div id="fw-preview-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px"></div>' +
-      '<div id="fw-upload-status" style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:12px;min-height:18px"></div>' +
+      '<div id="fw-upload-status" style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:12px;min-height:18px"></div>' +
       '<div style="display:flex;gap:10px">' +
         '<button id="fw-save-btn" style="display:none;padding:10px 28px;background:var(--rust);border:none;color:#fff;font-family:var(--body);font-size:13px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border-radius:2px">Save Photos</button>' +
         '<button id="fw-cancel-btn" style="padding:10px 20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);font-family:var(--body);font-size:13px;cursor:pointer;border-radius:2px">Cancel</button>' +
@@ -1039,7 +1039,7 @@ function adminDoUpload(aid, albumTitle) {
       selectedFiles.push(file);
       var thumb = document.createElement('div');
       thumb.style.cssText = 'aspect-ratio:1;border-radius:3px;overflow:hidden;position:relative;background:rgba(255,255,255,.05)';
-      thumb.innerHTML = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:rgba(255,255,255,.3)">Loading...</div>';
+      thumb.innerHTML = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:rgba(255,255,255,.45)">Loading...</div>';
       previewGrid.appendChild(thumb);
 
       var objUrl = URL.createObjectURL(file);
@@ -1156,7 +1156,7 @@ function adminLoadAlbums() {
         var meta = document.createElement('div');
         meta.style.cssText = 'flex:1;min-width:0';
         meta.innerHTML = '<div style="font-size:14px;color:#fff;font-weight:500">' + (a.title||'Untitled') + '</div>'
-          + '<div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:3px">'
+          + '<div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:3px">'
           + (a.trip_name ? a.trip_name + ' &middot; ' : '') + fmtDate(a.created_at)
           + ' &middot; ' + photoCount + '/6 photos &middot; ' + statusBadge(a.status) + '</div>';
 
@@ -1169,7 +1169,7 @@ function adminLoadAlbums() {
         delBtn.style.cssText = 'padding:6px 14px;font-size:11px;letter-spacing:1px;text-transform:uppercase;font-family:var(--body);cursor:pointer;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);color:#f87171;border-radius:2px;white-space:nowrap';
 
         var hint = document.createElement('div');
-        hint.style.cssText = 'font-size:10px;color:rgba(255,255,255,.25);margin-top:3px;text-align:right';
+        hint.style.cssText = 'font-size:10px;color:rgba(255,255,255,.45);margin-top:3px;text-align:right';
         hint.textContent = 'Max 6 photos · auto-compressed';
 
         var btnWrap = document.createElement('div');
@@ -1209,7 +1209,7 @@ function adminLoadAlbums() {
         if (!(a.photos||[]).length) {
           var empty = document.createElement('div');
           empty.className = 'album-empty-note';
-          empty.style.cssText = 'color:rgba(255,255,255,.3);font-size:12px;grid-column:1/-1;padding:10px 0';
+          empty.style.cssText = 'color:rgba(255,255,255,.45);font-size:12px;grid-column:1/-1;padding:10px 0';
           empty.textContent = 'No photos yet.';
           grid.appendChild(empty);
         }
