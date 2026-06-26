@@ -168,7 +168,7 @@ a{color:inherit}
   <div class="pol-section">
     <span class="pol-section-num">06</span>
     <h2>Payment Method & Currency</h2>
-    <p>All payments are in Indian Rupees (INR). Refunds will be made to the original payment source — UPI ID or bank account used for payment. FreeWheel is not responsible for delays caused by banking or payment processing systems.</p>
+    <p>All payments are in Indian Rupees (INR) and processed via Razorpay. Approved refunds are issued back to the original payment method (card, UPI, or bank account) through Razorpay automatically — we never handle your payment details directly. FreeWheel is not responsible for delays caused by your bank or card issuer once a refund has been initiated.</p>
     <p>For international participants, currency conversion differences are not refunded. Refunds are made in INR only.</p>
   </div>
 
