@@ -188,7 +188,7 @@ a{color:inherit}
     <span class="pol-section-num">08</span>
     <h2>Booking & Payment</h2>
     <p>A booking is confirmed only upon receipt of payment (full or partial deposit) by FreeWheel and confirmation from FreeWheel in writing or via WhatsApp. Submission of a booking form does not constitute a confirmed booking.</p>
-    <p>Payment may be made via UPI, bank transfer, or such other methods as FreeWheel makes available. Payments are made in Indian Rupees (INR). For Nepal expeditions, pricing denominated per vehicle follows the rates specified at the time of booking.</p>
+    <p>Payment is processed securely through Razorpay (UPI, credit/debit cards, net banking, and wallets), or such other methods as FreeWheel makes available. Payments are made in Indian Rupees (INR). For Nepal expeditions, pricing denominated per vehicle follows the rates specified at the time of booking.</p>
     <p>Where a partial payment (deposit) option is offered, the remaining balance must be paid no later than 30 days before the expedition departure date. Failure to pay the balance by this date may result in cancellation of your booking without refund of the deposit.</p>
     <p>Prices are subject to change. Any change in price will be communicated before booking is confirmed and will not apply to confirmed bookings.</p>
   </div>
