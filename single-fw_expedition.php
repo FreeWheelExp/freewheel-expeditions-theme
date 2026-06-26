@@ -450,9 +450,9 @@ echo '<script type="application/ld+json">' . json_encode($schema_exp, JSON_UNESC
         <div style="margin-bottom:14px">
           <label style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.45);display:block;margin-bottom:6px">Seats Wanted</label>
           <div style="display:flex;align-items:center;gap:10px">
-            <button onclick="fwWlSeatChange(-1)" style="width:36px;height:36px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:18px;cursor:pointer;border-radius:2px">−</button>
+            <button onclick="fwWlSeatChange(-1)" aria-label="Decrease seats" style="width:36px;height:36px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:18px;cursor:pointer;border-radius:2px">−</button>
             <span id="wlSeatCount" style="font-family:var(--headline);font-size:28px;color:#fff;min-width:30px;text-align:center">1</span>
-            <button onclick="fwWlSeatChange(1)" style="width:36px;height:36px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:18px;cursor:pointer;border-radius:2px">+</button>
+            <button onclick="fwWlSeatChange(1)" aria-label="Increase seats" style="width:36px;height:36px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:18px;cursor:pointer;border-radius:2px">+</button>
           </div>
         </div>
 
@@ -503,9 +503,9 @@ echo '<script type="application/ld+json">' . json_encode($schema_exp, JSON_UNESC
         <div style="margin-bottom:14px">
           <label style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.45);display:block;margin-bottom:6px">Number of Seats</label>
           <div style="display:flex;align-items:center;gap:10px">
-            <button onclick="fwExpSeatChange(-1)" style="width:36px;height:36px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:18px;cursor:pointer;border-radius:2px">−</button>
+            <button onclick="fwExpSeatChange(-1)" aria-label="Decrease seats" style="width:36px;height:36px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:18px;cursor:pointer;border-radius:2px">−</button>
             <span id="expSeatCount" style="font-family:var(--headline);font-size:28px;color:#fff;min-width:30px;text-align:center">1</span>
-            <button onclick="fwExpSeatChange(1)" style="width:36px;height:36px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:18px;cursor:pointer;border-radius:2px">+</button>
+            <button onclick="fwExpSeatChange(1)" aria-label="Increase seats" style="width:36px;height:36px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:18px;cursor:pointer;border-radius:2px">+</button>
             <span style="font-size:13px;color:rgba(255,255,255,.4)">× ₹<?php echo number_format($price); ?></span>
           </div>
           <div style="margin-top:8px;font-size:13px;color:rgba(255,255,255,.6)">Total: <strong id="expTotalAmt" style="color:var(--amber)">₹<?php echo number_format($price); ?></strong></div>
@@ -781,7 +781,7 @@ $carry_items = !empty($things_carry) ? $things_carry : $default_carry;
 
 <!-- Lightbox -->
 <div id="expLightbox" class="exp-lightbox" onclick="if(event.target===this)expCloseLB()">
-  <button class="exp-lb-close" onclick="expCloseLB()">✕</button>
+  <button class="exp-lb-close" onclick="expCloseLB()" aria-label="Close gallery">✕</button>
   <button class="exp-lb-prev" onclick="expNavLB(-1)">&#8592;</button>
   <img id="expLBImg" class="exp-lb-img" src="" alt="">
   <button class="exp-lb-next" onclick="expNavLB(1)">&#8594;</button>
