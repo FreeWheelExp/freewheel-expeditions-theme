@@ -500,7 +500,7 @@ function closeMenu(){var m=document.getElementById('mobileMenu');if(m)m.classLis
 <!-- SUBSCRIPTION MODAL -->
 <div id="subOverlay" onclick="if(event.target===this)closeSubModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
   <div style="background:#1a1208;border:1px solid rgba(255,255,255,.12);border-top:3px solid var(--rust,#c1440e);border-radius:4px;width:100%;max-width:440px;padding:36px 32px;position:relative">
-    <button onclick="closeSubModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:rgba(255,255,255,.5);font-size:22px;cursor:pointer;line-height:1">×</button>
+    <button onclick="closeSubModal()" aria-label="Close" style="position:absolute;top:14px;right:16px;background:none;border:none;color:rgba(255,255,255,.5);font-size:22px;cursor:pointer;line-height:1">×</button>
     <div style="font-size:32px;margin-bottom:10px;text-align:center">🏔️</div>
     <h3 style="font-family:var(--headline,'sans-serif');font-size:22px;color:#fff;letter-spacing:1.5px;text-align:center;margin:0 0 6px">MEMBERSHIP PERKS</h3>
     <p style="font-size:12px;color:rgba(255,255,255,.45);text-align:center;margin:0 0 24px;line-height:1.6">Subscribe for exclusive discounts, early access & road dispatches. We'll verify your email with a quick OTP.</p>
