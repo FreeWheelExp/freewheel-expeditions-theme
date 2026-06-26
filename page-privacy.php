@@ -64,7 +64,7 @@ a{color:inherit}
         <tr><td>Email address</td><td>Account registration, newsletter subscription, booking, contact form</td></tr>
         <tr><td>Phone / WhatsApp number</td><td>Account registration, booking form, contact form</td></tr>
         <tr><td>City / location</td><td>Account registration (optional)</td></tr>
-        <tr><td>Payment reference (UTR)</td><td>Booking payment confirmation — we do not store card or UPI credentials</td></tr>
+        <tr><td>Payment data</td><td>Booking checkout — processed via Razorpay. We receive only the payment confirmation (order ID, payment ID, amount, status); we never see or store your card, UPI, or bank account details — these are handled directly by Razorpay, a PCI-DSS compliant payment gateway</td></tr>
         <tr><td>Vehicle details</td><td>Booking form (type of vehicle, self-drive or seat-sharing)</td></tr>
         <tr><td>Profile photo</td><td>Dashboard — optional, uploaded by you</td></tr>
         <tr><td>Blog content</td><td>Community dashboard — content you voluntarily submit for publication</td></tr>
@@ -100,6 +100,8 @@ a{color:inherit}
     <p>Your data is stored and processed using the following third-party services:</p>
     <ul>
       <li><strong>Supabase</strong> (supabase.com) — our primary database and authentication provider. Subscriber data, account data, and booking data is stored on Supabase servers. Supabase is SOC 2 compliant. <a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer" style="color:var(--rust)">Supabase Privacy Policy</a></li>
+      <li><strong>Razorpay</strong> (razorpay.com) — our payment gateway, used to process all booking and merchandise payments. Razorpay is PCI-DSS compliant and handles your card/UPI/bank details directly — we never receive or store this information. <a href="https://razorpay.com/privacy/" target="_blank" rel="noopener noreferrer" style="color:var(--rust)">Razorpay Privacy Policy</a></li>
+      <li><strong>Brevo</strong> (brevo.com) — used to send transactional emails (booking confirmations, OTP verification, welcome emails). Your email address and name are shared with Brevo solely to deliver these emails. <a href="https://www.brevo.com/legal/privacypolicy/" target="_blank" rel="noopener noreferrer" style="color:var(--rust)">Brevo Privacy Policy</a></li>
       <li><strong>WordPress</strong> — our website platform, hosted on a third-party web host. WordPress stores page content, blog posts, comments, and standard WordPress data.</li>
       <li><strong>Fast2SMS</strong> — used to send SMS notifications for booking confirmations. Your phone number may be used to send transaction SMS only.</li>
       <li><strong>Google Analytics</strong> (if active) — anonymous usage analytics. No personally identifiable information is shared with Google Analytics.</li>
