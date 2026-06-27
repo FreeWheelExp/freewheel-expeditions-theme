@@ -108,7 +108,7 @@ function fw_google_rating_section() {
         </a>
 
         <?php if ( ! empty( $reviews ) ): ?>
-        <div id="fwGrCarousel" style="max-width:440px;text-align:left;border-left:2px solid rgba(232,160,32,.4);padding-left:18px;position:relative;min-height:70px">
+        <div class="fwGrCarousel" style="max-width:440px;text-align:left;border-left:2px solid rgba(232,160,32,.4);padding-left:18px;position:relative;min-height:70px">
           <?php foreach ( $reviews as $i => $r ): ?>
           <div class="fw-gr-slide" data-i="<?php echo $i; ?>" style="<?php echo $i === 0 ? '' : 'display:none;'; ?>">
             <p style="font-size:14px;color:rgba(255,255,255,.7);font-style:italic;line-height:1.6;margin:0 0 6px">&ldquo;<?php echo esc_html( wp_trim_words( $r['text'], 22 ) ); ?>&rdquo;</p>
@@ -116,32 +116,46 @@ function fw_google_rating_section() {
           </div>
           <?php endforeach; ?>
           <?php if ( count( $reviews ) > 1 ): ?>
-          <div style="display:flex;gap:6px;margin-top:12px">
+          <div class="fw-gr-dots" style="display:flex;gap:6px;margin-top:12px">
             <?php foreach ( $reviews as $i => $r ): ?>
-            <span class="fw-gr-dot" data-i="<?php echo $i; ?>" onclick="fwGrGoto(<?php echo $i; ?>)" style="width:6px;height:6px;border-radius:50%;cursor:pointer;background:<?php echo $i === 0 ? 'var(--amber,#e8a020)' : 'rgba(255,255,255,.2)'; ?>"></span>
+            <span class="fw-gr-dot" data-i="<?php echo $i; ?>" style="width:6px;height:6px;border-radius:50%;cursor:pointer;background:<?php echo $i === 0 ? 'var(--amber,#e8a020)' : 'rgba(255,255,255,.2)'; ?>"></span>
             <?php endforeach; ?>
           </div>
           <?php endif; ?>
         </div>
         <?php if ( count( $reviews ) > 1 ): ?>
         <script>
-        (function(){
-          var slides = document.querySelectorAll('#fwGrCarousel .fw-gr-slide');
-          var dots   = document.querySelectorAll('#fwGrCarousel .fw-gr-dot');
-          var cur = 0, total = slides.length, timer;
-          window.fwGrGoto = function(i) {
-            slides[cur].style.display = 'none';
-            dots[cur].style.background = 'rgba(255,255,255,.2)';
-            cur = i;
-            slides[cur].style.display = 'block';
-            dots[cur].style.background = 'var(--amber,#e8a020)';
-          };
-          function next(){ fwGrGoto( (cur + 1) % total ); }
-          function startAuto(){ timer = setInterval(next, 6000); }
-          function stopAuto(){ clearInterval(timer); }
-          document.getElementById('fwGrCarousel').addEventListener('mouseenter', stopAuto);
-          document.getElementById('fwGrCarousel').addEventListener('mouseleave', startAuto);
-          startAuto();
+        (function init(){
+          if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); return; }
+          var containers = document.querySelectorAll('.fwGrCarousel');
+          containers.forEach(function(box){
+            var slides = box.querySelectorAll('.fw-gr-slide');
+            var dots   = box.querySelectorAll('.fw-gr-dot');
+            if (!slides.length) return;
+            var cur = 0, total = slides.length, timer = null;
+
+            function goto(i){
+              if (!slides[cur] || !slides[i]) return;
+              slides[cur].style.display = 'none';
+              if (dots[cur]) dots[cur].style.background = 'rgba(255,255,255,.2)';
+              cur = i;
+              slides[cur].style.display = 'block';
+              if (dots[cur]) dots[cur].style.background = 'var(--amber,#e8a020)';
+            }
+            function next(){ goto( (cur + 1) % total ); }
+            function startAuto(){ stopAuto(); timer = setInterval(next, 6000); }
+            function stopAuto(){ if (timer) clearInterval(timer); timer = null; }
+
+            dots.forEach(function(dot){
+              dot.addEventListener('click', function(){
+                var i = parseInt(dot.getAttribute('data-i'), 10);
+                if (!isNaN(i)) { goto(i); startAuto(); }
+              });
+            });
+            box.addEventListener('mouseenter', stopAuto);
+            box.addEventListener('mouseleave', startAuto);
+            startAuto();
+          });
         })();
         </script>
         <?php endif; ?>
