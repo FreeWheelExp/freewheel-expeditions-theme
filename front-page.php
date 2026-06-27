@@ -289,6 +289,8 @@ nav{padding-left:max(5vw,env(safe-area-inset-left));padding-right:max(5vw,env(sa
   </div>
 </section>
 
+<?php fw_google_rating_section(); ?>
+
 <!-- UPCOMING EXPEDITIONS -->
 <section class="upcoming" id="upcoming">
   <div class="sec-header">
