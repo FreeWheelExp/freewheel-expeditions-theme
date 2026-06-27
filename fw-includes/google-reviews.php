@@ -108,18 +108,29 @@ function fw_google_rating_section() {
         </a>
 
         <?php if ( ! empty( $reviews ) ): ?>
-        <div class="fwGrCarousel" style="max-width:440px;text-align:left;border-left:2px solid rgba(232,160,32,.4);padding-left:18px;position:relative;min-height:70px">
+        <div class="fwGrCarousel" style="max-width:460px;text-align:left;border-left:2px solid rgba(232,160,32,.4);padding-left:18px;position:relative;min-height:84px">
           <?php foreach ( $reviews as $i => $r ): ?>
           <div class="fw-gr-slide" data-i="<?php echo $i; ?>" style="<?php echo $i === 0 ? '' : 'display:none;'; ?>">
-            <p style="font-size:14px;color:rgba(255,255,255,.7);font-style:italic;line-height:1.6;margin:0 0 6px">&ldquo;<?php echo esc_html( wp_trim_words( $r['text'], 22 ) ); ?>&rdquo;</p>
-            <div style="font-size:12px;color:rgba(255,255,255,.4)"><?php echo esc_html( $r['author'] ); ?> &middot; <?php echo esc_html( $r['time_ago'] ); ?></div>
+            <p style="font-size:14px;color:rgba(255,255,255,.7);font-style:italic;line-height:1.6;margin:0 0 8px">&ldquo;<?php echo esc_html( wp_trim_words( $r['text'], 22 ) ); ?>&rdquo;</p>
+            <div style="display:flex;align-items:center;gap:8px">
+              <?php if ( ! empty( $r['avatar'] ) ): ?>
+                <img src="<?php echo esc_url( $r['avatar'] ); ?>" alt="<?php echo esc_attr( $r['author'] ); ?>" loading="lazy" style="width:26px;height:26px;border-radius:50%;object-fit:cover;flex-shrink:0">
+              <?php else: ?>
+                <div style="width:26px;height:26px;border-radius:50%;background:rgba(232,160,32,.2);color:var(--amber,#e8a020);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0"><?php echo esc_html( mb_substr( $r['author'], 0, 1 ) ); ?></div>
+              <?php endif; ?>
+              <div style="font-size:12px;color:rgba(255,255,255,.4)"><?php echo esc_html( $r['author'] ); ?> &middot; <?php echo esc_html( $r['time_ago'] ); ?></div>
+            </div>
           </div>
           <?php endforeach; ?>
           <?php if ( count( $reviews ) > 1 ): ?>
-          <div class="fw-gr-dots" style="display:flex;gap:6px;margin-top:12px">
-            <?php foreach ( $reviews as $i => $r ): ?>
-            <span class="fw-gr-dot" data-i="<?php echo $i; ?>" style="width:6px;height:6px;border-radius:50%;cursor:pointer;background:<?php echo $i === 0 ? 'var(--amber,#e8a020)' : 'rgba(255,255,255,.2)'; ?>"></span>
-            <?php endforeach; ?>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:14px">
+            <button class="fw-gr-prev" aria-label="Previous review" style="background:none;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;flex-shrink:0">&#8592;</button>
+            <div class="fw-gr-dots" style="display:flex;gap:6px">
+              <?php foreach ( $reviews as $i => $r ): ?>
+              <span class="fw-gr-dot" data-i="<?php echo $i; ?>" style="width:6px;height:6px;border-radius:50%;cursor:pointer;background:<?php echo $i === 0 ? 'var(--amber,#e8a020)' : 'rgba(255,255,255,.2)'; ?>"></span>
+              <?php endforeach; ?>
+            </div>
+            <button class="fw-gr-next" aria-label="Next review" style="background:none;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;flex-shrink:0">&#8594;</button>
           </div>
           <?php endif; ?>
         </div>
@@ -131,6 +142,8 @@ function fw_google_rating_section() {
           containers.forEach(function(box){
             var slides = box.querySelectorAll('.fw-gr-slide');
             var dots   = box.querySelectorAll('.fw-gr-dot');
+            var prevBtn = box.querySelector('.fw-gr-prev');
+            var nextBtn = box.querySelector('.fw-gr-next');
             if (!slides.length) return;
             var cur = 0, total = slides.length, timer = null;
 
@@ -143,6 +156,7 @@ function fw_google_rating_section() {
               if (dots[cur]) dots[cur].style.background = 'var(--amber,#e8a020)';
             }
             function next(){ goto( (cur + 1) % total ); }
+            function prev(){ goto( (cur - 1 + total) % total ); }
             function startAuto(){ stopAuto(); timer = setInterval(next, 6000); }
             function stopAuto(){ if (timer) clearInterval(timer); timer = null; }
 
@@ -152,6 +166,8 @@ function fw_google_rating_section() {
                 if (!isNaN(i)) { goto(i); startAuto(); }
               });
             });
+            if (nextBtn) nextBtn.addEventListener('click', function(){ next(); startAuto(); });
+            if (prevBtn) prevBtn.addEventListener('click', function(){ prev(); startAuto(); });
             box.addEventListener('mouseenter', stopAuto);
             box.addEventListener('mouseleave', startAuto);
             startAuto();
