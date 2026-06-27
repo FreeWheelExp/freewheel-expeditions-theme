@@ -429,6 +429,9 @@ echo '<script type="application/ld+json">' . json_encode($schema_exp, JSON_UNESC
         <?php endif; ?>
       </div>
 
+      <?php $_grb = fw_google_rating_badge(); if ( $_grb ): ?>
+      <div style="padding:12px 24px 0;text-align:center"><?php echo $_grb; ?></div>
+      <?php endif; ?>
 
 
       <!-- BOOK NOW — Razorpay + WhatsApp -->
