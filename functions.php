@@ -7,6 +7,7 @@
 /* Split into includes for maintainability — function bodies live here,
    route registrations stay in this file. */
 require_once get_template_directory() . '/fw-includes/community-features.php';
+require_once get_template_directory() . '/fw-includes/google-reviews.php';
 
 // Prevent Sucuri from blocking/stripping POST body on our REST endpoints
 add_filter( 'sucuriscan_event_ignore_list', function( $list ) {
