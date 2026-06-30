@@ -428,3 +428,351 @@ function fw_send_waitlist_slot_email( $email, $first_name, $trip_title ) {
         'timeout' => 15, 'data_format' => 'body',
     ));
 }
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   SUBSCRIBER / CAMPAIGN NOTIFICATION SYSTEM
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── Helper: upsert a subscriber row (called from fw_register_member + manual add) ── */
+function fw_subscriber_auto_upsert( $email, $mobile = '', $source = 'registration_auto', $consent_text = 'Auto-subscribed at registration' ) {
+    if ( ! $email ) return false;
+
+    $h_svc = array(
+        'apikey'        => FW_SUPABASE_SERVICE,
+        'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE,
+        'Content-Type'  => 'application/json',
+        'Prefer'        => 'resolution=ignore-duplicates,return=minimal', // safe upsert — skip if email already exists
+    );
+
+    // Check if already subscribed (to avoid overwriting real consent with weaker auto-consent)
+    $check = wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_subscribers?email=eq.' . rawurlencode( strtolower( $email ) ) . '&select=id,source',
+        array( 'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE ), 'timeout' => 8 )
+    );
+    $existing = json_decode( wp_remote_retrieve_body( $check ), true );
+
+    if ( ! empty( $existing[0]['id'] ) ) {
+        // Already exists — ensure is_subscribed is true (they may have previously unsubscribed and re-registered)
+        // but do NOT overwrite a real consent source (public_form) with a weaker one (registration_auto)
+        $existing_source = $existing[0]['source'] ?? 'registration_auto';
+        $patch_data = array( 'is_subscribed' => true );
+        if ( $existing_source === 'registration_auto' || $existing_source === 'admin_manual' ) {
+            $patch_data['source'] = $source;
+        }
+        wp_remote_request( FW_SUPABASE_URL . '/rest/v1/fw_subscribers?id=eq.' . rawurlencode( $existing[0]['id'] ), array(
+            'method'      => 'PATCH',
+            'headers'     => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE, 'Content-Type' => 'application/json', 'Prefer' => 'return=minimal' ),
+            'body'        => wp_json_encode( $patch_data ),
+            'timeout'     => 8,
+            'data_format' => 'body',
+        ));
+        return true;
+    }
+
+    $token = bin2hex( random_bytes( 32 ) );
+    $row   = array(
+        'email'             => strtolower( $email ),
+        'mobile'            => $mobile ?: null,
+        'is_subscribed'     => true,
+        'source'            => $source,
+        'unsubscribe_token' => $token,
+        'email_verified'    => true, // registration already OTP-verified
+    );
+
+    wp_remote_post( FW_SUPABASE_URL . '/rest/v1/fw_subscribers', array(
+        'headers'     => $h_svc,
+        'body'        => wp_json_encode( $row ),
+        'timeout'     => 10,
+        'data_format' => 'body',
+    ));
+    return true;
+}
+
+/* ── Helper: generic Brevo campaign email send ── */
+function fw_send_campaign_email( $email, $name, $subject, $html_body ) {
+    $brevo_api_key = defined( 'FW_BREVO_API_KEY' ) ? FW_BREVO_API_KEY : '';
+    if ( ! $brevo_api_key ) {
+        error_log( '[FW] fw_send_campaign_email skipped: FW_BREVO_API_KEY not defined.' );
+        return false;
+    }
+    $resp = wp_remote_post( 'https://api.brevo.com/v3/smtp/email', array(
+        'headers' => array(
+            'api-key'      => $brevo_api_key,
+            'Content-Type' => 'application/json',
+            'Accept'       => 'application/json',
+        ),
+        'body' => wp_json_encode( array(
+            'sender'      => array( 'name' => 'FreeWheel Expeditions', 'email' => 'hello@freewheelexpeditions.in' ),
+            'to'          => array( array( 'email' => $email, 'name' => $name ?: 'Explorer' ) ),
+            'subject'     => $subject,
+            'htmlContent' => $html_body,
+        )),
+        'timeout'     => 15,
+        'data_format' => 'body',
+    ));
+    if ( is_wp_error( $resp ) ) {
+        error_log( '[FW] Brevo campaign send failed for ' . $email . ': ' . $resp->get_error_message() );
+        return false;
+    }
+    return true;
+}
+
+/* ── Helper: build campaign HTML email body ── */
+function fw_build_campaign_html( $body_text, $expedition_titles, $unsubscribe_url ) {
+    $exp_html = '';
+    foreach ( $expedition_titles as $title ) {
+        $exp_html .= '<li style="margin:6px 0;color:rgba(255,255,255,.85);font-size:15px">' . esc_html( $title ) . '</li>';
+    }
+    $trips_block = $exp_html
+        ? '<ul style="text-align:left;display:inline-block;margin:20px auto;padding-left:20px">' . $exp_html . '</ul>'
+        : '';
+
+    $safe_body = nl2br( esc_html( $body_text ) );
+
+    return '
+<div style="font-family:Arial,sans-serif;background:#0f0d0b;padding:40px 20px;color:#fff;max-width:600px;margin:0 auto">
+  <div style="text-align:center;margin-bottom:30px">
+    <h2 style="color:#e8a020;margin:0 0 8px">FreeWheel Expeditions 🏔️</h2>
+    <p style="color:rgba(255,255,255,.4);font-size:13px;margin:0">The JUNGLI Convoy</p>
+  </div>
+  <div style="background:rgba(255,255,255,.05);border-radius:12px;padding:28px;margin-bottom:24px">
+    <p style="color:rgba(255,255,255,.85);font-size:15px;line-height:1.8;margin:0 0 16px">' . $safe_body . '</p>
+    ' . $trips_block . '
+  </div>
+  <div style="text-align:center;margin-top:30px">
+    <a href="https://freewheelexpeditions.in" style="background:#e8a020;color:#0f0d0b;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px">View Expeditions →</a>
+  </div>
+  <p style="text-align:center;margin-top:30px;color:rgba(255,255,255,.25);font-size:11px">
+    You\'re receiving this because you subscribed to FreeWheel Expeditions updates.<br>
+    <a href="' . esc_url( $unsubscribe_url ) . '" style="color:rgba(255,255,255,.35)">Unsubscribe</a>
+  </p>
+</div>';
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   REST ENDPOINTS
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── POST /admin/subscriber-add — admin/moderator manual subscriber entry ── */
+function fw_admin_add_subscriber( $request ) {
+    $user = fw_admin_auth( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $p      = $request->get_json_params() ?: array();
+    $email  = isset( $p['email'] )  ? sanitize_email( $p['email'] )              : '';
+    $mobile = isset( $p['mobile'] ) ? sanitize_text_field( $p['mobile'] )        : '';
+    $name   = isset( $p['name'] )   ? sanitize_text_field( $p['name'] )          : '';
+
+    if ( ! $email && ! $mobile ) {
+        return new WP_Error( 'missing', 'Email or mobile number is required.', array( 'status' => 400 ) );
+    }
+    if ( $email && ! is_email( $email ) ) {
+        return new WP_Error( 'invalid_email', 'Invalid email address.', array( 'status' => 400 ) );
+    }
+
+    $h_svc = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
+
+    // Check duplicates — email collision
+    if ( $email ) {
+        $chk = json_decode( wp_remote_retrieve_body( wp_remote_get(
+            FW_SUPABASE_URL . '/rest/v1/fw_subscribers?email=eq.' . rawurlencode( strtolower( $email ) ) . '&select=id,is_subscribed',
+            array( 'headers' => $h_svc, 'timeout' => 8 )
+        )), true );
+        if ( ! empty( $chk[0]['id'] ) ) {
+            // Re-activate if previously unsubscribed
+            if ( empty( $chk[0]['is_subscribed'] ) ) {
+                wp_remote_request( FW_SUPABASE_URL . '/rest/v1/fw_subscribers?id=eq.' . rawurlencode( $chk[0]['id'] ), array(
+                    'method'      => 'PATCH',
+                    'headers'     => array_merge( $h_svc, array( 'Content-Type' => 'application/json', 'Prefer' => 'return=minimal' ) ),
+                    'body'        => wp_json_encode( array( 'is_subscribed' => true ) ),
+                    'timeout'     => 8,
+                    'data_format' => 'body',
+                ));
+                return rest_ensure_response( array( 'success' => true, 'message' => 'Previously unsubscribed — reactivated.' ) );
+            }
+            return rest_ensure_response( array( 'success' => false, 'message' => 'This email is already in the subscriber list.' ) );
+        }
+    }
+
+    // Check duplicates — mobile collision
+    if ( $mobile ) {
+        $chk_m = json_decode( wp_remote_retrieve_body( wp_remote_get(
+            FW_SUPABASE_URL . '/rest/v1/fw_subscribers?mobile=eq.' . rawurlencode( $mobile ) . '&select=id',
+            array( 'headers' => $h_svc, 'timeout' => 8 )
+        )), true );
+        if ( ! empty( $chk_m[0]['id'] ) ) {
+            return rest_ensure_response( array( 'success' => false, 'message' => 'This WhatsApp number is already in the subscriber list.' ) );
+        }
+    }
+
+    $source_label = in_array( $user['role'], array( 'super_admin', 'admin' ), true ) ? 'admin_manual' : 'moderator_manual';
+    $token        = bin2hex( random_bytes( 32 ) );
+
+    $row = array(
+        'email'             => $email ? strtolower( $email ) : null,
+        'mobile'            => $mobile ?: null,
+        'name'              => $name ?: null,
+        'is_subscribed'     => true,
+        'source'            => $source_label,
+        'unsubscribe_token' => $token,
+        'email_verified'    => (bool) $email, // admin-entered email treated as verified
+    );
+
+    $insert = wp_remote_post( FW_SUPABASE_URL . '/rest/v1/fw_subscribers', array(
+        'headers'     => array_merge( $h_svc, array( 'Content-Type' => 'application/json', 'Prefer' => 'return=minimal' ) ),
+        'body'        => wp_json_encode( $row ),
+        'timeout'     => 10,
+        'data_format' => 'body',
+    ));
+
+    if ( is_wp_error( $insert ) || wp_remote_retrieve_response_code( $insert ) >= 300 ) {
+        error_log( '[FW] fw_admin_add_subscriber failed: ' . wp_remote_retrieve_body( $insert ) );
+        return new WP_Error( 'db_fail', 'Failed to add subscriber.', array( 'status' => 500 ) );
+    }
+
+    fw_log_admin_action( $user['id'], 'subscriber_add', null, 'Added subscriber: ' . ( $email ?: $mobile ) );
+    return rest_ensure_response( array( 'success' => true, 'message' => 'Subscriber added successfully.' ) );
+}
+
+/* ── GET /admin/subscribers — list all subscribers ── */
+function fw_admin_get_subscribers( $request ) {
+    $user = fw_admin_auth( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $resp = wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_subscribers?order=created_at.desc&select=id,name,email,mobile,is_subscribed,source,email_verified,created_at',
+        array(
+            'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE ),
+            'timeout' => 15,
+        )
+    );
+    $rows = json_decode( wp_remote_retrieve_body( $resp ), true ) ?: array();
+    return rest_ensure_response( array( 'success' => true, 'subscribers' => $rows, 'total' => count( $rows ) ) );
+}
+
+/* ── POST /admin/send-campaign — send bulk email + log it ── */
+function fw_admin_send_campaign( $request ) {
+    $user = fw_admin_auth( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $p               = $request->get_json_params() ?: array();
+    $subject         = sanitize_text_field( $p['subject']          ?? '' );
+    $body_text       = sanitize_textarea_field( $p['body']         ?? '' );
+    $expedition_ids  = array_map( 'intval', (array) ( $p['expedition_ids'] ?? array() ) );
+
+    if ( ! $subject || ! $body_text ) {
+        return new WP_Error( 'missing', 'Subject and body are required.', array( 'status' => 400 ) );
+    }
+
+    // Resolve expedition titles from WP post IDs
+    $expedition_titles = array();
+    foreach ( $expedition_ids as $pid ) {
+        $post = get_post( $pid );
+        if ( $post ) $expedition_titles[] = get_the_title( $post );
+    }
+
+    $h_svc = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
+
+    // Fetch all active email subscribers
+    $resp = wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_subscribers?is_subscribed=eq.true&email=not.is.null&email_verified=eq.true&select=email,name,unsubscribe_token',
+        array( 'headers' => $h_svc, 'timeout' => 15 )
+    );
+    $subscribers = json_decode( wp_remote_retrieve_body( $resp ), true ) ?: array();
+
+    if ( empty( $subscribers ) ) {
+        return rest_ensure_response( array( 'success' => false, 'message' => 'No active email subscribers to send to.' ) );
+    }
+
+    $sent  = 0;
+    $fails = 0;
+    $site_url = trailingslashit( get_site_url() );
+
+    foreach ( $subscribers as $sub ) {
+        $unsub_url = $site_url . 'wp-json/freewheel/v1/unsubscribe?token=' . rawurlencode( $sub['unsubscribe_token'] );
+        $html      = fw_build_campaign_html( $body_text, $expedition_titles, $unsub_url );
+        $ok        = fw_send_campaign_email( $sub['email'], $sub['name'] ?? '', $subject, $html );
+        $ok ? $sent++ : $fails++;
+    }
+
+    // Log to fw_notification_log
+    wp_remote_post( FW_SUPABASE_URL . '/rest/v1/fw_notification_log', array(
+        'headers'     => array_merge( $h_svc, array( 'Content-Type' => 'application/json', 'Prefer' => 'return=minimal' ) ),
+        'body'        => wp_json_encode( array(
+            'expedition_ids'  => implode( ',', $expedition_ids ),
+            'subject'         => $subject,
+            'body_html'       => $body_text,
+            'recipient_count' => $sent,
+            'sent_by'         => $user['email'],
+        )),
+        'timeout'     => 10,
+        'data_format' => 'body',
+    ));
+
+    fw_log_admin_action( $user['id'], 'campaign_sent', null, 'Campaign "' . $subject . '" sent to ' . $sent . ' subscribers.' );
+
+    return rest_ensure_response( array(
+        'success'  => true,
+        'sent'     => $sent,
+        'failed'   => $fails,
+        'message'  => 'Campaign sent to ' . $sent . ' subscriber' . ( $sent !== 1 ? 's' : '' ) . '.' . ( $fails ? ' ' . $fails . ' failed.' : '' ),
+    ));
+}
+
+/* ── GET /unsubscribe?token=xxx — public no-auth unsubscribe link ── */
+function fw_handle_unsubscribe( $request ) {
+    $token = sanitize_text_field( $request->get_param( 'token' ) );
+
+    if ( ! $token ) {
+        return new WP_Error( 'missing_token', 'Invalid unsubscribe link.', array( 'status' => 400 ) );
+    }
+
+    $h_svc = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
+
+    $check = json_decode( wp_remote_retrieve_body( wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_subscribers?unsubscribe_token=eq.' . rawurlencode( $token ) . '&select=id,is_subscribed',
+        array( 'headers' => $h_svc, 'timeout' => 8 )
+    )), true );
+
+    if ( empty( $check[0]['id'] ) ) {
+        return new WP_Error( 'not_found', 'Unsubscribe link is invalid or already used.', array( 'status' => 404 ) );
+    }
+
+    if ( empty( $check[0]['is_subscribed'] ) ) {
+        // Already unsubscribed — no-op, but show success to avoid leaking state
+        return rest_ensure_response( array( 'success' => true, 'message' => 'You are already unsubscribed.' ) );
+    }
+
+    wp_remote_request( FW_SUPABASE_URL . '/rest/v1/fw_subscribers?id=eq.' . rawurlencode( $check[0]['id'] ), array(
+        'method'      => 'PATCH',
+        'headers'     => array_merge( $h_svc, array( 'Content-Type' => 'application/json', 'Prefer' => 'return=minimal' ) ),
+        'body'        => wp_json_encode( array( 'is_subscribed' => false ) ),
+        'timeout'     => 10,
+        'data_format' => 'body',
+    ));
+
+    // Redirect to a friendly confirmation page rather than returning raw JSON
+    wp_redirect( home_url( '/?fw_unsub=1' ) );
+    exit;
+}
+
+/* ── GET /admin/whatsapp-export — copy/export mobile numbers ── */
+function fw_admin_whatsapp_export( $request ) {
+    $user = fw_admin_auth( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $resp = wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_subscribers?is_subscribed=eq.true&mobile=not.is.null&select=name,mobile',
+        array( 'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE ), 'timeout' => 10 )
+    );
+    $rows    = json_decode( wp_remote_retrieve_body( $resp ), true ) ?: array();
+    $numbers = array_column( $rows, 'mobile' );
+
+    return rest_ensure_response( array(
+        'success' => true,
+        'count'   => count( $numbers ),
+        'numbers' => $numbers,
+        'csv'     => implode( "\n", $numbers ), // paste-ready for WhatsApp broadcast
+    ));
+}
