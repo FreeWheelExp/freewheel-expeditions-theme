@@ -196,7 +196,7 @@ function fw_rest_send_welcome( $req ) {
     }
 
     // ── Verify OTP via cURL (bypasses WP HTTP API) ──
-    $vpayload = json_encode( array( 'email' => $email, 'token' => $otp, 'type' => 'magiclink' ) );
+    $vpayload = json_encode( array( 'email' => $email, 'token' => $otp, 'type' => 'email' ) );
     $vch = curl_init( $sb_url . '/auth/v1/verify' );
     curl_setopt_array( $vch, array(
         CURLOPT_RETURNTRANSFER => true,
