@@ -13,6 +13,7 @@ require_once get_template_directory() . '/fw-includes/google-reviews.php';
 add_filter( 'sucuriscan_event_ignore_list', function( $list ) {
     $list[] = 'freewheel/v1/subscribe';
     $list[] = 'freewheel/v1/send-welcome';
+    $list[] = 'freewheel/v1/unsubscribe';
     return $list;
 } );
 
@@ -221,22 +222,10 @@ function fw_rest_send_welcome( $req ) {
     // OTP verified — clear stashed meta
     delete_transient( 'fw_sub_meta_' . md5($email) );
 
-    // ── Upsert into Supabase fw_subscribers using new schema ──
-    // TABLE SCHEMA (run once in Supabase SQL Editor):
-    //
-    //   CREATE TABLE IF NOT EXISTS fw_subscribers (
-    //     id             uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-    //     name           text NOT NULL,
-    //     mobile         text,
-    //     email          text UNIQUE NOT NULL,
-    //     email_verified boolean DEFAULT false,
-    //     subscribed_at  timestamptz DEFAULT now()
-    //   );
-    //   ALTER TABLE fw_subscribers ENABLE ROW LEVEL SECURITY;
-    //   CREATE POLICY "service_insert" ON fw_subscribers FOR INSERT WITH CHECK (true);
-    //   CREATE POLICY "service_select" ON fw_subscribers FOR SELECT USING (true);
-    //
-    // NOTE: service role key is used server-side only — never exposed to browser.
+    // ── Upsert into Supabase fw_subscribers ──
+    // TABLE SCHEMA: see fw_subscribers_migration_v2.sql (BIGSERIAL id, includes
+    // is_subscribed + unsubscribe_token + source columns used by the campaign
+    // notification system added 2026-06-30).
 
     $sb_service = FW_SUPABASE_SERVICE;
     $already    = false;
@@ -262,11 +251,14 @@ function fw_rest_send_welcome( $req ) {
 
     if ( ! $already ) {
         $ipayload = json_encode( array(
-            'name'           => $name,
-            'mobile'         => $mobile ?: null,
-            'email'          => $email,
-            'email_verified' => true,
-            'subscribed_at'  => date('c'),
+            'name'              => $name,
+            'mobile'            => $mobile ?: null,
+            'email'             => $email,
+            'email_verified'    => true,
+            'subscribed_at'     => date('c'),
+            'is_subscribed'     => true,
+            'unsubscribe_token' => bin2hex( random_bytes( 32 ) ),
+            'source'            => $source,
         ) );
         $ich = curl_init( $sb_url . '/rest/v1/fw_subscribers' );
         curl_setopt_array( $ich, array(
@@ -618,6 +610,9 @@ function fw_register_member( $request ) {
 
     // Send welcome email via Brevo
     fw_send_welcome_email( $email, $first_name );
+
+    // Auto-subscribe to expedition notification list
+    fw_subscriber_auto_upsert( $email, $phone, 'registration_auto', 'Auto-subscribed at registration' );
 
     return rest_ensure_response( array(
         'success'         => true,
@@ -1323,6 +1318,12 @@ add_action( 'rest_api_init', function() {
     register_rest_route( 'freewheel/v1', '/admin/get-blogs',           array( 'methods'=>'GET',  'callback'=>'fw_admin_get_blogs',           'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/get-albums',          array( 'methods'=>'GET',  'callback'=>'fw_admin_get_albums',          'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/delete-album',        array( 'methods'=>'POST', 'callback'=>'fw_admin_delete_album',        'permission_callback'=>'__return_true' ));
+    // Subscriber / campaign notification system
+    register_rest_route( 'freewheel/v1', '/admin/subscriber-add',     array( 'methods'=>'POST', 'callback'=>'fw_admin_add_subscriber',      'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/subscribers',        array( 'methods'=>'GET',  'callback'=>'fw_admin_get_subscribers',     'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/send-campaign',      array( 'methods'=>'POST', 'callback'=>'fw_admin_send_campaign',       'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/whatsapp-export',    array( 'methods'=>'GET',  'callback'=>'fw_admin_whatsapp_export',     'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/unsubscribe',              array( 'methods'=>'GET',  'callback'=>'fw_handle_unsubscribe',        'permission_callback'=>'__return_true' ));
 });
 
 /* ── Helper: log status change ── */
@@ -3502,5 +3503,3 @@ function fw_admin_delete_album( $request ) {
 
     return rest_ensure_response( array( 'success' => true ) );
 }
-
-
