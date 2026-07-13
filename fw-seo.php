@@ -213,7 +213,13 @@ add_action( 'wp_head', function() {
         'page-login.php', 'page-register.php', 'page-dashboard.php',
         'page-edit-profile.php', 'page-fw-admin.php',
     );
-    if ( is_page_template( $private_templates ) ) {
+    /* Thin/duplicate archive pages (tag, category, date, author, search)
+       should never be indexed — these are aggregator views, not unique
+       content, and are a common cause of "Crawled - currently not
+       indexed" in Search Console. */
+    $is_thin_archive = is_tag() || is_category() || is_date() || is_author() || is_search();
+
+    if ( is_page_template( $private_templates ) || $is_thin_archive ) {
         echo "<meta name=\"robots\" content=\"noindex, nofollow\">\n";
     } else {
         echo "<meta name=\"robots\" content=\"index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1\">\n";
@@ -431,6 +437,9 @@ add_filter( 'robots_txt', function( $output, $public ) {
     $output .= "Disallow: /register/\n";
     $output .= "Disallow: /login/\n";
     $output .= "Disallow: /admin-dashboard/\n";
+    $output .= "Disallow: /wp-content/plugins/\n";
+    $output .= "Disallow: /wp-content/uploads/*.css\n";
+    $output .= "Disallow: /wp-content/uploads/*.js\n";
     $output .= "\n";
     $output .= "Sitemap: {$sitemap_url}\n";
 
