@@ -591,6 +591,7 @@ function admTab(id, btn) {
   if (id === 'create') adminCreateTab('blog');
   if (id === 'activitylog') loadActivityLog();
   if (id === 'waitlist') loadWaitlist();
+  if (id === 'campaigns') loadCampaignsTab();
 }
 
 function loadActivityLog() {
@@ -1253,4 +1254,165 @@ function adminCreateAlbum() {
       } else { msg.textContent = d.message || 'Error creating album.'; msg.style.color = '#f87171'; }
     })
     .catch(function(e){ msg.textContent = 'Error: ' + e.message; msg.style.color = '#f87171'; });
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   NOTIFICATIONS / CAMPAIGNS
+   ══════════════════════════════════════════════════════════════════════ */
+var _campLoaded = false;
+var _campAudience = [];
+var _campSending = false;
+
+function loadCampaignsTab() {
+  if (_campLoaded) return;
+  _campLoaded = true;
+
+  fetch(_admRest + '/admin/campaign-audience', { headers: h() })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d.success) {
+        _campAudience = d.audience || [];
+        document.getElementById('campAudienceCount').textContent = d.count;
+      } else {
+        document.getElementById('campAudienceCount').textContent = '0';
+      }
+    })
+    .catch(function(){ document.getElementById('campAudienceCount').textContent = '?'; });
+
+  fetch(_admRest + '/admin/campaign-expeditions', { headers: h() })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var wrap = document.getElementById('campExpeditionList');
+      if (!d.success || !d.expeditions || !d.expeditions.length) {
+        wrap.innerHTML = '<span style="font-size:12px;color:rgba(255,255,255,.4)">No published expeditions found.</span>';
+        return;
+      }
+      wrap.innerHTML = d.expeditions.map(function(e){
+        return '<label style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);padding:6px 12px;border-radius:14px;font-size:12px;color:rgba(255,255,255,.75);cursor:pointer">' +
+          '<input type="checkbox" class="campExpCheck" value="' + e.id + '" style="accent-color:var(--rust)"> ' + e.title.replace(/</g,'&lt;') + '</label>';
+      }).join('');
+    })
+    .catch(function(){
+      document.getElementById('campExpeditionList').innerHTML = '<span style="font-size:12px;color:#f87171">Failed to load expeditions.</span>';
+    });
+}
+
+function campUploadAsset(input, kind) {
+  if (!input.files || !input.files[0]) return;
+  var fd = new FormData();
+  fd.append('file', input.files[0]);
+  var previewEl = document.getElementById(kind === 'image' ? 'campImagePreview' : 'campPdfPreview');
+  previewEl.textContent = 'Uploading...';
+
+  var headers = {};
+  if (_admToken) headers['Authorization'] = 'Bearer ' + _admToken;
+
+  fetch(_admRest + '/admin/campaign-upload', { method: 'POST', headers: headers, body: fd })
+    .then(function(r){
+      if (!r.ok) return r.text().then(function(t){ throw new Error(r.status + ': ' + t); });
+      return r.json();
+    })
+    .then(function(d){
+      if (!d.success) { previewEl.textContent = d.message || 'Upload failed.'; previewEl.style.color = '#f87171'; return; }
+      if (kind === 'image') {
+        document.getElementById('campImageUrl').value = d.url;
+        previewEl.innerHTML = '<img src="' + d.url + '" style="max-width:100%;max-height:80px;border-radius:4px;display:block;margin-top:4px">';
+      } else {
+        document.getElementById('campPdfUrl').value = d.url;
+        previewEl.textContent = 'Uploaded: ' + d.url.split('/').pop();
+        previewEl.style.color = '#4ade80';
+        document.getElementById('campPdfLabel').style.display = 'block';
+      }
+    })
+    .catch(function(e){ previewEl.textContent = 'Error: ' + e.message; previewEl.style.color = '#f87171'; });
+}
+
+function campExportWhatsapp() {
+  var msg = document.getElementById('campMsg');
+  msg.textContent = 'Loading...'; msg.style.color = 'rgba(255,255,255,.6)';
+  fetch(_admRest + '/admin/whatsapp-export', { headers: h() })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d.success) { msg.textContent = 'Failed to export.'; msg.style.color = '#f87171'; return; }
+      if (!d.count) { msg.textContent = 'No WhatsApp numbers on file.'; msg.style.color = 'rgba(255,255,255,.5)'; return; }
+      navigator.clipboard.writeText(d.csv).then(function(){
+        msg.textContent = 'Copied ' + d.count + ' WhatsApp numbers to clipboard.'; msg.style.color = '#4ade80';
+      }).catch(function(){
+        msg.textContent = d.count + ' numbers: ' + d.csv; msg.style.color = 'rgba(255,255,255,.7)';
+      });
+    })
+    .catch(function(){ msg.textContent = 'Error exporting.'; msg.style.color = '#f87171'; });
+}
+
+function campSend() {
+  if (_campSending) return;
+
+  var subject = document.getElementById('campSubject').value.trim();
+  var body    = document.getElementById('campBody').value.trim();
+  var msg     = document.getElementById('campMsg');
+  var progressEl = document.getElementById('campProgress');
+
+  if (!subject || !body) { msg.textContent = 'Subject and message are required.'; msg.style.color = '#f87171'; return; }
+  if (!_campAudience.length) { msg.textContent = 'No recipients to send to.'; msg.style.color = '#f87171'; return; }
+
+  var expIds = Array.prototype.map.call(document.querySelectorAll('.campExpCheck:checked'), function(c){ return parseInt(c.value, 10); });
+  var payloadExtra = {
+    expedition_ids: expIds,
+    image_url:  document.getElementById('campImageUrl').value,
+    pdf_url:    document.getElementById('campPdfUrl').value,
+    pdf_label:  document.getElementById('campPdfLabel').value,
+    cta_url:    document.getElementById('campCtaUrl').value,
+    cta_label:  document.getElementById('campCtaLabel').value,
+  };
+
+  if (!confirm('Send this notification to ' + _campAudience.length + ' recipients? This cannot be undone.')) return;
+
+  _campSending = true;
+  document.getElementById('campSendBtn').disabled = true;
+  document.getElementById('campSendBtn').style.opacity = '0.5';
+  msg.textContent = ''; msg.style.color = '';
+
+  var BATCH = 20;
+  var batches = [];
+  for (var i = 0; i < _campAudience.length; i += BATCH) batches.push(_campAudience.slice(i, i + BATCH));
+
+  var totalSent = 0, totalFailed = 0, idx = 0;
+
+  function sendNext() {
+    if (idx >= batches.length) {
+      // All done — log the campaign
+      fetch(_admRest + '/admin/log-campaign', {
+        method: 'POST', headers: h(),
+        body: JSON.stringify({ subject: subject, body: body, sent: totalSent, failed: totalFailed, expedition_ids: expIds })
+      }).finally(function(){
+        _campSending = false;
+        document.getElementById('campSendBtn').disabled = false;
+        document.getElementById('campSendBtn').style.opacity = '1';
+        progressEl.textContent = '';
+        msg.textContent = 'Done — sent to ' + totalSent + ' recipient' + (totalSent !== 1 ? 's' : '') + (totalFailed ? ', ' + totalFailed + ' failed' : '') + '.';
+        msg.style.color = totalFailed ? '#e8a020' : '#4ade80';
+      });
+      return;
+    }
+
+    progressEl.textContent = 'Sending batch ' + (idx + 1) + ' of ' + batches.length + ' (' + totalSent + ' sent so far)...';
+
+    var body_payload = Object.assign({ emails: batches[idx], subject: subject, body: body }, payloadExtra);
+
+    fetch(_admRest + '/admin/send-campaign-batch', { method: 'POST', headers: h(), body: JSON.stringify(body_payload) })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (d.success) { totalSent += d.sent; totalFailed += d.failed; }
+        else { totalFailed += batches[idx].length; }
+        idx++;
+        sendNext();
+      })
+      .catch(function(){
+        totalFailed += batches[idx].length;
+        idx++;
+        sendNext();
+      });
+  }
+
+  sendNext();
 }

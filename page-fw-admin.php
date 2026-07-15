@@ -110,6 +110,7 @@ get_header();
       <button class="adm-tab" onclick="admTab('orders',this)">Orders</button>
       <button class="adm-tab" onclick="admTab('users',this)">Members</button>
       <button class="adm-tab" onclick="admTab('create',this)">Create Content</button>
+      <button class="adm-tab" onclick="admTab('campaigns',this)">Notifications</button>
       <button class="adm-tab" id="tabStats" style="display:none" onclick="admTab('stats',this)">Site Stats</button>
       <button class="adm-tab" id="tabWaitlist" style="display:none" onclick="admTab('waitlist',this)">Waitlist</button>
       <button class="adm-tab" id="tabActivityLog" style="display:none" onclick="admTab('activitylog',this)">Activity Log</button>
@@ -341,6 +342,71 @@ get_header();
           <div id="adminAlbumFormMsg" style="font-size:12px;margin-top:10px;color:#f87171"></div>
         </div>
       </div>
+    </div>
+
+    <!-- ── NOTIFICATIONS / CAMPAIGNS ── -->
+    <div id="panel-campaigns" class="adm-panel">
+
+      <div class="adm-section-title">Send Notification
+        <span class="adm-count" id="campAudienceCount">–</span>
+        <span style="font-size:11px;color:rgba(255,255,255,.4);font-weight:400;text-transform:none;letter-spacing:0">recipients (subscribers + members, deduped)</span>
+      </div>
+
+      <div class="adm-card">
+        <div style="display:grid;gap:14px">
+          <div>
+            <label class="adm-label">Subject</label>
+            <input type="text" id="campSubject" class="adm-input" placeholder="e.g. New expedition open for booking — Winter Spiti 2026">
+          </div>
+
+          <div>
+            <label class="adm-label">Message</label>
+            <textarea id="campBody" class="adm-input" rows="6" placeholder="Write your update here..."></textarea>
+          </div>
+
+          <div class="adm-grid-2">
+            <div>
+              <label class="adm-label">Image (optional)</label>
+              <input type="file" id="campImageInput" accept="image/*" style="display:none" onchange="campUploadAsset(this,'image')">
+              <button type="button" class="adm-btn btn-secondary" onclick="document.getElementById('campImageInput').click()" style="width:100%">Upload Image</button>
+              <div id="campImagePreview" style="margin-top:8px;font-size:12px;color:rgba(255,255,255,.5)"></div>
+              <input type="hidden" id="campImageUrl" value="">
+            </div>
+            <div>
+              <label class="adm-label">Attach PDF (optional)</label>
+              <input type="file" id="campPdfInput" accept="application/pdf" style="display:none" onchange="campUploadAsset(this,'pdf')">
+              <button type="button" class="adm-btn btn-secondary" onclick="document.getElementById('campPdfInput').click()" style="width:100%">Upload PDF</button>
+              <div id="campPdfPreview" style="margin-top:8px;font-size:12px;color:rgba(255,255,255,.5)"></div>
+              <input type="hidden" id="campPdfUrl" value="">
+              <input type="text" id="campPdfLabel" class="adm-input" placeholder="Button label (e.g. Download Itinerary)" style="margin-top:8px;display:none">
+            </div>
+          </div>
+
+          <div class="adm-grid-2">
+            <div>
+              <label class="adm-label">Button link (optional — defaults to homepage)</label>
+              <input type="text" id="campCtaUrl" class="adm-input" placeholder="https://freewheelexpeditions.in/expedition/...">
+            </div>
+            <div>
+              <label class="adm-label">Button text</label>
+              <input type="text" id="campCtaLabel" class="adm-input" placeholder="View Expeditions →">
+            </div>
+          </div>
+
+          <div>
+            <label class="adm-label">Link to expeditions (optional — listed in the email)</label>
+            <div id="campExpeditionList" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px"><span style="font-size:12px;color:rgba(255,255,255,.4)">Loading...</span></div>
+          </div>
+
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <button class="adm-btn btn-save" onclick="campSend()" id="campSendBtn">Send Notification</button>
+            <button class="adm-btn btn-secondary" onclick="campExportWhatsapp()">Export WhatsApp Numbers</button>
+            <span id="campProgress" style="font-size:12px;color:rgba(255,255,255,.6)"></span>
+          </div>
+          <div id="campMsg" style="font-size:12px"></div>
+        </div>
+      </div>
+
     </div>
 
     <!-- Activity Log Panel (Super Admin only) -->

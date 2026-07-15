@@ -518,8 +518,9 @@ function fw_send_campaign_email( $email, $name, $subject, $html_body ) {
     return true;
 }
 
-/* ── Helper: build campaign HTML email body ── */
-function fw_build_campaign_html( $body_text, $expedition_titles, $unsubscribe_url ) {
+/* ── Helper: build campaign HTML email body ──
+   $assets: optional array with keys image_url, pdf_url, pdf_label, cta_url, cta_label */
+function fw_build_campaign_html( $body_text, $expedition_titles, $unsubscribe_url, $assets = array() ) {
     $exp_html = '';
     foreach ( $expedition_titles as $title ) {
         $exp_html .= '<li style="margin:6px 0;color:rgba(255,255,255,.85);font-size:15px">' . esc_html( $title ) . '</li>';
@@ -530,6 +531,21 @@ function fw_build_campaign_html( $body_text, $expedition_titles, $unsubscribe_ur
 
     $safe_body = nl2br( esc_html( $body_text ) );
 
+    $image_block = '';
+    if ( ! empty( $assets['image_url'] ) ) {
+        $image_block = '<img src="' . esc_url( $assets['image_url'] ) . '" alt="" style="max-width:100%;border-radius:10px;display:block;margin:0 0 20px">';
+    }
+
+    $pdf_block = '';
+    if ( ! empty( $assets['pdf_url'] ) ) {
+        $pdf_label = ! empty( $assets['pdf_label'] ) ? sanitize_text_field( $assets['pdf_label'] ) : 'Download PDF';
+        $pdf_block = '<div style="text-align:center;margin:20px 0"><a href="' . esc_url( $assets['pdf_url'] ) . '" style="background:rgba(232,160,32,.12);border:1px solid #e8a020;color:#e8a020;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:14px;display:inline-block">📄 ' . esc_html( $pdf_label ) . '</a></div>';
+    }
+
+    // Primary CTA: use admin-provided URL/label if given, otherwise default to the expeditions page
+    $cta_url   = ! empty( $assets['cta_url'] )   ? esc_url( $assets['cta_url'] )                     : 'https://freewheelexpeditions.in';
+    $cta_label = ! empty( $assets['cta_label'] ) ? esc_html( sanitize_text_field( $assets['cta_label'] ) ) : 'View Expeditions →';
+
     return '
 <div style="font-family:Arial,sans-serif;background:#0f0d0b;padding:40px 20px;color:#fff;max-width:600px;margin:0 auto">
   <div style="text-align:center;margin-bottom:30px">
@@ -537,17 +553,205 @@ function fw_build_campaign_html( $body_text, $expedition_titles, $unsubscribe_ur
     <p style="color:rgba(255,255,255,.4);font-size:13px;margin:0">The JUNGLI Convoy</p>
   </div>
   <div style="background:rgba(255,255,255,.05);border-radius:12px;padding:28px;margin-bottom:24px">
+    ' . $image_block . '
     <p style="color:rgba(255,255,255,.85);font-size:15px;line-height:1.8;margin:0 0 16px">' . $safe_body . '</p>
     ' . $trips_block . '
+    ' . $pdf_block . '
   </div>
   <div style="text-align:center;margin-top:30px">
-    <a href="https://freewheelexpeditions.in" style="background:#e8a020;color:#0f0d0b;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px">View Expeditions →</a>
+    <a href="' . $cta_url . '" style="background:#e8a020;color:#0f0d0b;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px">' . $cta_label . '</a>
   </div>
   <p style="text-align:center;margin-top:30px;color:rgba(255,255,255,.25);font-size:11px">
     You\'re receiving this because you subscribed to FreeWheel Expeditions updates.<br>
     <a href="' . esc_url( $unsubscribe_url ) . '" style="color:rgba(255,255,255,.35)">Unsubscribe</a>
   </p>
 </div>';
+}
+
+/* ── Helper: resolve deduped campaign audience — fw_subscribers ∪ fw_members ──
+   Members without a subscriber row are auto-upserted so every recipient has an
+   unsubscribe_token (compliance requirement — every campaign email must be able
+   to opt out, regardless of which table they originated from). */
+function fw_get_campaign_audience() {
+    $h_svc = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
+
+    // Members with an email, not suspended
+    $mem_resp = wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_members?email=not.is.null&select=email,first_name,is_suspended',
+        array( 'headers' => $h_svc, 'timeout' => 15 )
+    );
+    $members = json_decode( wp_remote_retrieve_body( $mem_resp ), true ) ?: array();
+
+    // Existing subscriber emails (so we don't needlessly re-upsert)
+    $sub_resp = wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_subscribers?select=email',
+        array( 'headers' => $h_svc, 'timeout' => 15 )
+    );
+    $existing_sub_emails = array_map( 'strtolower', array_filter( array_column(
+        json_decode( wp_remote_retrieve_body( $sub_resp ), true ) ?: array(), 'email'
+    )));
+    $existing_sub_emails = array_flip( $existing_sub_emails );
+
+    // Auto-create a subscriber row (with token) for any active member not already tracked
+    foreach ( $members as $m ) {
+        if ( empty( $m['email'] ) || ! empty( $m['is_suspended'] ) ) continue;
+        $email_lc = strtolower( $m['email'] );
+        if ( isset( $existing_sub_emails[ $email_lc ] ) ) continue;
+        fw_subscriber_auto_upsert( $m['email'], '', 'member_campaign_merge', 'Registered member — auto-included in campaign audience' );
+    }
+
+    // Final merged, deduped, active list
+    $final_resp = wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_subscribers?is_subscribed=eq.true&email=not.is.null&select=email,name,unsubscribe_token',
+        array( 'headers' => $h_svc, 'timeout' => 15 )
+    );
+    $rows = json_decode( wp_remote_retrieve_body( $final_resp ), true ) ?: array();
+
+    $seen = array();
+    $out  = array();
+    foreach ( $rows as $r ) {
+        if ( empty( $r['email'] ) ) continue;
+        $key = strtolower( trim( $r['email'] ) );
+        if ( isset( $seen[ $key ] ) ) continue;
+        $seen[ $key ] = true;
+        $out[] = array( 'email' => $r['email'], 'name' => $r['name'] ?? '', 'unsubscribe_token' => $r['unsubscribe_token'] ?? '' );
+    }
+    return $out;
+}
+
+/* ── GET /admin/campaign-expeditions — simple list for the campaign composer picker ── */
+function fw_admin_campaign_expeditions( $request ) {
+    $user = fw_admin_auth( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $posts = get_posts( array( 'post_type' => 'fw_expedition', 'post_status' => 'publish', 'posts_per_page' => -1, 'orderby' => 'date', 'order' => 'DESC' ) );
+    $out = array();
+    foreach ( $posts as $p ) {
+        $out[] = array( 'id' => $p->ID, 'title' => get_the_title( $p ) );
+    }
+    return rest_ensure_response( array( 'success' => true, 'expeditions' => $out ) );
+}
+
+/* ── GET /admin/campaign-audience — resolve + return recipient count/list ── */
+function fw_admin_campaign_audience( $request ) {
+    $user = fw_admin_auth( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $audience = fw_get_campaign_audience();
+    return rest_ensure_response( array( 'success' => true, 'count' => count( $audience ), 'audience' => $audience ) );
+}
+
+/* ── POST /admin/campaign-upload — generic asset upload (image or PDF) to WP Media Library ── */
+function fw_admin_campaign_upload( $request ) {
+    $user = fw_admin_auth( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    if ( empty( $_FILES['file'] ) || $_FILES['file']['error'] !== UPLOAD_ERR_OK ) {
+        return new WP_Error( 'no_file', 'No file uploaded.', array( 'status' => 400 ) );
+    }
+
+    $allowed = array( 'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf' );
+    $type    = $_FILES['file']['type'];
+    if ( ! in_array( $type, $allowed, true ) ) {
+        return new WP_Error( 'bad_type', 'Only JPG, PNG, WEBP, GIF, or PDF files are allowed.', array( 'status' => 400 ) );
+    }
+    // 10MB cap — plenty for a campaign image/flyer, keeps Brevo delivery snappy since we link rather than attach
+    if ( $_FILES['file']['size'] > 10 * 1024 * 1024 ) {
+        return new WP_Error( 'too_large', 'File must be under 10MB.', array( 'status' => 400 ) );
+    }
+
+    require_once ABSPATH . 'wp-admin/includes/file.php';
+    require_once ABSPATH . 'wp-admin/includes/media.php';
+    require_once ABSPATH . 'wp-admin/includes/image.php';
+
+    $attachment_id = media_handle_upload( 'file', 0 );
+    if ( is_wp_error( $attachment_id ) ) {
+        error_log( '[FW] Campaign asset upload failed: ' . $attachment_id->get_error_message() );
+        return new WP_Error( 'upload_fail', 'Upload failed.', array( 'status' => 500 ) );
+    }
+
+    fw_log_admin_action( $user['id'], 'campaign_asset_upload', 'attachment', $attachment_id, basename( get_attached_file( $attachment_id ) ) );
+
+    return rest_ensure_response( array( 'success' => true, 'url' => wp_get_attachment_url( $attachment_id ) ) );
+}
+
+/* ── POST /admin/send-campaign-batch — send ONE small batch (avoids PHP timeout on shared hosting) ──
+   Frontend calls this repeatedly with slices of the resolved audience until done. */
+function fw_admin_send_campaign_batch( $request ) {
+    $user = fw_admin_auth( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $p         = $request->get_json_params() ?: array();
+    $emails    = is_array( $p['emails'] ?? null ) ? $p['emails'] : array();
+    $subject   = sanitize_text_field( $p['subject'] ?? '' );
+    $body_text = sanitize_textarea_field( $p['body'] ?? '' );
+    $exp_ids   = array_map( 'intval', (array) ( $p['expedition_ids'] ?? array() ) );
+
+    if ( ! $subject || ! $body_text || empty( $emails ) ) {
+        return new WP_Error( 'missing', 'Subject, body, and at least one recipient are required.', array( 'status' => 400 ) );
+    }
+    if ( count( $emails ) > 25 ) {
+        return new WP_Error( 'batch_too_large', 'Max 25 recipients per batch call.', array( 'status' => 400 ) );
+    }
+
+    $expedition_titles = array();
+    foreach ( $exp_ids as $pid ) {
+        $post = get_post( $pid );
+        if ( $post ) $expedition_titles[] = get_the_title( $post );
+    }
+
+    $assets = array(
+        'image_url' => esc_url_raw( $p['image_url'] ?? '' ),
+        'pdf_url'   => esc_url_raw( $p['pdf_url']   ?? '' ),
+        'pdf_label' => sanitize_text_field( $p['pdf_label'] ?? '' ),
+        'cta_url'   => esc_url_raw( $p['cta_url']   ?? '' ),
+        'cta_label' => sanitize_text_field( $p['cta_label'] ?? '' ),
+    );
+
+    $site_url = trailingslashit( get_site_url() );
+    $sent = 0; $failed = 0;
+
+    foreach ( $emails as $recipient ) {
+        $email = sanitize_email( $recipient['email'] ?? '' );
+        if ( ! $email ) { $failed++; continue; }
+        $name  = sanitize_text_field( $recipient['name'] ?? '' );
+        $token = sanitize_text_field( $recipient['unsubscribe_token'] ?? '' );
+        $unsub_url = $site_url . 'wp-json/freewheel/v1/unsubscribe?token=' . rawurlencode( $token );
+        $html = fw_build_campaign_html( $body_text, $expedition_titles, $unsub_url, $assets );
+        $ok   = fw_send_campaign_email( $email, $name, $subject, $html );
+        $ok ? $sent++ : $failed++;
+    }
+
+    return rest_ensure_response( array( 'success' => true, 'sent' => $sent, 'failed' => $failed ) );
+}
+
+/* ── POST /admin/log-campaign — record a completed campaign run (called once, after all batches finish) ── */
+function fw_admin_log_campaign( $request ) {
+    $user = fw_admin_auth( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $p       = $request->get_json_params() ?: array();
+    $subject = sanitize_text_field( $p['subject'] ?? '' );
+    $body    = sanitize_textarea_field( $p['body'] ?? '' );
+    $sent    = intval( $p['sent'] ?? 0 );
+    $failed  = intval( $p['failed'] ?? 0 );
+    $exp_ids = array_map( 'intval', (array) ( $p['expedition_ids'] ?? array() ) );
+
+    $h_svc = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
+    wp_remote_post( FW_SUPABASE_URL . '/rest/v1/fw_notification_log', array(
+        'headers'     => array_merge( $h_svc, array( 'Content-Type' => 'application/json', 'Prefer' => 'return=minimal' ) ),
+        'body'        => wp_json_encode( array(
+            'expedition_ids'  => implode( ',', $exp_ids ),
+            'subject'         => $subject,
+            'body_html'       => $body,
+            'recipient_count' => $sent,
+            'sent_by'         => $user['email'],
+        )),
+        'timeout' => 10, 'data_format' => 'body',
+    ));
+
+    fw_log_admin_action( $user['id'], 'campaign_sent', null, 'Campaign "' . $subject . '" — sent ' . $sent . ', failed ' . $failed . '.' );
+    return rest_ensure_response( array( 'success' => true ) );
 }
 
 /* ══════════════════════════════════════════════════════════════════════

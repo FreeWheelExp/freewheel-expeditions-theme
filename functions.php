@@ -1326,6 +1326,11 @@ add_action( 'rest_api_init', function() {
     register_rest_route( 'freewheel/v1', '/admin/subscribers',        array( 'methods'=>'GET',  'callback'=>'fw_admin_get_subscribers',     'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/send-campaign',      array( 'methods'=>'POST', 'callback'=>'fw_admin_send_campaign',       'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/whatsapp-export',    array( 'methods'=>'GET',  'callback'=>'fw_admin_whatsapp_export',     'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/campaign-audience',  array( 'methods'=>'GET',  'callback'=>'fw_admin_campaign_audience',   'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/campaign-expeditions', array( 'methods'=>'GET', 'callback'=>'fw_admin_campaign_expeditions', 'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/campaign-upload',    array( 'methods'=>'POST', 'callback'=>'fw_admin_campaign_upload',     'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/send-campaign-batch',array( 'methods'=>'POST', 'callback'=>'fw_admin_send_campaign_batch', 'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/log-campaign',       array( 'methods'=>'POST', 'callback'=>'fw_admin_log_campaign',        'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/unsubscribe',              array( 'methods'=>'GET',  'callback'=>'fw_handle_unsubscribe',        'permission_callback'=>'__return_true' ));
 });
 
@@ -3506,3 +3511,290 @@ function fw_admin_delete_album( $request ) {
 
     return rest_ensure_response( array( 'success' => true ) );
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   WP ADMIN — SEND NOTIFICATION PAGE
+   Mirrors the frontend campaign composer (page-fw-admin.php / fw-admin.js)
+   but runs as a native WP Admin page for the site owner, using WP nonces
+   + capability checks instead of Supabase JWT — reuses the exact same
+   audience-resolution and email-sending PHP functions underneath.
+   ══════════════════════════════════════════════════════════════════════ */
+
+add_action( 'admin_menu', function() {
+    add_submenu_page(
+        'edit.php?post_type=fw_expedition',
+        'Send Notification',
+        '📣 Send Notification',
+        'edit_others_posts', // admin/editor level — matches site-owner-only access
+        'fw-send-notification',
+        'fw_render_notification_admin_page'
+    );
+});
+
+function fw_render_notification_admin_page() {
+    if ( ! current_user_can( 'edit_others_posts' ) ) wp_die( 'Insufficient permissions.' );
+    $nonce = wp_create_nonce( 'fw_camp_nonce' );
+    ?>
+    <div class="wrap">
+        <h1>📣 Send Notification</h1>
+        <p>Recipients: <strong id="fwCampCount">–</strong> (subscribers + registered members, deduplicated). This uses the same system as the frontend admin dashboard — sends in small batches to avoid timeouts.</p>
+
+        <table class="form-table">
+            <tr><th><label>Subject</label></th><td><input type="text" id="fwCampSubject" class="regular-text" style="width:500px" placeholder="e.g. New expedition open for booking"></td></tr>
+            <tr><th><label>Message</label></th><td><textarea id="fwCampBody" rows="6" style="width:500px" placeholder="Write your update here..."></textarea></td></tr>
+            <tr><th><label>Image</label></th><td>
+                <input type="file" id="fwCampImage" accept="image/*">
+                <div id="fwCampImagePreview" style="margin-top:6px"></div>
+                <input type="hidden" id="fwCampImageUrl">
+            </td></tr>
+            <tr><th><label>Attach PDF</label></th><td>
+                <input type="file" id="fwCampPdf" accept="application/pdf">
+                <div id="fwCampPdfPreview" style="margin-top:6px"></div>
+                <input type="hidden" id="fwCampPdfUrl">
+                <br><input type="text" id="fwCampPdfLabel" placeholder="Button label (e.g. Download Itinerary)" style="width:300px;margin-top:6px;display:none">
+            </td></tr>
+            <tr><th><label>Button link</label></th><td><input type="text" id="fwCampCtaUrl" class="regular-text" placeholder="https://freewheelexpeditions.in/expedition/..."></td></tr>
+            <tr><th><label>Button text</label></th><td><input type="text" id="fwCampCtaLabel" class="regular-text" placeholder="View Expeditions →"></td></tr>
+            <tr><th><label>Link expeditions</label></th><td><div id="fwCampExpeditions">Loading...</div></td></tr>
+        </table>
+
+        <p>
+            <button class="button button-primary" id="fwCampSendBtn" onclick="fwCampSend()">Send Notification</button>
+            <button class="button" onclick="fwCampExportWA()">Export WhatsApp Numbers</button>
+            <span id="fwCampProgress" style="margin-left:10px"></span>
+        </p>
+        <div id="fwCampMsg"></div>
+    </div>
+
+    <script>
+    (function(){
+        var NONCE = '<?php echo esc_js( $nonce ); ?>';
+        var AJAX  = '<?php echo esc_js( admin_url( 'admin-ajax.php' ) ); ?>';
+        var audience = [];
+        var sending = false;
+
+        function post(action, data) {
+            var fd = new FormData();
+            fd.append('action', action);
+            fd.append('nonce', NONCE);
+            for (var k in data) fd.append(k, data[k]);
+            return fetch(AJAX, { method: 'POST', body: fd }).then(function(r){ return r.json(); });
+        }
+
+        fetch(AJAX + '?action=fw_camp_audience&nonce=' + NONCE)
+            .then(function(r){ return r.json(); })
+            .then(function(d){
+                if (d.success) { audience = d.data.audience; document.getElementById('fwCampCount').textContent = d.data.count; }
+            });
+
+        fetch(AJAX + '?action=fw_camp_expeditions&nonce=' + NONCE)
+            .then(function(r){ return r.json(); })
+            .then(function(d){
+                var wrap = document.getElementById('fwCampExpeditions');
+                if (!d.success || !d.data.length) { wrap.textContent = 'No published expeditions.'; return; }
+                wrap.innerHTML = d.data.map(function(e){
+                    return '<label style="display:inline-block;margin:2px 10px 2px 0"><input type="checkbox" class="fwCampExp" value="' + e.id + '"> ' + e.title.replace(/</g,'&lt;') + '</label>';
+                }).join('');
+            });
+
+        document.getElementById('fwCampImage').addEventListener('change', function(){
+            if (!this.files[0]) return;
+            var fd = new FormData(); fd.append('action','fw_camp_upload'); fd.append('nonce',NONCE); fd.append('file', this.files[0]);
+            document.getElementById('fwCampImagePreview').textContent = 'Uploading...';
+            fetch(AJAX, { method:'POST', body: fd }).then(function(r){ return r.json(); }).then(function(d){
+                if (d.success) {
+                    document.getElementById('fwCampImageUrl').value = d.data.url;
+                    document.getElementById('fwCampImagePreview').innerHTML = '<img src="' + d.data.url + '" style="max-height:80px;border-radius:4px">';
+                } else { document.getElementById('fwCampImagePreview').textContent = d.data || 'Upload failed.'; }
+            });
+        });
+        document.getElementById('fwCampPdf').addEventListener('change', function(){
+            if (!this.files[0]) return;
+            var fd = new FormData(); fd.append('action','fw_camp_upload'); fd.append('nonce',NONCE); fd.append('file', this.files[0]);
+            document.getElementById('fwCampPdfPreview').textContent = 'Uploading...';
+            fetch(AJAX, { method:'POST', body: fd }).then(function(r){ return r.json(); }).then(function(d){
+                if (d.success) {
+                    document.getElementById('fwCampPdfUrl').value = d.data.url;
+                    document.getElementById('fwCampPdfPreview').textContent = 'Uploaded: ' + d.data.url.split('/').pop();
+                    document.getElementById('fwCampPdfLabel').style.display = 'inline-block';
+                } else { document.getElementById('fwCampPdfPreview').textContent = d.data || 'Upload failed.'; }
+            });
+        });
+
+        window.fwCampExportWA = function() {
+            var msg = document.getElementById('fwCampMsg');
+            fetch(AJAX + '?action=fw_camp_whatsapp_export&nonce=' + NONCE)
+                .then(function(r){ return r.json(); })
+                .then(function(d){
+                    if (!d.success || !d.data.count) { msg.textContent = 'No WhatsApp numbers on file.'; return; }
+                    navigator.clipboard.writeText(d.data.csv).then(function(){
+                        msg.textContent = 'Copied ' + d.data.count + ' numbers to clipboard.';
+                    }).catch(function(){ msg.textContent = d.data.count + ' numbers: ' + d.data.csv; });
+                });
+        };
+
+        window.fwCampSend = function() {
+            if (sending) return;
+            var subject = document.getElementById('fwCampSubject').value.trim();
+            var body    = document.getElementById('fwCampBody').value.trim();
+            var msg     = document.getElementById('fwCampMsg');
+            var progress = document.getElementById('fwCampProgress');
+            if (!subject || !body) { msg.textContent = 'Subject and message are required.'; return; }
+            if (!audience.length) { msg.textContent = 'No recipients to send to.'; return; }
+            if (!confirm('Send this notification to ' + audience.length + ' recipients?')) return;
+
+            var expIds = Array.prototype.map.call(document.querySelectorAll('.fwCampExp:checked'), function(c){ return c.value; });
+            var extra = {
+                image_url: document.getElementById('fwCampImageUrl').value,
+                pdf_url:   document.getElementById('fwCampPdfUrl').value,
+                pdf_label: document.getElementById('fwCampPdfLabel').value,
+                cta_url:   document.getElementById('fwCampCtaUrl').value,
+                cta_label: document.getElementById('fwCampCtaLabel').value,
+                expedition_ids: expIds.join(',')
+            };
+
+            sending = true;
+            document.getElementById('fwCampSendBtn').disabled = true;
+            var BATCH = 20, batches = [], i;
+            for (i = 0; i < audience.length; i += BATCH) batches.push(audience.slice(i, i + BATCH));
+            var sent = 0, failed = 0, idx = 0;
+
+            function next() {
+                if (idx >= batches.length) {
+                    var logData = Object.assign({ subject: subject, body: body, sent: sent, failed: failed }, extra);
+                    post('fw_camp_log', logData).finally(function(){
+                        sending = false;
+                        document.getElementById('fwCampSendBtn').disabled = false;
+                        progress.textContent = '';
+                        msg.textContent = 'Done — sent to ' + sent + ' recipients' + (failed ? ', ' + failed + ' failed' : '') + '.';
+                    });
+                    return;
+                }
+                progress.textContent = 'Batch ' + (idx+1) + '/' + batches.length + ' (' + sent + ' sent so far)...';
+                var batchData = Object.assign({ subject: subject, body: body, emails: JSON.stringify(batches[idx]) }, extra);
+                post('fw_camp_send_batch', batchData).then(function(d){
+                    if (d.success) { sent += d.data.sent; failed += d.data.failed; } else { failed += batches[idx].length; }
+                    idx++; next();
+                }).catch(function(){ failed += batches[idx].length; idx++; next(); });
+            }
+            next();
+        };
+    })();
+    </script>
+    <?php
+}
+
+/* ── AJAX: resolve audience (reuses fw_get_campaign_audience from community-features.php) ── */
+add_action( 'wp_ajax_fw_camp_audience', function() {
+    check_ajax_referer( 'fw_camp_nonce', 'nonce' );
+    if ( ! current_user_can( 'edit_others_posts' ) ) wp_send_json_error( 'Forbidden', 403 );
+    $audience = fw_get_campaign_audience();
+    wp_send_json_success( array( 'count' => count( $audience ), 'audience' => $audience ) );
+});
+
+add_action( 'wp_ajax_fw_camp_expeditions', function() {
+    check_ajax_referer( 'fw_camp_nonce', 'nonce' );
+    if ( ! current_user_can( 'edit_others_posts' ) ) wp_send_json_error( 'Forbidden', 403 );
+    $posts = get_posts( array( 'post_type' => 'fw_expedition', 'post_status' => 'publish', 'posts_per_page' => -1, 'orderby' => 'date', 'order' => 'DESC' ) );
+    $out = array();
+    foreach ( $posts as $p ) $out[] = array( 'id' => $p->ID, 'title' => get_the_title( $p ) );
+    wp_send_json_success( $out );
+});
+
+add_action( 'wp_ajax_fw_camp_upload', function() {
+    check_ajax_referer( 'fw_camp_nonce', 'nonce' );
+    if ( ! current_user_can( 'edit_others_posts' ) ) wp_send_json_error( 'Forbidden', 403 );
+    if ( empty( $_FILES['file'] ) || $_FILES['file']['error'] !== UPLOAD_ERR_OK ) wp_send_json_error( 'No file uploaded.' );
+
+    $allowed = array( 'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf' );
+    if ( ! in_array( $_FILES['file']['type'], $allowed, true ) ) wp_send_json_error( 'Only JPG, PNG, WEBP, GIF, or PDF allowed.' );
+    if ( $_FILES['file']['size'] > 10 * 1024 * 1024 ) wp_send_json_error( 'File must be under 10MB.' );
+
+    require_once ABSPATH . 'wp-admin/includes/file.php';
+    require_once ABSPATH . 'wp-admin/includes/media.php';
+    require_once ABSPATH . 'wp-admin/includes/image.php';
+
+    $attachment_id = media_handle_upload( 'file', 0 );
+    if ( is_wp_error( $attachment_id ) ) wp_send_json_error( 'Upload failed.' );
+
+    wp_send_json_success( array( 'url' => wp_get_attachment_url( $attachment_id ) ) );
+});
+
+add_action( 'wp_ajax_fw_camp_send_batch', function() {
+    check_ajax_referer( 'fw_camp_nonce', 'nonce' );
+    if ( ! current_user_can( 'edit_others_posts' ) ) wp_send_json_error( 'Forbidden', 403 );
+
+    $subject   = sanitize_text_field( $_POST['subject'] ?? '' );
+    $body_text = sanitize_textarea_field( $_POST['body'] ?? '' );
+    $emails    = json_decode( stripslashes( $_POST['emails'] ?? '[]' ), true ) ?: array();
+    $exp_ids   = array_filter( array_map( 'intval', explode( ',', $_POST['expedition_ids'] ?? '' ) ) );
+
+    if ( ! $subject || ! $body_text || empty( $emails ) ) wp_send_json_error( 'Missing subject, body, or recipients.' );
+    if ( count( $emails ) > 25 ) wp_send_json_error( 'Max 25 recipients per batch.' );
+
+    $expedition_titles = array();
+    foreach ( $exp_ids as $pid ) { $post = get_post( $pid ); if ( $post ) $expedition_titles[] = get_the_title( $post ); }
+
+    $assets = array(
+        'image_url' => esc_url_raw( $_POST['image_url'] ?? '' ),
+        'pdf_url'   => esc_url_raw( $_POST['pdf_url']   ?? '' ),
+        'pdf_label' => sanitize_text_field( $_POST['pdf_label'] ?? '' ),
+        'cta_url'   => esc_url_raw( $_POST['cta_url']   ?? '' ),
+        'cta_label' => sanitize_text_field( $_POST['cta_label'] ?? '' ),
+    );
+
+    $site_url = trailingslashit( get_site_url() );
+    $sent = 0; $failed = 0;
+    foreach ( $emails as $recipient ) {
+        $email = sanitize_email( $recipient['email'] ?? '' );
+        if ( ! $email ) { $failed++; continue; }
+        $name  = sanitize_text_field( $recipient['name'] ?? '' );
+        $token = sanitize_text_field( $recipient['unsubscribe_token'] ?? '' );
+        $unsub_url = $site_url . 'wp-json/freewheel/v1/unsubscribe?token=' . rawurlencode( $token );
+        $html = fw_build_campaign_html( $body_text, $expedition_titles, $unsub_url, $assets );
+        fw_send_campaign_email( $email, $name, $subject, $html ) ? $sent++ : $failed++;
+    }
+    wp_send_json_success( array( 'sent' => $sent, 'failed' => $failed ) );
+});
+
+add_action( 'wp_ajax_fw_camp_log', function() {
+    check_ajax_referer( 'fw_camp_nonce', 'nonce' );
+    if ( ! current_user_can( 'edit_others_posts' ) ) wp_send_json_error( 'Forbidden', 403 );
+
+    $wp_user = wp_get_current_user();
+    $subject = sanitize_text_field( $_POST['subject'] ?? '' );
+    $body    = sanitize_textarea_field( $_POST['body'] ?? '' );
+    $sent    = intval( $_POST['sent'] ?? 0 );
+    $exp_ids = sanitize_text_field( $_POST['expedition_ids'] ?? '' );
+
+    $h_svc = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
+    wp_remote_post( FW_SUPABASE_URL . '/rest/v1/fw_notification_log', array(
+        'headers'     => array_merge( $h_svc, array( 'Content-Type' => 'application/json', 'Prefer' => 'return=minimal' ) ),
+        'body'        => wp_json_encode( array(
+            'expedition_ids'  => $exp_ids,
+            'subject'         => $subject,
+            'body_html'       => $body,
+            'recipient_count' => $sent,
+            'sent_by'         => $wp_user->user_email . ' (WP Admin)',
+        )),
+        'timeout' => 10, 'data_format' => 'body',
+    ));
+
+    fw_log_admin_action(
+        array( 'id' => 'wp_admin:' . $wp_user->ID, 'email' => $wp_user->user_email, 'role' => 'wp_admin' ),
+        'campaign_sent', null, 'Campaign "' . $subject . '" sent via WP Admin to ' . $sent . ' recipients.'
+    );
+    wp_send_json_success( array( 'logged' => true ) );
+});
+
+add_action( 'wp_ajax_fw_camp_whatsapp_export', function() {
+    check_ajax_referer( 'fw_camp_nonce', 'nonce' );
+    if ( ! current_user_can( 'edit_others_posts' ) ) wp_send_json_error( 'Forbidden', 403 );
+    $resp = wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_subscribers?is_subscribed=eq.true&mobile=not.is.null&select=name,mobile',
+        array( 'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE ), 'timeout' => 10 )
+    );
+    $rows = json_decode( wp_remote_retrieve_body( $resp ), true ) ?: array();
+    $numbers = array_column( $rows, 'mobile' );
+    wp_send_json_success( array( 'count' => count( $numbers ), 'csv' => implode( "\n", $numbers ) ) );
+});
