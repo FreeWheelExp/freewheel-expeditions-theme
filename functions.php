@@ -3536,6 +3536,18 @@ function fw_render_notification_admin_page() {
     $nonce = wp_create_nonce( 'fw_camp_nonce' );
     ?>
     <div class="wrap">
+        <h2>Add Subscriber</h2>
+        <p style="color:#666">For people who share contact info via WhatsApp or in person — adds them to the notification list only, no account is created.</p>
+        <table class="form-table">
+            <tr><th><label>Name</label></th><td><input type="text" id="fwSubName" class="regular-text"></td></tr>
+            <tr><th><label>City</label></th><td><input type="text" id="fwSubCity" class="regular-text" placeholder="e.g. Haldwani"></td></tr>
+            <tr><th><label>Email</label></th><td><input type="email" id="fwSubEmail" class="regular-text"></td></tr>
+            <tr><th><label>Phone / WhatsApp</label></th><td><input type="text" id="fwSubMobile" class="regular-text"></td></tr>
+        </table>
+        <p><button class="button" onclick="fwSubAdd()">Add Subscriber</button> <span id="fwSubMsg" style="margin-left:10px"></span></p>
+
+        <hr style="margin:30px 0">
+
         <h1>📣 Send Notification</h1>
         <p>Recipients: <strong id="fwCampCount">–</strong> (subscribers + registered members, deduplicated). This uses the same system as the frontend admin dashboard — sends in small batches to avoid timeouts.</p>
 
@@ -3621,6 +3633,27 @@ function fw_render_notification_admin_page() {
             });
         });
 
+        window.fwSubAdd = function() {
+            var name = document.getElementById('fwSubName').value.trim();
+            var city = document.getElementById('fwSubCity').value.trim();
+            var email = document.getElementById('fwSubEmail').value.trim();
+            var mobile = document.getElementById('fwSubMobile').value.trim();
+            var msg = document.getElementById('fwSubMsg');
+            if (!email && !mobile) { msg.textContent = 'Enter an email or phone number.'; msg.style.color = '#d63638'; return; }
+            msg.textContent = 'Adding...'; msg.style.color = '#666';
+            post('fw_camp_add_subscriber', { name: name, city: city, email: email, mobile: mobile }).then(function(d){
+                if (d.success) {
+                    msg.textContent = d.data.message || 'Added.'; msg.style.color = '#00a32a';
+                    document.getElementById('fwSubName').value = '';
+                    document.getElementById('fwSubCity').value = '';
+                    document.getElementById('fwSubEmail').value = '';
+                    document.getElementById('fwSubMobile').value = '';
+                } else {
+                    msg.textContent = (d.data && d.data.message) || d.data || 'Could not add subscriber.'; msg.style.color = '#d63638';
+                }
+            }).catch(function(){ msg.textContent = 'Error.'; msg.style.color = '#d63638'; });
+        };
+
         window.fwCampExportWA = function() {
             var msg = document.getElementById('fwCampMsg');
             fetch(AJAX + '?action=fw_camp_whatsapp_export&nonce=' + NONCE)
@@ -3685,6 +3718,27 @@ function fw_render_notification_admin_page() {
 }
 
 /* ── AJAX: resolve audience (reuses fw_get_campaign_audience from community-features.php) ── */
+add_action( 'wp_ajax_fw_camp_add_subscriber', function() {
+    check_ajax_referer( 'fw_camp_nonce', 'nonce' );
+    if ( ! current_user_can( 'edit_others_posts' ) ) wp_send_json_error( 'Forbidden', 403 );
+
+    $email  = sanitize_email( $_POST['email'] ?? '' );
+    $mobile = sanitize_text_field( $_POST['mobile'] ?? '' );
+    $name   = sanitize_text_field( $_POST['name'] ?? '' );
+    $city   = sanitize_text_field( $_POST['city'] ?? '' );
+
+    $result = fw_insert_manual_subscriber( $email, $mobile, $name, $city, 'admin_manual' );
+    if ( is_wp_error( $result ) ) wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+    if ( ! $result['success'] ) wp_send_json_error( array( 'message' => $result['message'] ) );
+
+    $wp_user = wp_get_current_user();
+    fw_log_admin_action(
+        array( 'id' => 'wp_admin:' . $wp_user->ID, 'email' => $wp_user->user_email, 'role' => 'wp_admin' ),
+        'subscriber_add', null, 'Added subscriber via WP Admin: ' . ( $email ?: $mobile )
+    );
+    wp_send_json_success( array( 'message' => $result['message'] ) );
+});
+
 add_action( 'wp_ajax_fw_camp_audience', function() {
     check_ajax_referer( 'fw_camp_nonce', 'nonce' );
     if ( ! current_user_can( 'edit_others_posts' ) ) wp_send_json_error( 'Forbidden', 403 );

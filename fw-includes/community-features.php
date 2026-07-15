@@ -767,7 +767,22 @@ function fw_admin_add_subscriber( $request ) {
     $email  = isset( $p['email'] )  ? sanitize_email( $p['email'] )              : '';
     $mobile = isset( $p['mobile'] ) ? sanitize_text_field( $p['mobile'] )        : '';
     $name   = isset( $p['name'] )   ? sanitize_text_field( $p['name'] )          : '';
+    $city   = isset( $p['city'] )   ? sanitize_text_field( $p['city'] )          : '';
 
+    $source_label = in_array( $user['role'], array( 'super_admin', 'admin' ), true ) ? 'admin_manual' : 'moderator_manual';
+    $result = fw_insert_manual_subscriber( $email, $mobile, $name, $city, $source_label );
+
+    if ( is_wp_error( $result ) ) return $result;
+    if ( ! $result['success'] ) return rest_ensure_response( $result );
+
+    fw_log_admin_action( $user['id'], 'subscriber_add', null, 'Added subscriber: ' . ( $email ?: $mobile ) );
+    return rest_ensure_response( $result );
+}
+
+/* ── Shared helper: insert/reactivate a manually-entered subscriber ──
+   Used by both the frontend REST endpoint (fw_admin_add_subscriber) and
+   the WP Admin AJAX handler, so the dedup/reactivation logic lives in one place. */
+function fw_insert_manual_subscriber( $email, $mobile, $name, $city, $source_label ) {
     if ( ! $email && ! $mobile ) {
         return new WP_Error( 'missing', 'Email or mobile number is required.', array( 'status' => 400 ) );
     }
@@ -784,7 +799,6 @@ function fw_admin_add_subscriber( $request ) {
             array( 'headers' => $h_svc, 'timeout' => 8 )
         )), true );
         if ( ! empty( $chk[0]['id'] ) ) {
-            // Re-activate if previously unsubscribed
             if ( empty( $chk[0]['is_subscribed'] ) ) {
                 wp_remote_request( FW_SUPABASE_URL . '/rest/v1/fw_subscribers?id=eq.' . rawurlencode( $chk[0]['id'] ), array(
                     'method'      => 'PATCH',
@@ -793,9 +807,9 @@ function fw_admin_add_subscriber( $request ) {
                     'timeout'     => 8,
                     'data_format' => 'body',
                 ));
-                return rest_ensure_response( array( 'success' => true, 'message' => 'Previously unsubscribed — reactivated.' ) );
+                return array( 'success' => true, 'message' => 'Previously unsubscribed — reactivated.' );
             }
-            return rest_ensure_response( array( 'success' => false, 'message' => 'This email is already in the subscriber list.' ) );
+            return array( 'success' => false, 'message' => 'This email is already in the subscriber list.' );
         }
     }
 
@@ -806,21 +820,20 @@ function fw_admin_add_subscriber( $request ) {
             array( 'headers' => $h_svc, 'timeout' => 8 )
         )), true );
         if ( ! empty( $chk_m[0]['id'] ) ) {
-            return rest_ensure_response( array( 'success' => false, 'message' => 'This WhatsApp number is already in the subscriber list.' ) );
+            return array( 'success' => false, 'message' => 'This WhatsApp number is already in the subscriber list.' );
         }
     }
 
-    $source_label = in_array( $user['role'], array( 'super_admin', 'admin' ), true ) ? 'admin_manual' : 'moderator_manual';
-    $token        = bin2hex( random_bytes( 32 ) );
-
+    $token = bin2hex( random_bytes( 32 ) );
     $row = array(
         'email'             => $email ? strtolower( $email ) : null,
         'mobile'            => $mobile ?: null,
         'name'              => $name ?: null,
+        'city'              => $city ?: null,
         'is_subscribed'     => true,
         'source'            => $source_label,
         'unsubscribe_token' => $token,
-        'email_verified'    => (bool) $email, // admin-entered email treated as verified
+        'email_verified'    => (bool) $email,
     );
 
     $insert = wp_remote_post( FW_SUPABASE_URL . '/rest/v1/fw_subscribers', array(
@@ -831,12 +844,11 @@ function fw_admin_add_subscriber( $request ) {
     ));
 
     if ( is_wp_error( $insert ) || wp_remote_retrieve_response_code( $insert ) >= 300 ) {
-        error_log( '[FW] fw_admin_add_subscriber failed: ' . wp_remote_retrieve_body( $insert ) );
+        error_log( '[FW] fw_insert_manual_subscriber failed: ' . wp_remote_retrieve_body( $insert ) );
         return new WP_Error( 'db_fail', 'Failed to add subscriber.', array( 'status' => 500 ) );
     }
 
-    fw_log_admin_action( $user['id'], 'subscriber_add', null, 'Added subscriber: ' . ( $email ?: $mobile ) );
-    return rest_ensure_response( array( 'success' => true, 'message' => 'Subscriber added successfully.' ) );
+    return array( 'success' => true, 'message' => 'Subscriber added successfully.' );
 }
 
 /* ── GET /admin/subscribers — list all subscribers ── */
@@ -845,7 +857,7 @@ function fw_admin_get_subscribers( $request ) {
     if ( is_wp_error( $user ) ) return $user;
 
     $resp = wp_remote_get(
-        FW_SUPABASE_URL . '/rest/v1/fw_subscribers?order=created_at.desc&select=id,name,email,mobile,is_subscribed,source,email_verified,created_at',
+        FW_SUPABASE_URL . '/rest/v1/fw_subscribers?order=created_at.desc&select=id,name,email,mobile,city,is_subscribed,source,email_verified,created_at',
         array(
             'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE ),
             'timeout' => 15,

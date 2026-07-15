@@ -347,6 +347,34 @@ get_header();
     <!-- ── NOTIFICATIONS / CAMPAIGNS ── -->
     <div id="panel-campaigns" class="adm-panel">
 
+      <div class="adm-section-title">Add Subscriber
+        <span style="font-size:11px;color:rgba(255,255,255,.4);font-weight:400;text-transform:none;letter-spacing:0">— for people who share contact info via WhatsApp/in person, without creating an account</span>
+      </div>
+      <div class="adm-card" style="margin-bottom:24px">
+        <div class="adm-grid-2" style="margin-bottom:12px">
+          <div>
+            <label class="adm-label">Name</label>
+            <input type="text" id="subAddName" class="adm-input" placeholder="Full name">
+          </div>
+          <div>
+            <label class="adm-label">City</label>
+            <input type="text" id="subAddCity" class="adm-input" placeholder="e.g. Haldwani">
+          </div>
+        </div>
+        <div class="adm-grid-2" style="margin-bottom:12px">
+          <div>
+            <label class="adm-label">Email</label>
+            <input type="email" id="subAddEmail" class="adm-input" placeholder="name@example.com">
+          </div>
+          <div>
+            <label class="adm-label">Phone / WhatsApp</label>
+            <input type="text" id="subAddMobile" class="adm-input" placeholder="+91...">
+          </div>
+        </div>
+        <button class="adm-btn btn-save" onclick="subAddSubmit()">Add Subscriber</button>
+        <div id="subAddMsg" style="font-size:12px;margin-top:8px"></div>
+      </div>
+
       <div class="adm-section-title">Send Notification
         <span class="adm-count" id="campAudienceCount">–</span>
         <span style="font-size:11px;color:rgba(255,255,255,.4);font-weight:400;text-transform:none;letter-spacing:0">recipients (subscribers + members, deduped)</span>

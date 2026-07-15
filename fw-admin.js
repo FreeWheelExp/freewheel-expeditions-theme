@@ -1416,3 +1416,35 @@ function campSend() {
 
   sendNext();
 }
+
+/* ── Manual subscriber add (WhatsApp/in-person contacts) ── */
+function subAddSubmit() {
+  var name   = document.getElementById('subAddName').value.trim();
+  var city   = document.getElementById('subAddCity').value.trim();
+  var email  = document.getElementById('subAddEmail').value.trim();
+  var mobile = document.getElementById('subAddMobile').value.trim();
+  var msg    = document.getElementById('subAddMsg');
+
+  if (!email && !mobile) { msg.textContent = 'Enter an email or phone number.'; msg.style.color = '#f87171'; return; }
+
+  msg.textContent = 'Adding...'; msg.style.color = 'rgba(255,255,255,.6)';
+
+  fetch(_admRest + '/admin/subscriber-add', {
+    method: 'POST', headers: h(),
+    body: JSON.stringify({ name: name, city: city, email: email, mobile: mobile })
+  })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d.success) {
+        msg.textContent = d.message || 'Added.'; msg.style.color = '#4ade80';
+        document.getElementById('subAddName').value = '';
+        document.getElementById('subAddCity').value = '';
+        document.getElementById('subAddEmail').value = '';
+        document.getElementById('subAddMobile').value = '';
+        _campLoaded = false; /* force recipient count to refresh next time tab is viewed */
+      } else {
+        msg.textContent = d.message || 'Could not add subscriber.'; msg.style.color = '#f87171';
+      }
+    })
+    .catch(function(){ msg.textContent = 'Error adding subscriber.'; msg.style.color = '#f87171'; });
+}
