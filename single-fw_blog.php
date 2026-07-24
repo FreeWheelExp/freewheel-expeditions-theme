@@ -236,7 +236,7 @@ if (strpos($blog_tags, 'umling la') !== false || strpos($blog_tags, 'leh ladakh'
 } elseif (strpos($blog_tags, 'adi kailash') !== false || strpos($blog_tags, 'om parvat') !== false) {
     $exp_link = '/expedition/adi-kailash-om-parvat-self-drive-expedition/';
     $exp_name = 'Adi Kailash Om Parvat Expedition';
-    $exp_desc = 'Drive to India's sacred Himalayan peak — guided self-drive convoy, 2026';
+    $exp_desc = "Drive to India's sacred Himalayan peak — guided self-drive convoy, 2026";
 } elseif (strpos($blog_tags, 'mustang') !== false || strpos($blog_tags, 'nepal') !== false) {
     $exp_link = '/expedition/upper-mustang-muktinath-expedition/';
     $exp_name = 'Upper Mustang Expedition';
@@ -244,7 +244,7 @@ if (strpos($blog_tags, 'umling la') !== false || strpos($blog_tags, 'leh ladakh'
 } elseif (strpos($blog_tags, 'darma') !== false || strpos($blog_tags, 'rimkhim') !== false) {
     $exp_link = '/expedition/rimkhim-pass-lapthal-darma-valley-expedition/';
     $exp_name = 'Rimkhim Pass Darma Valley Expedition';
-    $exp_desc = 'Kumaon's most remote off-road valley — guided self-drive convoy, 2026';
+    $exp_desc = "Kumaon's most remote off-road valley — guided self-drive convoy, 2026";
 }
 
 if ($exp_link):
