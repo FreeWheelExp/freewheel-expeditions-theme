@@ -88,6 +88,7 @@ function loadAll() {
   loadBookings('');
   loadOrders();
   loadMembers();
+  loadSubscriberCount();
   try {
     var _s = JSON.parse(localStorage.getItem('fw_session')||'null');
     var isStaff = _s && (_s.role === 'super_admin' || _s.role === 'moderator' || _s.role === 'admin');
@@ -684,6 +685,19 @@ function loadMembers() {
       if(statBlocked) statBlocked.textContent = blocked;
       renderMembers(_allMembers);
     }).catch(function(){ document.getElementById('membersList').innerHTML = '<div class="adm-empty">Error loading members.</div>'; });
+}
+
+function loadSubscriberCount() {
+  fetch(_admRest + '/admin/subscribers', {headers: h()})
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+      var statSubs = document.getElementById('admStatSubscribers');
+      if (statSubs) statSubs.textContent = (typeof d.total === 'number') ? d.total : (d.subscribers || []).length;
+    })
+    .catch(function(){
+      var statSubs = document.getElementById('admStatSubscribers');
+      if (statSubs) statSubs.textContent = '?';
+    });
 }
 function renderMembers(members) {
   var el = document.getElementById('membersList');

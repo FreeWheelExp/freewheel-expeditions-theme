@@ -101,6 +101,7 @@ get_header();
       <div class="adm-stat-box"><div class="adm-stat-n" id="admStatOrders">–</div><div class="adm-stat-l">Total Orders</div></div>
       <div class="adm-stat-box"><div class="adm-stat-n" id="admStatUsers">–</div><div class="adm-stat-l">Members</div></div>
       <div class="adm-stat-box"><div class="adm-stat-n" id="admStatBlocked">–</div><div class="adm-stat-l">Blocked</div></div>
+      <div class="adm-stat-box"><div class="adm-stat-n" id="admStatSubscribers">–</div><div class="adm-stat-l">Subscribers</div></div>
     </div>
 
     <!-- Tabs -->
