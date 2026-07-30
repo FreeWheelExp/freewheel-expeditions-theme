@@ -268,6 +268,8 @@ get_header();
       <div style="display:flex;gap:12px;margin-bottom:24px">
         <button id="createTabBlog" onclick="adminCreateTab('blog')" style="padding:9px 20px;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:var(--body);cursor:pointer;border-radius:2px;background:var(--rust);border:none;color:#fff">Blog</button>
         <button id="createTabAlbum" onclick="adminCreateTab('album')" style="padding:9px 20px;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:var(--body);cursor:pointer;border-radius:2px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.6)">Album</button>
+        <button id="createTabExpedition" onclick="adminCreateTab('expedition')" style="padding:9px 20px;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:var(--body);cursor:pointer;border-radius:2px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.6)">Expeditions</button>
+        <button id="createTabProduct" onclick="adminCreateTab('product')" style="padding:9px 20px;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-family:var(--body);cursor:pointer;border-radius:2px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.6)">Merchandise</button>
       </div>
 
       <!-- Blog Section -->
@@ -341,6 +343,148 @@ get_header();
             <button onclick="document.getElementById('adminAlbumForm').style.display='none'" style="padding:10px 20px;background:rgba(255,255,255,.06);border:none;color:rgba(255,255,255,.5);font-family:var(--body);font-size:13px;cursor:pointer;border-radius:2px">Cancel</button>
           </div>
           <div id="adminAlbumFormMsg" style="font-size:12px;margin-top:10px;color:#f87171"></div>
+        </div>
+      </div>
+
+      <!-- Expeditions Section -->
+      <div id="createExpeditionSection" style="display:none">
+        <div class="adm-section-title">Expeditions <button onclick="adminShowExpeditionEditor()" style="margin-left:12px;padding:5px 14px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-family:var(--body);cursor:pointer;background:rgba(193,68,14,.2);border:1px solid rgba(193,68,14,.4);color:var(--rust);border-radius:2px">+ New Expedition</button></div>
+        <div id="adminExpeditionList"><div class="adm-spinner">Loading...</div></div>
+
+        <div id="adminExpeditionEditor" style="display:none;margin-top:24px;background:#0f0d0b;border:1px solid rgba(255,255,255,.1);padding:24px;border-radius:2px">
+          <input type="hidden" id="expId" value="">
+
+          <div class="adm-label" style="font-size:13px;color:#fff;margin-bottom:10px">Title</div>
+          <input type="text" id="expTitle" class="adm-input" placeholder="e.g. Upper Mustang – Muktinath Expedition" style="margin-bottom:18px">
+
+          <div class="adm-section-title" style="font-size:14px">Basic Details</div>
+          <div class="adm-grid-2" style="margin-bottom:12px">
+            <div><label class="adm-label">Status</label><select id="expStatus" class="adm-select"><option value="upcoming">Upcoming</option><option value="past">Past / Completed</option></select></div>
+            <div><label class="adm-label">Destination</label><input type="text" id="expDestination" class="adm-input" placeholder="e.g. Nepal (Mustang)"></div>
+          </div>
+          <div class="adm-grid-3" style="margin-bottom:12px">
+            <div><label class="adm-label">Dates (display text)</label><input type="text" id="expDates" class="adm-input" placeholder="23rd May – 30th May 2026"></div>
+            <div><label class="adm-label">Month (used for sorting/display)</label><input type="text" id="expMonth" class="adm-input" placeholder="e.g. September 2026"></div>
+            <div><label class="adm-label">Duration</label><input type="text" id="expDuration" class="adm-input" placeholder="8 Nights / 9 Days"></div>
+          </div>
+          <div class="adm-grid-3" style="margin-bottom:12px">
+            <div><label class="adm-label">Region</label><input type="text" id="expRegion" class="adm-input" placeholder="International / Himachal etc."></div>
+            <div><label class="adm-label">Difficulty</label><select id="expDifficulty" class="adm-select"><option>Easy</option><option>Moderate</option><option>Challenging</option><option>Extreme</option></select></div>
+            <div><label class="adm-label">Card Emoji</label><input type="text" id="expEmoji" class="adm-input" placeholder="🏔️"></div>
+          </div>
+          <div style="margin-bottom:12px"><label class="adm-label">Short Subtitle</label><input type="text" id="expSubtitle" class="adm-input" placeholder="4x4 Only · Mustang Valley · Nepal"></div>
+          <div style="margin-bottom:12px"><label class="adm-label">Overview / About This Trip</label><textarea id="expOverview" class="adm-input" rows="4"></textarea></div>
+          <div style="margin-bottom:20px"><label class="adm-label">Highlights (one per line)</label><textarea id="expHighlights" class="adm-input" rows="3" placeholder="Mustang Valley&#10;Lo Manthang&#10;Kagbeni"></textarea></div>
+
+          <div class="adm-section-title" style="font-size:14px">Slots &amp; Pricing</div>
+          <div class="adm-grid-3" style="margin-bottom:12px">
+            <div><label class="adm-label">Price (₹)</label><input type="number" id="expPrice" class="adm-input" placeholder="29999"></div>
+            <div><label class="adm-label">Price Unit</label><select id="expPriceUnit" class="adm-select"><option value="per person">per person</option><option value="per car">per car</option><option value="per couple">per couple</option></select></div>
+            <div><label class="adm-label">Card Badge</label><input type="text" id="expBadge" class="adm-input" placeholder="Early Bird Discount"></div>
+          </div>
+          <div class="adm-grid-3" style="margin-bottom:12px">
+            <div><label class="adm-label">Couple Discount Price (₹)</label><input type="number" id="expCouplePrice" class="adm-input"></div>
+            <div><label class="adm-label">Seat Sharing Price (₹)</label><input type="number" id="expSeatPrice" class="adm-input"></div>
+            <div><label class="adm-label">Display Order (lower = first)</label><input type="number" id="expOrder" class="adm-input" value="0"></div>
+          </div>
+          <div class="adm-grid-3" style="margin-bottom:12px">
+            <div><label class="adm-label">Total Slots</label><input type="number" id="expMaxSlots" class="adm-input" value="20"></div>
+            <div><label class="adm-label">Slots Filled</label><input type="number" id="expFilledSlots" class="adm-input" value="0"></div>
+            <div><label class="adm-label">Booking Status</label><select id="expWaitlist" class="adm-select"><option value="">Open for Booking</option><option value="1">Full — Show Waitlist</option></select></div>
+          </div>
+          <div class="adm-grid-2" style="margin-bottom:12px">
+            <div><label class="adm-label">Booking WhatsApp Number</label><input type="text" id="expWhatsapp" class="adm-input" placeholder="917817838060"></div>
+            <div><label class="adm-label">UPI QR Code Image URL</label><input type="text" id="expQrImage" class="adm-input"></div>
+          </div>
+          <div style="margin-bottom:12px"><label class="adm-label">Cancellation Policy (one point per line)</label><textarea id="expCancellation" class="adm-input" rows="3"></textarea></div>
+          <div style="margin-bottom:20px"><label class="adm-label">Things to Carry (one item per line)</label><textarea id="expThingsCarry" class="adm-input" rows="4"></textarea></div>
+
+          <div class="adm-section-title" style="font-size:14px">Inclusions &amp; Exclusions</div>
+          <div class="adm-grid-2" style="margin-bottom:20px">
+            <div><label class="adm-label">Inclusions ✅ (one per line)</label><textarea id="expInclusions" class="adm-input" rows="5"></textarea></div>
+            <div><label class="adm-label">Exclusions ❌ (one per line)</label><textarea id="expExclusions" class="adm-input" rows="5"></textarea></div>
+          </div>
+
+          <div class="adm-section-title" style="font-size:14px">Day-by-Day Itinerary</div>
+          <div id="expItinRows" style="margin-bottom:10px"></div>
+          <button type="button" onclick="expAddDay()" style="margin-bottom:20px;padding:8px 16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;font-family:var(--body);font-size:12px;cursor:pointer;border-radius:2px">+ Add Day</button>
+
+          <div class="adm-section-title" style="font-size:14px">Photo Gallery</div>
+          <div id="expGalPreview" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px"></div>
+          <input type="file" id="expGalInput" accept="image/*" multiple style="display:none" onchange="expUploadGallery(this)">
+          <button type="button" onclick="document.getElementById('expGalInput').click()" style="margin-bottom:20px;padding:8px 16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;font-family:var(--body);font-size:12px;cursor:pointer;border-radius:2px">Upload Photos</button>
+
+          <div class="adm-section-title" style="font-size:14px">FAQs</div>
+          <div id="expFaqRows" style="margin-bottom:10px"></div>
+          <button type="button" onclick="expAddFaq()" style="margin-bottom:20px;padding:8px 16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;font-family:var(--body);font-size:12px;cursor:pointer;border-radius:2px">+ Add FAQ</button>
+
+          <div class="adm-section-title" style="font-size:14px">Featured Image</div>
+          <div style="display:flex;gap:12px;align-items:center;margin-bottom:20px">
+            <img id="expThumbPreview" src="" style="width:80px;height:56px;object-fit:cover;border-radius:2px;display:none;background:#1a1410">
+            <input type="file" id="expThumbInput" accept="image/*" style="display:none" onchange="expUploadThumb(this)">
+            <input type="hidden" id="expThumbId" value="">
+            <button type="button" onclick="document.getElementById('expThumbInput').click()" style="padding:8px 16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;font-family:var(--body);font-size:12px;cursor:pointer;border-radius:2px">Upload / Change</button>
+            <span id="expThumbName" style="font-size:12px;color:rgba(255,255,255,.5)"></span>
+          </div>
+
+          <div style="margin-bottom:6px"><label class="adm-label">Publish Status</label>
+            <select id="expPostStatus" class="adm-select" style="max-width:200px"><option value="publish">Published (live on site)</option><option value="draft">Draft (hidden)</option></select>
+          </div>
+          <div style="margin-top:16px;display:flex;gap:10px">
+            <button onclick="adminSaveExpedition()" class="btn-save" style="padding:10px 24px;font-family:var(--body);font-size:13px;letter-spacing:1px;cursor:pointer;border-radius:2px;border:none">Save Expedition</button>
+            <button onclick="document.getElementById('adminExpeditionEditor').style.display='none'" class="btn-secondary" style="padding:10px 20px;font-family:var(--body);font-size:13px;cursor:pointer;border-radius:2px">Cancel</button>
+          </div>
+          <div id="adminExpeditionMsg" style="font-size:12px;margin-top:10px"></div>
+        </div>
+      </div>
+
+      <!-- Merchandise Section -->
+      <div id="createProductSection" style="display:none">
+        <div class="adm-section-title">Merchandise <button onclick="adminShowProductEditor()" style="margin-left:12px;padding:5px 14px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-family:var(--body);cursor:pointer;background:rgba(193,68,14,.2);border:1px solid rgba(193,68,14,.4);color:var(--rust);border-radius:2px">+ New Product</button></div>
+        <div id="adminProductList"><div class="adm-spinner">Loading...</div></div>
+
+        <div id="adminProductEditor" style="display:none;margin-top:24px;background:#0f0d0b;border:1px solid rgba(255,255,255,.1);padding:24px;border-radius:2px">
+          <input type="hidden" id="prodId" value="">
+
+          <div class="adm-label" style="font-size:13px;color:#fff;margin-bottom:10px">Title</div>
+          <input type="text" id="prodTitle" class="adm-input" placeholder="e.g. FreeWheel Convoy Cap" style="margin-bottom:18px">
+
+          <div class="adm-grid-3" style="margin-bottom:12px">
+            <div><label class="adm-label">Price (₹)</label><input type="number" id="prodPrice" class="adm-input" placeholder="799"></div>
+            <div><label class="adm-label">Original Price (₹, optional)</label><input type="number" id="prodOrigPrice" class="adm-input" placeholder="Leave blank if no discount"></div>
+            <div><label class="adm-label">Category</label><input type="text" id="prodCategory" class="adm-input" placeholder="T-Shirts / Caps / Mugs"></div>
+          </div>
+          <div class="adm-grid-2" style="margin-bottom:12px">
+            <div><label class="adm-label">Stock Status</label><select id="prodStock" class="adm-select">
+              <option value="in-stock">In Stock</option><option value="new-arrival">New Arrival</option><option value="limited-stock">Limited Stock</option><option value="out-of-stock">Out of Stock</option>
+            </select></div>
+            <div><label class="adm-label">Display Order (lower = first)</label><input type="number" id="prodOrder" class="adm-input" value="0"></div>
+          </div>
+          <div style="margin-bottom:12px"><label class="adm-label">Special Feature / Material</label><input type="text" id="prodFeature" class="adm-input" placeholder="e.g. Ceramic / 100% Cotton / Stainless Steel"></div>
+          <div style="margin-bottom:12px"><label class="adm-label">Short Description</label><textarea id="prodDesc" class="adm-input" rows="3"></textarea></div>
+          <div style="margin-bottom:12px"><label class="adm-label">WhatsApp Order Message (pre-filled)</label><input type="text" id="prodWaMsg" class="adm-input" placeholder="Hi! I want to order: ..."></div>
+          <div class="adm-grid-2" style="margin-bottom:20px">
+            <div><label class="adm-label">Available Colors (comma separated)</label><input type="text" id="prodColors" class="adm-input" placeholder="White,Black,Olive Green"></div>
+            <div><label class="adm-label">Available Sizes (comma separated)</label><input type="text" id="prodSizes" class="adm-input" placeholder="M,L,XL,XXL"></div>
+          </div>
+
+          <div class="adm-section-title" style="font-size:14px">Product Image</div>
+          <div style="display:flex;gap:12px;align-items:center;margin-bottom:20px">
+            <img id="prodThumbPreview" src="" style="width:80px;height:80px;object-fit:cover;border-radius:2px;display:none;background:#1a1410">
+            <input type="file" id="prodThumbInput" accept="image/*" style="display:none" onchange="prodUploadThumb(this)">
+            <input type="hidden" id="prodThumbId" value="">
+            <button type="button" onclick="document.getElementById('prodThumbInput').click()" style="padding:8px 16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;font-family:var(--body);font-size:12px;cursor:pointer;border-radius:2px">Upload / Change</button>
+            <span id="prodThumbName" style="font-size:12px;color:rgba(255,255,255,.5)"></span>
+          </div>
+
+          <div style="margin-bottom:6px"><label class="adm-label">Publish Status</label>
+            <select id="prodPostStatus" class="adm-select" style="max-width:200px"><option value="publish">Published (live on site)</option><option value="draft">Draft (hidden)</option></select>
+          </div>
+          <div style="margin-top:16px;display:flex;gap:10px">
+            <button onclick="adminSaveProduct()" class="btn-save" style="padding:10px 24px;font-family:var(--body);font-size:13px;letter-spacing:1px;cursor:pointer;border-radius:2px;border:none">Save Product</button>
+            <button onclick="document.getElementById('adminProductEditor').style.display='none'" class="btn-secondary" style="padding:10px 20px;font-family:var(--body);font-size:13px;cursor:pointer;border-radius:2px">Cancel</button>
+          </div>
+          <div id="adminProductMsg" style="font-size:12px;margin-top:10px"></div>
         </div>
       </div>
     </div>

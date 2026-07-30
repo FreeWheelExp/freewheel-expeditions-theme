@@ -1321,6 +1321,16 @@ add_action( 'rest_api_init', function() {
     register_rest_route( 'freewheel/v1', '/admin/get-blogs',           array( 'methods'=>'GET',  'callback'=>'fw_admin_get_blogs',           'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/get-albums',          array( 'methods'=>'GET',  'callback'=>'fw_admin_get_albums',          'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/delete-album',        array( 'methods'=>'POST', 'callback'=>'fw_admin_delete_album',        'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/delete-blog',         array( 'methods'=>'POST', 'callback'=>'fw_admin_delete_blog',         'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/upload-content-image',array( 'methods'=>'POST', 'callback'=>'fw_admin_upload_content_image','permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/list-expeditions',    array( 'methods'=>'GET',  'callback'=>'fw_admin_list_expeditions',    'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/get-expedition',      array( 'methods'=>'GET',  'callback'=>'fw_admin_get_expedition',      'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/save-expedition',     array( 'methods'=>'POST', 'callback'=>'fw_admin_save_expedition',     'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/delete-expedition',   array( 'methods'=>'POST', 'callback'=>'fw_admin_delete_expedition',   'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/list-products',       array( 'methods'=>'GET',  'callback'=>'fw_admin_list_products',       'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/get-product',         array( 'methods'=>'GET',  'callback'=>'fw_admin_get_product',         'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/save-product',        array( 'methods'=>'POST', 'callback'=>'fw_admin_save_product',        'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/delete-product',      array( 'methods'=>'POST', 'callback'=>'fw_admin_delete_product',      'permission_callback'=>'__return_true' ));
     // Subscriber / campaign notification system
     register_rest_route( 'freewheel/v1', '/admin/subscriber-add',     array( 'methods'=>'POST', 'callback'=>'fw_admin_add_subscriber',      'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/subscribers',        array( 'methods'=>'GET',  'callback'=>'fw_admin_get_subscribers',     'permission_callback'=>'__return_true' ));
@@ -3508,6 +3518,307 @@ function fw_admin_delete_album( $request ) {
     /* Delete album */
     wp_remote_request( FW_SUPABASE_URL . '/rest/v1/fw_albums?id=eq.' . rawurlencode( $album_id ),
         array( 'method' => 'DELETE', 'headers' => $h, 'timeout' => 10 ) );
+
+    return rest_ensure_response( array( 'success' => true ) );
+}
+
+/* /admin/delete-blog — Supabase fw_blogs (member submission pipeline), scoped to owner */
+function fw_admin_delete_blog( $request ) {
+    $user = fw_admin_auth( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $p  = $request->get_json_params() ?: array();
+    $id = sanitize_text_field( $p['id'] ?? '' );
+    if ( ! $id ) return new WP_Error( 'missing', 'Blog ID required.', array( 'status' => 400 ) );
+
+    wp_remote_request( FW_SUPABASE_URL . '/rest/v1/fw_blogs?id=eq.' . rawurlencode( $id ) . '&user_id=eq.' . rawurlencode( $user['id'] ), array(
+        'method'  => 'DELETE',
+        'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE ),
+        'timeout' => 10,
+    ));
+    return rest_ensure_response( array( 'success' => true ) );
+}
+
+/* /admin/upload-content-image — uploads into the REAL WP media library (not Supabase storage),
+   so the returned attachment ID works with set_post_thumbnail() and matches the {id,url} shape
+   the native fw_expedition gallery meta box already uses via wp.media(). */
+function fw_admin_upload_content_image( $request ) {
+    $user = fw_admin_auth( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    if ( empty( $_FILES['photo'] ) || $_FILES['photo']['error'] !== UPLOAD_ERR_OK ) {
+        return new WP_Error( 'no_file', 'No file uploaded.', array( 'status' => 400 ) );
+    }
+
+    require_once ABSPATH . 'wp-admin/includes/image.php';
+    require_once ABSPATH . 'wp-admin/includes/file.php';
+    require_once ABSPATH . 'wp-admin/includes/media.php';
+
+    $attachment_id = media_handle_upload( 'photo', 0 );
+    if ( is_wp_error( $attachment_id ) ) return $attachment_id;
+
+    return rest_ensure_response( array(
+        'success' => true,
+        'id'      => $attachment_id,
+        'url'     => wp_get_attachment_url( $attachment_id ),
+    ));
+}
+
+/* ═══════════════════════════════════
+   EXPEDITIONS — frontend dashboard CRUD
+   Mirrors the exact postmeta keys used by the native WP Admin meta boxes
+   (fw_exp_main_cb / fw_exp_slots_cb / fw_exp_itin_cb / fw_exp_details_cb /
+   fw_exp_gallery_cb / fw_exp_faq_cb / fw_exp_side_cb) so content created here
+   renders identically on the live site.
+═══════════════════════════════════ */
+function fw_admin_list_expeditions( $request ) {
+    $user = fw_admin_auth( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $posts = get_posts( array(
+        'post_type'      => 'fw_expedition',
+        'post_status'    => array( 'publish', 'draft' ),
+        'posts_per_page' => -1,
+        'orderby'        => 'date',
+        'order'          => 'DESC',
+    ));
+
+    $out = array();
+    foreach ( $posts as $post ) {
+        $out[] = array(
+            'id'          => $post->ID,
+            'title'       => get_the_title( $post ),
+            'status'      => $post->post_status,
+            'destination' => get_post_meta( $post->ID, 'fw_destination', true ),
+            'dates'       => get_post_meta( $post->ID, 'fw_dates', true ),
+            'price'       => get_post_meta( $post->ID, 'fw_price', true ),
+            'thumbnail'   => get_the_post_thumbnail_url( $post->ID, 'medium' ),
+            'permalink'   => get_permalink( $post->ID ),
+        );
+    }
+    return rest_ensure_response( array( 'success' => true, 'expeditions' => $out ) );
+}
+
+function fw_admin_get_expedition( $request ) {
+    $user = fw_admin_auth( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $id   = intval( $request->get_param( 'id' ) );
+    $post = get_post( $id );
+    if ( ! $post || $post->post_type !== 'fw_expedition' ) {
+        return new WP_Error( 'not_found', 'Expedition not found.', array( 'status' => 404 ) );
+    }
+
+    $m = function( $k ) use ( $id ) { return get_post_meta( $id, $k, true ); };
+    $data = array(
+        'id'            => $id,
+        'title'         => get_the_title( $id ),
+        'post_status'   => $post->post_status,
+        'thumbnail_id'  => (int) get_post_thumbnail_id( $id ),
+        'thumbnail_url' => get_the_post_thumbnail_url( $id, 'medium' ),
+    );
+    $tf = array('fw_status','fw_destination','fw_dates','fw_month','fw_duration','fw_region','fw_difficulty','fw_subtitle','fw_overview','fw_highlights','fw_badge','fw_hero_emoji','fw_inclusions','fw_exclusions','fw_cancellation','fw_things_carry','fw_whatsapp','fw_price_unit','fw_qr_image','fw_waitlist_mode');
+    foreach ( $tf as $f ) $data[$f] = $m( $f );
+    $nf = array('fw_price','fw_couple_price','fw_seat_price','fw_max_slots','fw_filled_slots','fw_order');
+    foreach ( $nf as $f ) $data[$f] = $m( $f );
+    $data['itinerary'] = json_decode( $m( 'fw_itinerary' ) ?: '[]', true ) ?: array();
+    $data['gallery']   = json_decode( $m( 'fw_gallery' ) ?: '[]', true ) ?: array();
+    $data['faqs']      = json_decode( $m( 'fw_exp_faqs' ) ?: '[]', true ) ?: array();
+
+    return rest_ensure_response( array( 'success' => true, 'expedition' => $data ) );
+}
+
+function fw_admin_save_expedition( $request ) {
+    $user = fw_admin_auth( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $p     = $request->get_json_params() ?: array();
+    $id    = intval( $p['id'] ?? 0 );
+    $title = sanitize_text_field( $p['title'] ?? '' );
+    if ( ! $title ) return new WP_Error( 'missing', 'Expedition title required.', array( 'status' => 400 ) );
+
+    $status  = in_array( $p['post_status'] ?? '', array( 'publish', 'draft' ), true ) ? $p['post_status'] : 'draft';
+    $postarr = array( 'post_title' => $title, 'post_type' => 'fw_expedition', 'post_status' => $status );
+
+    if ( $id ) {
+        $existing = get_post( $id );
+        if ( ! $existing || $existing->post_type !== 'fw_expedition' ) {
+            return new WP_Error( 'not_found', 'Expedition not found.', array( 'status' => 404 ) );
+        }
+        $postarr['ID'] = $id;
+        $post_id = wp_update_post( $postarr, true );
+    } else {
+        $post_id = wp_insert_post( $postarr, true );
+    }
+    if ( is_wp_error( $post_id ) ) return $post_id;
+
+    $tf = array('fw_status','fw_destination','fw_dates','fw_month','fw_duration','fw_region','fw_difficulty','fw_subtitle','fw_overview','fw_highlights','fw_badge','fw_hero_emoji','fw_inclusions','fw_exclusions','fw_cancellation','fw_things_carry','fw_whatsapp','fw_price_unit','fw_qr_image','fw_waitlist_mode');
+    foreach ( $tf as $f ) { if ( isset( $p[$f] ) ) update_post_meta( $post_id, $f, sanitize_textarea_field( $p[$f] ) ); }
+
+    $nf = array('fw_price','fw_couple_price','fw_seat_price','fw_max_slots','fw_filled_slots','fw_order');
+    foreach ( $nf as $f ) { if ( isset( $p[$f] ) ) update_post_meta( $post_id, $f, intval( $p[$f] ) ); }
+
+    if ( isset( $p['itinerary'] ) && is_array( $p['itinerary'] ) ) {
+        $clean = array();
+        foreach ( $p['itinerary'] as $d ) {
+            $t = sanitize_text_field( $d['title'] ?? '' );
+            $desc = sanitize_textarea_field( $d['description'] ?? '' );
+            if ( $t !== '' || $desc !== '' ) $clean[] = array( 'title' => $t, 'description' => $desc );
+        }
+        update_post_meta( $post_id, 'fw_itinerary', wp_json_encode( $clean ) );
+    }
+
+    if ( isset( $p['gallery'] ) && is_array( $p['gallery'] ) ) {
+        $clean = array();
+        foreach ( $p['gallery'] as $g ) {
+            if ( ! empty( $g['id'] ) && ! empty( $g['url'] ) ) {
+                $clean[] = array( 'id' => intval( $g['id'] ), 'url' => esc_url_raw( $g['url'] ) );
+            }
+        }
+        update_post_meta( $post_id, 'fw_gallery', wp_json_encode( $clean ) );
+    }
+
+    if ( isset( $p['faqs'] ) && is_array( $p['faqs'] ) ) {
+        $clean = array();
+        foreach ( $p['faqs'] as $f ) {
+            $q = sanitize_text_field( $f['q'] ?? '' );
+            $a = sanitize_textarea_field( $f['a'] ?? '' );
+            if ( $q !== '' ) $clean[] = array( 'q' => $q, 'a' => $a );
+        }
+        update_post_meta( $post_id, 'fw_exp_faqs', wp_json_encode( $clean, JSON_UNESCAPED_UNICODE ) );
+    }
+
+    if ( isset( $p['thumbnail_id'] ) && intval( $p['thumbnail_id'] ) > 0 ) {
+        set_post_thumbnail( $post_id, intval( $p['thumbnail_id'] ) );
+    }
+
+    return rest_ensure_response( array( 'success' => true, 'id' => $post_id, 'permalink' => get_permalink( $post_id ) ) );
+}
+
+function fw_admin_delete_expedition( $request ) {
+    $user = fw_admin_auth( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $p  = $request->get_json_params() ?: array();
+    $id = intval( $p['id'] ?? 0 );
+    if ( ! $id ) return new WP_Error( 'missing', 'Expedition ID required.', array( 'status' => 400 ) );
+
+    $post = get_post( $id );
+    if ( ! $post || $post->post_type !== 'fw_expedition' ) {
+        return new WP_Error( 'not_found', 'Expedition not found.', array( 'status' => 404 ) );
+    }
+    if ( ! wp_trash_post( $id ) ) return new WP_Error( 'delete_fail', 'Could not delete expedition.', array( 'status' => 500 ) );
+
+    return rest_ensure_response( array( 'success' => true ) );
+}
+
+/* ═══════════════════════════════════
+   MERCHANDISE — frontend dashboard CRUD
+   Mirrors fw_prod_main_cb's postmeta keys exactly.
+═══════════════════════════════════ */
+function fw_admin_list_products( $request ) {
+    $user = fw_admin_auth( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $posts = get_posts( array(
+        'post_type'      => 'fw_product',
+        'post_status'    => array( 'publish', 'draft' ),
+        'posts_per_page' => -1,
+        'orderby'        => 'date',
+        'order'          => 'DESC',
+    ));
+
+    $out = array();
+    foreach ( $posts as $post ) {
+        $out[] = array(
+            'id'        => $post->ID,
+            'title'     => get_the_title( $post ),
+            'status'    => $post->post_status,
+            'category'  => get_post_meta( $post->ID, 'fw_prod_category', true ),
+            'price'     => get_post_meta( $post->ID, 'fw_prod_price', true ),
+            'stock'     => get_post_meta( $post->ID, 'fw_prod_stock', true ),
+            'thumbnail' => get_the_post_thumbnail_url( $post->ID, 'medium' ),
+        );
+    }
+    return rest_ensure_response( array( 'success' => true, 'products' => $out ) );
+}
+
+function fw_admin_get_product( $request ) {
+    $user = fw_admin_auth( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $id   = intval( $request->get_param( 'id' ) );
+    $post = get_post( $id );
+    if ( ! $post || $post->post_type !== 'fw_product' ) {
+        return new WP_Error( 'not_found', 'Product not found.', array( 'status' => 404 ) );
+    }
+
+    $m = function( $k ) use ( $id ) { return get_post_meta( $id, $k, true ); };
+    $data = array(
+        'id'            => $id,
+        'title'         => get_the_title( $id ),
+        'post_status'   => $post->post_status,
+        'thumbnail_id'  => (int) get_post_thumbnail_id( $id ),
+        'thumbnail_url' => get_the_post_thumbnail_url( $id, 'medium' ),
+    );
+    $tf = array('fw_prod_category','fw_prod_stock','fw_prod_desc','fw_prod_wa_msg','fw_prod_feature','fw_prod_colors','fw_prod_sizes');
+    foreach ( $tf as $f ) $data[$f] = $m( $f );
+    $nf = array('fw_prod_price','fw_prod_orig_price','fw_prod_order');
+    foreach ( $nf as $f ) $data[$f] = $m( $f );
+
+    return rest_ensure_response( array( 'success' => true, 'product' => $data ) );
+}
+
+function fw_admin_save_product( $request ) {
+    $user = fw_admin_auth( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $p     = $request->get_json_params() ?: array();
+    $id    = intval( $p['id'] ?? 0 );
+    $title = sanitize_text_field( $p['title'] ?? '' );
+    if ( ! $title ) return new WP_Error( 'missing', 'Product title required.', array( 'status' => 400 ) );
+
+    $status  = in_array( $p['post_status'] ?? '', array( 'publish', 'draft' ), true ) ? $p['post_status'] : 'draft';
+    $postarr = array( 'post_title' => $title, 'post_type' => 'fw_product', 'post_status' => $status );
+
+    if ( $id ) {
+        $existing = get_post( $id );
+        if ( ! $existing || $existing->post_type !== 'fw_product' ) {
+            return new WP_Error( 'not_found', 'Product not found.', array( 'status' => 404 ) );
+        }
+        $postarr['ID'] = $id;
+        $post_id = wp_update_post( $postarr, true );
+    } else {
+        $post_id = wp_insert_post( $postarr, true );
+    }
+    if ( is_wp_error( $post_id ) ) return $post_id;
+
+    $tf = array('fw_prod_category','fw_prod_stock','fw_prod_desc','fw_prod_wa_msg','fw_prod_feature','fw_prod_colors','fw_prod_sizes');
+    foreach ( $tf as $f ) { if ( isset( $p[$f] ) ) update_post_meta( $post_id, $f, sanitize_textarea_field( $p[$f] ) ); }
+
+    $nf = array('fw_prod_price','fw_prod_orig_price','fw_prod_order');
+    foreach ( $nf as $f ) { if ( isset( $p[$f] ) ) update_post_meta( $post_id, $f, intval( $p[$f] ) ); }
+
+    if ( isset( $p['thumbnail_id'] ) && intval( $p['thumbnail_id'] ) > 0 ) {
+        set_post_thumbnail( $post_id, intval( $p['thumbnail_id'] ) );
+    }
+
+    return rest_ensure_response( array( 'success' => true, 'id' => $post_id, 'permalink' => get_permalink( $post_id ) ) );
+}
+
+function fw_admin_delete_product( $request ) {
+    $user = fw_admin_auth( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $p  = $request->get_json_params() ?: array();
+    $id = intval( $p['id'] ?? 0 );
+    if ( ! $id ) return new WP_Error( 'missing', 'Product ID required.', array( 'status' => 400 ) );
+
+    $post = get_post( $id );
+    if ( ! $post || $post->post_type !== 'fw_product' ) {
+        return new WP_Error( 'not_found', 'Product not found.', array( 'status' => 404 ) );
+    }
+    if ( ! wp_trash_post( $id ) ) return new WP_Error( 'delete_fail', 'Could not delete product.', array( 'status' => 500 ) );
 
     return rest_ensure_response( array( 'success' => true ) );
 }

@@ -712,7 +712,7 @@ function renderMembers(members) {
     var sb = m.is_suspended ? '<span class="adm-badge badge-rejected">Blocked</span>' : '<span class="adm-badge badge-approved">Active</span>';
     var rb = '<span style="font-size:10px;padding:2px 8px;border-radius:2px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1)">'+m.role+'</span>';
 
-    var isStaff = m.role === 'moderator' || m.role === 'super_admin';
+    var isStaff = m.role === 'moderator' || m.role === 'admin' || m.role === 'super_admin';
     /* Moderators cannot act on staff accounts at all — render as read-only */
     if ( !isSuperAdmin && isStaff ) {
       return '<div class="adm-card" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;opacity:.55">'+av+'<div style="flex:1;min-width:160px"><div style="font-size:14px;color:#fff">'+(m.first_name||'')+' '+(m.last_name||'')+'</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">'+m.email+'</div></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+sb+rb+'<span style="font-size:10px;color:rgba(255,255,255,.45)">Staff account — Super Admin only</span></div></div>';
@@ -836,19 +836,20 @@ var _adminCreateTab = 'blog';
 
 function adminCreateTab(tab) {
   _adminCreateTab = tab;
-  var isBlog = tab === 'blog';
-  document.getElementById('createBlogSection').style.display  = isBlog ? '' : 'none';
-  document.getElementById('createAlbumSection').style.display = isBlog ? 'none' : '';
-  var bBtn = document.getElementById('createTabBlog');
-  var aBtn = document.getElementById('createTabAlbum');
-  bBtn.style.background  = isBlog ? 'var(--rust)' : 'rgba(255,255,255,.08)';
-  bBtn.style.border      = isBlog ? 'none' : '1px solid rgba(255,255,255,.12)';
-  bBtn.style.color       = isBlog ? '#fff' : 'rgba(255,255,255,.6)';
-  aBtn.style.background  = isBlog ? 'rgba(255,255,255,.08)' : 'var(--rust)';
-  aBtn.style.border      = isBlog ? '1px solid rgba(255,255,255,.12)' : 'none';
-  aBtn.style.color       = isBlog ? 'rgba(255,255,255,.6)' : '#fff';
+  var sectionMap = { blog:'createBlogSection', album:'createAlbumSection', expedition:'createExpeditionSection', product:'createProductSection' };
+  var btnMap     = { blog:'createTabBlog', album:'createTabAlbum', expedition:'createTabExpedition', product:'createTabProduct' };
+  Object.keys(sectionMap).forEach(function(t){
+    var active = (t === tab);
+    document.getElementById(sectionMap[t]).style.display = active ? '' : 'none';
+    var btn = document.getElementById(btnMap[t]);
+    btn.style.background = active ? 'var(--rust)' : 'rgba(255,255,255,.08)';
+    btn.style.border     = active ? 'none' : '1px solid rgba(255,255,255,.12)';
+    btn.style.color      = active ? '#fff' : 'rgba(255,255,255,.6)';
+  });
   if (tab === 'blog') adminLoadBlogs();
-  else adminLoadAlbums();
+  else if (tab === 'album') adminLoadAlbums();
+  else if (tab === 'expedition') adminLoadExpeditions();
+  else if (tab === 'product') adminLoadProducts();
 }
 
 /* ---- Blog ---- */
@@ -865,12 +866,28 @@ function adminLoadBlogs() {
         row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:2px;margin-bottom:8px;gap:12px';
         row.innerHTML = '<div style="flex:1;min-width:0"><div style="font-size:14px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (b.title || 'Untitled') + '</div>'
           + '<div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">' + fmtDate(b.created_at) + ' ' + statusBadge(b.status) + '</div></div>'
-          + '<button style="padding:6px 14px;font-size:11px;letter-spacing:1px;text-transform:uppercase;font-family:var(--body);cursor:pointer;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.6);border-radius:2px">Edit</button>';
-        row.querySelector('button').addEventListener('click', (function(blog){ return function(){ adminEditBlog(blog); }; })(b));
+          + '<div style="display:flex;gap:6px;flex-shrink:0">'
+          + '<button class="fw-blog-edit" style="padding:6px 14px;font-size:11px;letter-spacing:1px;text-transform:uppercase;font-family:var(--body);cursor:pointer;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.6);border-radius:2px">Edit</button>'
+          + '<button class="fw-blog-del" style="padding:6px 14px;font-size:11px;letter-spacing:1px;text-transform:uppercase;font-family:var(--body);cursor:pointer;background:rgba(231,76,60,.15);border:1px solid rgba(231,76,60,.4);color:#e74c3c;border-radius:2px">Delete</button>'
+          + '</div>';
+        row.querySelector('.fw-blog-edit').addEventListener('click', (function(blog){ return function(){ adminEditBlog(blog); }; })(b));
+        row.querySelector('.fw-blog-del').addEventListener('click', (function(blog){ return function(){ adminDeleteBlog(blog.id); }; })(b));
         el.appendChild(row);
       });
     })
     .catch(function(e){ console.error('[FW Admin] get-blogs:', e); el.innerHTML = '<div class="adm-empty">Failed to load.</div>'; });
+}
+
+function adminDeleteBlog(id) {
+  if (!confirm('Delete this blog post? This cannot be undone.')) return;
+  fetch(_admRest + '/admin/delete-blog', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + _admToken, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: id })
+  })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if (d.success) adminLoadBlogs(); else alert(d.message || 'Could not delete blog.'); })
+    .catch(function(){ alert('Error deleting blog.'); });
 }
 
 function adminShowBlogEditor() {
@@ -1268,6 +1285,435 @@ function adminCreateAlbum() {
       } else { msg.textContent = d.message || 'Error creating album.'; msg.style.color = '#f87171'; }
     })
     .catch(function(e){ msg.textContent = 'Error: ' + e.message; msg.style.color = '#f87171'; });
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   EXPEDITIONS — writes directly to WP fw_expedition posts, same postmeta
+   keys the native WP Admin editor uses, so content shows up live.
+   ══════════════════════════════════════════════════════════════════════ */
+var _expGallery = [];
+
+function adminLoadExpeditions() {
+  var el = document.getElementById('adminExpeditionList');
+  el.innerHTML = '<div class="adm-spinner">Loading...</div>';
+  fetch(_admRest + '/admin/list-expeditions', { headers: { 'Authorization': 'Bearer ' + _admToken } })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d.success || !d.expeditions || !d.expeditions.length) { el.innerHTML = '<div class="adm-empty">No expeditions yet.</div>'; return; }
+      el.innerHTML = '';
+      d.expeditions.forEach(function(x) {
+        var row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:2px;margin-bottom:8px;gap:12px';
+        var thumb = x.thumbnail ? '<img src="' + x.thumbnail + '" style="width:44px;height:32px;object-fit:cover;border-radius:2px;flex-shrink:0">' : '<div style="width:44px;height:32px;background:#1a1410;border-radius:2px;flex-shrink:0"></div>';
+        row.innerHTML = '<div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">' + thumb
+          + '<div style="min-width:0"><div style="font-size:14px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (x.title || 'Untitled') + '</div>'
+          + '<div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">' + (x.destination || '') + (x.dates ? ' · ' + x.dates : '') + (x.status === 'draft' ? ' · <span style="color:#e8a020">DRAFT</span>' : '') + '</div></div></div>'
+          + '<div style="display:flex;gap:6px;flex-shrink:0">'
+          + '<button class="fw-exp-edit" style="padding:6px 14px;font-size:11px;letter-spacing:1px;text-transform:uppercase;font-family:var(--body);cursor:pointer;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.6);border-radius:2px">Edit</button>'
+          + '<button class="fw-exp-del" style="padding:6px 14px;font-size:11px;letter-spacing:1px;text-transform:uppercase;font-family:var(--body);cursor:pointer;background:rgba(231,76,60,.15);border:1px solid rgba(231,76,60,.4);color:#e74c3c;border-radius:2px">Delete</button>'
+          + '</div>';
+        row.querySelector('.fw-exp-edit').addEventListener('click', (function(id){ return function(){ adminShowExpeditionEditor(id); }; })(x.id));
+        row.querySelector('.fw-exp-del').addEventListener('click', (function(id,title){ return function(){ adminDeleteExpedition(id,title); }; })(x.id, x.title));
+        el.appendChild(row);
+      });
+    })
+    .catch(function(e){ console.error('[FW Admin] list-expeditions:', e); el.innerHTML = '<div class="adm-empty">Failed to load.</div>'; });
+}
+
+function expResetForm() {
+  ['expId','expDestination','expDates','expMonth','expDuration','expRegion','expSubtitle','expOverview','expHighlights','expBadge','expWhatsapp','expQrImage','expCancellation','expThingsCarry','expInclusions','expExclusions','expThumbId'].forEach(function(id){ document.getElementById(id).value = ''; });
+  document.getElementById('expTitle').value = '';
+  document.getElementById('expStatus').value = 'upcoming';
+  document.getElementById('expDifficulty').value = 'Moderate';
+  document.getElementById('expEmoji').value = '🏔️';
+  document.getElementById('expPriceUnit').value = 'per person';
+  document.getElementById('expWaitlist').value = '';
+  document.getElementById('expPrice').value = '';
+  document.getElementById('expCouplePrice').value = '';
+  document.getElementById('expSeatPrice').value = '';
+  document.getElementById('expOrder').value = '0';
+  document.getElementById('expMaxSlots').value = '20';
+  document.getElementById('expFilledSlots').value = '0';
+  document.getElementById('expPostStatus').value = 'publish';
+  document.getElementById('expItinRows').innerHTML = '';
+  document.getElementById('expFaqRows').innerHTML = '';
+  document.getElementById('expThumbPreview').style.display = 'none';
+  document.getElementById('expThumbName').textContent = '';
+  document.getElementById('adminExpeditionMsg').textContent = '';
+  _expGallery = [];
+  expRenderGallery();
+  expAddDay(); expAddDay();
+  expAddFaq(); expAddFaq();
+}
+
+function adminShowExpeditionEditor(id) {
+  expResetForm();
+  document.getElementById('adminExpeditionEditor').style.display = 'block';
+  document.getElementById('adminExpeditionEditor').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (!id) return;
+
+  document.getElementById('adminExpeditionMsg').textContent = 'Loading expedition...';
+  fetch(_admRest + '/admin/get-expedition?id=' + id, { headers: { 'Authorization': 'Bearer ' + _admToken } })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      document.getElementById('adminExpeditionMsg').textContent = '';
+      if (!d.success) { alert(d.message || 'Could not load expedition.'); return; }
+      var e = d.expedition;
+      document.getElementById('expId').value = e.id;
+      document.getElementById('expTitle').value = e.title || '';
+      document.getElementById('expStatus').value = e.fw_status || 'upcoming';
+      document.getElementById('expDestination').value = e.fw_destination || '';
+      document.getElementById('expDates').value = e.fw_dates || '';
+      document.getElementById('expMonth').value = e.fw_month || '';
+      document.getElementById('expDuration').value = e.fw_duration || '';
+      document.getElementById('expRegion').value = e.fw_region || '';
+      document.getElementById('expDifficulty').value = e.fw_difficulty || 'Moderate';
+      document.getElementById('expEmoji').value = e.fw_hero_emoji || '🏔️';
+      document.getElementById('expSubtitle').value = e.fw_subtitle || '';
+      document.getElementById('expOverview').value = e.fw_overview || '';
+      document.getElementById('expHighlights').value = e.fw_highlights || '';
+      document.getElementById('expPrice').value = e.fw_price || '';
+      document.getElementById('expPriceUnit').value = e.fw_price_unit || 'per person';
+      document.getElementById('expBadge').value = e.fw_badge || '';
+      document.getElementById('expCouplePrice').value = e.fw_couple_price || '';
+      document.getElementById('expSeatPrice').value = e.fw_seat_price || '';
+      document.getElementById('expOrder').value = e.fw_order || '0';
+      document.getElementById('expMaxSlots').value = e.fw_max_slots || '20';
+      document.getElementById('expFilledSlots').value = e.fw_filled_slots || '0';
+      document.getElementById('expWaitlist').value = e.fw_waitlist_mode || '';
+      document.getElementById('expWhatsapp').value = e.fw_whatsapp || '';
+      document.getElementById('expQrImage').value = e.fw_qr_image || '';
+      document.getElementById('expCancellation').value = e.fw_cancellation || '';
+      document.getElementById('expThingsCarry').value = e.fw_things_carry || '';
+      document.getElementById('expInclusions').value = e.fw_inclusions || '';
+      document.getElementById('expExclusions').value = e.fw_exclusions || '';
+      document.getElementById('expPostStatus').value = e.post_status === 'draft' ? 'draft' : 'publish';
+
+      document.getElementById('expItinRows').innerHTML = '';
+      (e.itinerary && e.itinerary.length ? e.itinerary : [{title:'',description:''}]).forEach(function(day){ expAddDay(day); });
+
+      document.getElementById('expFaqRows').innerHTML = '';
+      (e.faqs && e.faqs.length ? e.faqs : [{q:'',a:''}]).forEach(function(faq){ expAddFaq(faq); });
+
+      _expGallery = e.gallery || [];
+      expRenderGallery();
+
+      if (e.thumbnail_id) {
+        document.getElementById('expThumbId').value = e.thumbnail_id;
+        document.getElementById('expThumbPreview').src = e.thumbnail_url;
+        document.getElementById('expThumbPreview').style.display = 'block';
+        document.getElementById('expThumbName').textContent = 'Current image';
+      }
+    })
+    .catch(function(){ document.getElementById('adminExpeditionMsg').textContent = 'Failed to load expedition.'; document.getElementById('adminExpeditionMsg').style.color = '#f87171'; });
+}
+
+/* ---- Itinerary day builder ---- */
+function expAddDay(day) {
+  day = day || { title: '', description: '' };
+  var rows = document.getElementById('expItinRows');
+  var num = rows.querySelectorAll('.exp-itin-row').length + 1;
+  var div = document.createElement('div');
+  div.className = 'exp-itin-row';
+  div.style.cssText = 'display:grid;grid-template-columns:220px 1fr 34px;gap:10px;margin-bottom:8px;align-items:start';
+  div.innerHTML = '<input type="text" class="adm-input exp-day-title" placeholder="Day ' + num + ': Title">'
+    + '<textarea class="adm-input exp-day-desc" rows="2" placeholder="What happens this day..."></textarea>'
+    + '<button type="button" style="background:#e74c3c;color:#fff;border:none;border-radius:2px;width:34px;height:34px;cursor:pointer;font-size:14px">×</button>';
+  div.querySelector('.exp-day-title').value = day.title || '';
+  div.querySelector('.exp-day-desc').value = day.description || '';
+  div.querySelector('button').addEventListener('click', function(){ div.remove(); });
+  rows.appendChild(div);
+}
+
+/* ---- FAQ builder ---- */
+function expAddFaq(faq) {
+  faq = faq || { q: '', a: '' };
+  var rows = document.getElementById('expFaqRows');
+  var div = document.createElement('div');
+  div.className = 'exp-faq-row';
+  div.style.cssText = 'background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:2px;padding:12px;margin-bottom:10px;position:relative';
+  div.innerHTML = '<button type="button" style="position:absolute;top:8px;right:8px;background:#e74c3c;color:#fff;border:none;border-radius:2px;padding:2px 8px;cursor:pointer;font-size:11px">✕</button>'
+    + '<label class="adm-label">Question</label><input type="text" class="adm-input exp-faq-q" placeholder="e.g. What permits do I need?" style="margin-bottom:8px">'
+    + '<label class="adm-label">Answer</label><textarea class="adm-input exp-faq-a" rows="2"></textarea>';
+  div.querySelector('.exp-faq-q').value = faq.q || '';
+  div.querySelector('.exp-faq-a').value = faq.a || '';
+  div.querySelector('button').addEventListener('click', function(){ div.remove(); });
+  rows.appendChild(div);
+}
+
+/* ---- Gallery (multi-image) ---- */
+function expRenderGallery() {
+  var el = document.getElementById('expGalPreview');
+  el.innerHTML = '';
+  _expGallery.forEach(function(img){
+    var d = document.createElement('div');
+    d.style.cssText = 'position:relative;width:100px;height:70px;border-radius:2px;overflow:hidden;background:#1a1410';
+    d.innerHTML = '<img src="' + img.url + '" style="width:100%;height:100%;object-fit:cover">'
+      + '<button type="button" style="position:absolute;top:2px;right:2px;background:rgba(231,76,60,.9);color:#fff;border:none;border-radius:2px;padding:1px 5px;cursor:pointer;font-size:11px">✕</button>';
+    d.querySelector('button').addEventListener('click', function(){ _expGallery = _expGallery.filter(function(x){ return x.id !== img.id; }); expRenderGallery(); });
+    el.appendChild(d);
+  });
+}
+
+function expUploadGallery(input) {
+  if (!input.files || !input.files.length) return;
+  var files = Array.prototype.slice.call(input.files);
+  files.forEach(function(file){
+    var fd = new FormData();
+    fd.append('photo', file);
+    fetch(_admRest + '/admin/upload-content-image', { method: 'POST', headers: { 'Authorization': 'Bearer ' + _admToken }, body: fd })
+      .then(function(r){ return r.json(); })
+      .then(function(d){ if (d.success) { _expGallery.push({ id: d.id, url: d.url }); expRenderGallery(); } })
+      .catch(function(){ console.error('[FW Admin] gallery upload failed'); });
+  });
+  input.value = '';
+}
+
+function expUploadThumb(input) {
+  if (!input.files[0]) return;
+  var fd = new FormData();
+  fd.append('photo', input.files[0]);
+  fetch(_admRest + '/admin/upload-content-image', { method: 'POST', headers: { 'Authorization': 'Bearer ' + _admToken }, body: fd })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d.success) {
+        document.getElementById('expThumbId').value = d.id;
+        document.getElementById('expThumbPreview').src = d.url;
+        document.getElementById('expThumbPreview').style.display = 'block';
+        document.getElementById('expThumbName').textContent = '✓ Uploaded';
+        document.getElementById('expThumbName').style.color = '#4ade80';
+      }
+    });
+}
+
+function adminSaveExpedition() {
+  var title = document.getElementById('expTitle').value.trim();
+  var msg = document.getElementById('adminExpeditionMsg');
+  if (!title) { msg.textContent = 'Title is required.'; msg.style.color = '#f87171'; return; }
+
+  var itinerary = [];
+  document.querySelectorAll('#expItinRows .exp-itin-row').forEach(function(row){
+    itinerary.push({ title: row.querySelector('.exp-day-title').value, description: row.querySelector('.exp-day-desc').value });
+  });
+  var faqs = [];
+  document.querySelectorAll('#expFaqRows .exp-faq-row').forEach(function(row){
+    faqs.push({ q: row.querySelector('.exp-faq-q').value, a: row.querySelector('.exp-faq-a').value });
+  });
+
+  var payload = {
+    id: document.getElementById('expId').value,
+    title: title,
+    post_status: document.getElementById('expPostStatus').value,
+    fw_status: document.getElementById('expStatus').value,
+    fw_destination: document.getElementById('expDestination').value,
+    fw_dates: document.getElementById('expDates').value,
+    fw_month: document.getElementById('expMonth').value,
+    fw_duration: document.getElementById('expDuration').value,
+    fw_region: document.getElementById('expRegion').value,
+    fw_difficulty: document.getElementById('expDifficulty').value,
+    fw_hero_emoji: document.getElementById('expEmoji').value,
+    fw_subtitle: document.getElementById('expSubtitle').value,
+    fw_overview: document.getElementById('expOverview').value,
+    fw_highlights: document.getElementById('expHighlights').value,
+    fw_price: document.getElementById('expPrice').value,
+    fw_price_unit: document.getElementById('expPriceUnit').value,
+    fw_badge: document.getElementById('expBadge').value,
+    fw_couple_price: document.getElementById('expCouplePrice').value,
+    fw_seat_price: document.getElementById('expSeatPrice').value,
+    fw_order: document.getElementById('expOrder').value,
+    fw_max_slots: document.getElementById('expMaxSlots').value,
+    fw_filled_slots: document.getElementById('expFilledSlots').value,
+    fw_waitlist_mode: document.getElementById('expWaitlist').value,
+    fw_whatsapp: document.getElementById('expWhatsapp').value,
+    fw_qr_image: document.getElementById('expQrImage').value,
+    fw_cancellation: document.getElementById('expCancellation').value,
+    fw_things_carry: document.getElementById('expThingsCarry').value,
+    fw_inclusions: document.getElementById('expInclusions').value,
+    fw_exclusions: document.getElementById('expExclusions').value,
+    itinerary: itinerary,
+    faqs: faqs,
+    gallery: _expGallery,
+    thumbnail_id: document.getElementById('expThumbId').value
+  };
+
+  msg.textContent = 'Saving...'; msg.style.color = 'rgba(255,255,255,.4)';
+  fetch(_admRest + '/admin/save-expedition', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + _admToken, 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+    .then(function(r){
+      if (!r.ok) return r.text().then(function(t){ throw new Error(r.status + ': ' + t); });
+      return r.json();
+    })
+    .then(function(d){
+      if (d.success) {
+        msg.textContent = 'Expedition saved!'; msg.style.color = '#4ade80';
+        setTimeout(function(){ document.getElementById('adminExpeditionEditor').style.display = 'none'; adminLoadExpeditions(); }, 1000);
+      } else { msg.textContent = d.message || 'Error saving expedition.'; msg.style.color = '#f87171'; }
+    })
+    .catch(function(e){ msg.textContent = 'Error: ' + e.message; msg.style.color = '#f87171'; });
+}
+
+function adminDeleteExpedition(id, title) {
+  if (!confirm('Delete "' + (title || 'this expedition') + '"? This moves it to trash and it will disappear from the live site.')) return;
+  fetch(_admRest + '/admin/delete-expedition', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + _admToken, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: id })
+  })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if (d.success) adminLoadExpeditions(); else alert(d.message || 'Could not delete.'); })
+    .catch(function(){ alert('Error deleting expedition.'); });
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   MERCHANDISE — writes directly to WP fw_product posts.
+   ══════════════════════════════════════════════════════════════════════ */
+function adminLoadProducts() {
+  var el = document.getElementById('adminProductList');
+  el.innerHTML = '<div class="adm-spinner">Loading...</div>';
+  fetch(_admRest + '/admin/list-products', { headers: { 'Authorization': 'Bearer ' + _admToken } })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d.success || !d.products || !d.products.length) { el.innerHTML = '<div class="adm-empty">No products yet.</div>'; return; }
+      el.innerHTML = '';
+      d.products.forEach(function(x) {
+        var row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:2px;margin-bottom:8px;gap:12px';
+        var thumb = x.thumbnail ? '<img src="' + x.thumbnail + '" style="width:40px;height:40px;object-fit:cover;border-radius:2px;flex-shrink:0">' : '<div style="width:40px;height:40px;background:#1a1410;border-radius:2px;flex-shrink:0"></div>';
+        row.innerHTML = '<div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">' + thumb
+          + '<div style="min-width:0"><div style="font-size:14px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (x.title || 'Untitled') + '</div>'
+          + '<div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">' + (x.category || '') + (x.price ? ' · ₹' + x.price : '') + ' · ' + (x.stock || 'in-stock') + (x.status === 'draft' ? ' · <span style="color:#e8a020">DRAFT</span>' : '') + '</div></div></div>'
+          + '<div style="display:flex;gap:6px;flex-shrink:0">'
+          + '<button class="fw-prod-edit" style="padding:6px 14px;font-size:11px;letter-spacing:1px;text-transform:uppercase;font-family:var(--body);cursor:pointer;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.6);border-radius:2px">Edit</button>'
+          + '<button class="fw-prod-del" style="padding:6px 14px;font-size:11px;letter-spacing:1px;text-transform:uppercase;font-family:var(--body);cursor:pointer;background:rgba(231,76,60,.15);border:1px solid rgba(231,76,60,.4);color:#e74c3c;border-radius:2px">Delete</button>'
+          + '</div>';
+        row.querySelector('.fw-prod-edit').addEventListener('click', (function(id){ return function(){ adminShowProductEditor(id); }; })(x.id));
+        row.querySelector('.fw-prod-del').addEventListener('click', (function(id,title){ return function(){ adminDeleteProduct(id,title); }; })(x.id, x.title));
+        el.appendChild(row);
+      });
+    })
+    .catch(function(e){ console.error('[FW Admin] list-products:', e); el.innerHTML = '<div class="adm-empty">Failed to load.</div>'; });
+}
+
+function prodResetForm() {
+  ['prodId','prodCategory','prodFeature','prodDesc','prodWaMsg','prodColors','prodSizes','prodThumbId'].forEach(function(id){ document.getElementById(id).value = ''; });
+  document.getElementById('prodTitle').value = '';
+  document.getElementById('prodPrice').value = '';
+  document.getElementById('prodOrigPrice').value = '';
+  document.getElementById('prodStock').value = 'in-stock';
+  document.getElementById('prodOrder').value = '0';
+  document.getElementById('prodPostStatus').value = 'publish';
+  document.getElementById('prodThumbPreview').style.display = 'none';
+  document.getElementById('prodThumbName').textContent = '';
+  document.getElementById('adminProductMsg').textContent = '';
+}
+
+function adminShowProductEditor(id) {
+  prodResetForm();
+  document.getElementById('adminProductEditor').style.display = 'block';
+  document.getElementById('adminProductEditor').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (!id) return;
+
+  document.getElementById('adminProductMsg').textContent = 'Loading product...';
+  fetch(_admRest + '/admin/get-product?id=' + id, { headers: { 'Authorization': 'Bearer ' + _admToken } })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      document.getElementById('adminProductMsg').textContent = '';
+      if (!d.success) { alert(d.message || 'Could not load product.'); return; }
+      var p = d.product;
+      document.getElementById('prodId').value = p.id;
+      document.getElementById('prodTitle').value = p.title || '';
+      document.getElementById('prodPrice').value = p.fw_prod_price || '';
+      document.getElementById('prodOrigPrice').value = p.fw_prod_orig_price || '';
+      document.getElementById('prodCategory').value = p.fw_prod_category || '';
+      document.getElementById('prodStock').value = p.fw_prod_stock || 'in-stock';
+      document.getElementById('prodOrder').value = p.fw_prod_order || '0';
+      document.getElementById('prodFeature').value = p.fw_prod_feature || '';
+      document.getElementById('prodDesc').value = p.fw_prod_desc || '';
+      document.getElementById('prodWaMsg').value = p.fw_prod_wa_msg || '';
+      document.getElementById('prodColors').value = p.fw_prod_colors || '';
+      document.getElementById('prodSizes').value = p.fw_prod_sizes || '';
+      document.getElementById('prodPostStatus').value = p.post_status === 'draft' ? 'draft' : 'publish';
+      if (p.thumbnail_id) {
+        document.getElementById('prodThumbId').value = p.thumbnail_id;
+        document.getElementById('prodThumbPreview').src = p.thumbnail_url;
+        document.getElementById('prodThumbPreview').style.display = 'block';
+        document.getElementById('prodThumbName').textContent = 'Current image';
+      }
+    })
+    .catch(function(){ document.getElementById('adminProductMsg').textContent = 'Failed to load product.'; document.getElementById('adminProductMsg').style.color = '#f87171'; });
+}
+
+function prodUploadThumb(input) {
+  if (!input.files[0]) return;
+  var fd = new FormData();
+  fd.append('photo', input.files[0]);
+  fetch(_admRest + '/admin/upload-content-image', { method: 'POST', headers: { 'Authorization': 'Bearer ' + _admToken }, body: fd })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d.success) {
+        document.getElementById('prodThumbId').value = d.id;
+        document.getElementById('prodThumbPreview').src = d.url;
+        document.getElementById('prodThumbPreview').style.display = 'block';
+        document.getElementById('prodThumbName').textContent = '✓ Uploaded';
+        document.getElementById('prodThumbName').style.color = '#4ade80';
+      }
+    });
+}
+
+function adminSaveProduct() {
+  var title = document.getElementById('prodTitle').value.trim();
+  var msg = document.getElementById('adminProductMsg');
+  if (!title) { msg.textContent = 'Title is required.'; msg.style.color = '#f87171'; return; }
+
+  var payload = {
+    id: document.getElementById('prodId').value,
+    title: title,
+    post_status: document.getElementById('prodPostStatus').value,
+    fw_prod_price: document.getElementById('prodPrice').value,
+    fw_prod_orig_price: document.getElementById('prodOrigPrice').value,
+    fw_prod_category: document.getElementById('prodCategory').value,
+    fw_prod_stock: document.getElementById('prodStock').value,
+    fw_prod_order: document.getElementById('prodOrder').value,
+    fw_prod_feature: document.getElementById('prodFeature').value,
+    fw_prod_desc: document.getElementById('prodDesc').value,
+    fw_prod_wa_msg: document.getElementById('prodWaMsg').value,
+    fw_prod_colors: document.getElementById('prodColors').value,
+    fw_prod_sizes: document.getElementById('prodSizes').value,
+    thumbnail_id: document.getElementById('prodThumbId').value
+  };
+
+  msg.textContent = 'Saving...'; msg.style.color = 'rgba(255,255,255,.4)';
+  fetch(_admRest + '/admin/save-product', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + _admToken, 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+    .then(function(r){
+      if (!r.ok) return r.text().then(function(t){ throw new Error(r.status + ': ' + t); });
+      return r.json();
+    })
+    .then(function(d){
+      if (d.success) {
+        msg.textContent = 'Product saved!'; msg.style.color = '#4ade80';
+        setTimeout(function(){ document.getElementById('adminProductEditor').style.display = 'none'; adminLoadProducts(); }, 1000);
+      } else { msg.textContent = d.message || 'Error saving product.'; msg.style.color = '#f87171'; }
+    })
+    .catch(function(e){ msg.textContent = 'Error: ' + e.message; msg.style.color = '#f87171'; });
+}
+
+function adminDeleteProduct(id, title) {
+  if (!confirm('Delete "' + (title || 'this product') + '"? This moves it to trash and it will disappear from the live site.')) return;
+  fetch(_admRest + '/admin/delete-product', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + _admToken, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: id })
+  })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if (d.success) adminLoadProducts(); else alert(d.message || 'Could not delete.'); })
+    .catch(function(){ alert('Error deleting product.'); });
 }
 
 /* ══════════════════════════════════════════════════════════════════════
