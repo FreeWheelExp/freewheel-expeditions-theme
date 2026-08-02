@@ -1338,6 +1338,7 @@ add_action( 'rest_api_init', function() {
     register_rest_route( 'freewheel/v1', '/admin/whatsapp-export',    array( 'methods'=>'GET',  'callback'=>'fw_admin_whatsapp_export',     'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/campaign-audience',  array( 'methods'=>'GET',  'callback'=>'fw_admin_campaign_audience',   'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/campaign-expeditions', array( 'methods'=>'GET', 'callback'=>'fw_admin_campaign_expeditions', 'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/campaign-trip-picker', array( 'methods'=>'GET', 'callback'=>'fw_admin_campaign_trip_picker', 'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/campaign-upload',    array( 'methods'=>'POST', 'callback'=>'fw_admin_campaign_upload',     'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/send-campaign-batch',array( 'methods'=>'POST', 'callback'=>'fw_admin_send_campaign_batch', 'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/log-campaign',       array( 'methods'=>'POST', 'callback'=>'fw_admin_log_campaign',        'permission_callback'=>'__return_true' ));

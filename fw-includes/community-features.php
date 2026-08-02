@@ -519,15 +519,57 @@ function fw_send_campaign_email( $email, $name, $subject, $html_body ) {
 }
 
 /* ── Helper: build campaign HTML email body ──
+   $trip_cards: array of structured expedition data (see fw_build_trip_card_data()) — each
+   renders as its own visually distinct card, not a flat bullet list.
    $assets: optional array with keys image_url, pdf_url, pdf_label, cta_url, cta_label */
-function fw_build_campaign_html( $body_text, $expedition_titles, $unsubscribe_url, $assets = array() ) {
-    $exp_html = '';
-    foreach ( $expedition_titles as $title ) {
-        $exp_html .= '<li style="margin:6px 0;color:rgba(255,255,255,.85);font-size:15px">' . esc_html( $title ) . '</li>';
+function fw_build_campaign_html( $body_text, $trip_cards, $unsubscribe_url, $assets = array() ) {
+    $cards_html = '';
+    foreach ( (array) $trip_cards as $card ) {
+        $badges_html = '';
+        foreach ( (array) ( $card['badges'] ?? array() ) as $badge ) {
+            $badge = trim( (string) $badge );
+            if ( $badge === '' ) continue;
+            $badges_html .= '<span style="display:inline-block;background:rgba(232,160,32,.15);border:1px solid rgba(232,160,32,.4);color:#e8a020;font-size:11px;font-weight:bold;letter-spacing:.4px;text-transform:uppercase;padding:4px 10px;border-radius:20px;margin:0 6px 6px 0">' . esc_html( $badge ) . '</span>';
+        }
+
+        $price_rows = '';
+        $tiers = array(
+            'Self Drive'       => $card['price'] ?? '',
+            'Couple Discount'  => $card['couple_price'] ?? '',
+            'Seat Sharing'     => $card['seat_price'] ?? '',
+        );
+        foreach ( $tiers as $label => $amount ) {
+            if ( $amount === '' || $amount === null ) continue;
+            $unit = ! empty( $card['price_unit'] ) ? esc_html( $card['price_unit'] ) : 'per person';
+            $price_rows .= '<tr>
+                <td style="padding:6px 0;color:rgba(255,255,255,.7);font-size:13px">' . esc_html( $label ) . '</td>
+                <td style="padding:6px 0;text-align:right;color:#fff;font-size:14px;font-weight:bold">₹' . esc_html( number_format_i18n( (float) $amount ) ) . ' <span style="color:rgba(255,255,255,.4);font-weight:normal;font-size:12px">' . $unit . '</span></td>
+            </tr>';
+        }
+        $price_block = $price_rows
+            ? '<div style="background:rgba(0,0,0,.25);border-radius:10px;padding:12px 16px;margin:0 0 18px"><table style="width:100%;border-collapse:collapse">' . $price_rows . '</table></div>'
+            : '';
+
+        $blurb_html = ! empty( $card['blurb'] )
+            ? '<p style="color:rgba(255,255,255,.65);font-size:14px;line-height:1.6;margin:0 0 16px">' . esc_html( $card['blurb'] ) . '</p>'
+            : '';
+
+        $dates_html = ! empty( $card['dates'] )
+            ? '<p style="color:#e8a020;font-size:13px;font-weight:600;margin:0 0 14px;letter-spacing:.3px">' . esc_html( $card['dates'] ) . '</p>'
+            : '';
+
+        $link = ! empty( $card['permalink'] ) ? esc_url( $card['permalink'] ) : 'https://freewheelexpeditions.in';
+
+        $cards_html .= '
+        <div style="background:rgba(232,160,32,.06);border:1px solid rgba(232,160,32,.3);border-radius:14px;padding:22px;margin:0 0 18px">
+            <div style="margin:0 0 12px">' . $badges_html . '</div>
+            <h3 style="color:#fff;font-size:19px;margin:0 0 4px;line-height:1.3">' . esc_html( $card['title'] ?? '' ) . '</h3>
+            ' . $dates_html . '
+            ' . $blurb_html . '
+            ' . $price_block . '
+            <a href="' . $link . '" style="display:block;text-align:center;background:#e8a020;color:#0f0d0b;padding:12px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:14px">View Route &amp; Book →</a>
+        </div>';
     }
-    $trips_block = $exp_html
-        ? '<ul style="text-align:left;display:inline-block;margin:20px auto;padding-left:20px">' . $exp_html . '</ul>'
-        : '';
 
     $safe_body = nl2br( esc_html( $body_text ) );
 
@@ -542,9 +584,9 @@ function fw_build_campaign_html( $body_text, $expedition_titles, $unsubscribe_ur
         $pdf_block = '<div style="text-align:center;margin:20px 0"><a href="' . esc_url( $assets['pdf_url'] ) . '" style="background:rgba(232,160,32,.12);border:1px solid #e8a020;color:#e8a020;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:14px;display:inline-block">📄 ' . esc_html( $pdf_label ) . '</a></div>';
     }
 
-    // Primary CTA: use admin-provided URL/label if given, otherwise default to the expeditions page
+    // Secondary CTA: use admin-provided URL/label if given, otherwise default to the expeditions page
     $cta_url   = ! empty( $assets['cta_url'] )   ? esc_url( $assets['cta_url'] )                     : 'https://freewheelexpeditions.in';
-    $cta_label = ! empty( $assets['cta_label'] ) ? esc_html( sanitize_text_field( $assets['cta_label'] ) ) : 'View Expeditions →';
+    $cta_label = ! empty( $assets['cta_label'] ) ? esc_html( sanitize_text_field( $assets['cta_label'] ) ) : 'View All Expeditions →';
 
     return '
 <div style="font-family:Arial,sans-serif;background:#0f0d0b;padding:40px 20px;color:#fff;max-width:600px;margin:0 auto">
@@ -554,8 +596,8 @@ function fw_build_campaign_html( $body_text, $expedition_titles, $unsubscribe_ur
   </div>
   <div style="background:rgba(255,255,255,.05);border-radius:12px;padding:28px;margin-bottom:24px">
     ' . $image_block . '
-    <p style="color:rgba(255,255,255,.85);font-size:15px;line-height:1.8;margin:0 0 16px">' . $safe_body . '</p>
-    ' . $trips_block . '
+    <p style="color:rgba(255,255,255,.85);font-size:15px;line-height:1.8;margin:0 0 20px">' . $safe_body . '</p>
+    ' . $cards_html . '
     ' . $pdf_block . '
   </div>
   <div style="text-align:center;margin-top:30px">
@@ -566,6 +608,31 @@ function fw_build_campaign_html( $body_text, $expedition_titles, $unsubscribe_ur
     <a href="' . esc_url( $unsubscribe_url ) . '" style="color:rgba(255,255,255,.35)">Unsubscribe</a>
   </p>
 </div>';
+}
+
+/* ── Helper: pull one expedition's real postmeta into the shape fw_build_campaign_html() expects ── */
+function fw_build_trip_card_data( $post_id, $custom_blurb = '', $extra_badges = array() ) {
+    $post = get_post( $post_id );
+    if ( ! $post || $post->post_type !== 'fw_expedition' ) return null;
+
+    $m = function( $k ) use ( $post_id ) { return get_post_meta( $post_id, $k, true ); };
+    $badges = array( 'Self Drive' );
+    if ( $m( 'fw_max_slots' ) ) $badges[] = $m( 'fw_max_slots' ) . ' Vehicle Slots';
+    foreach ( (array) $extra_badges as $b ) { if ( trim( (string) $b ) !== '' ) $badges[] = trim( (string) $b ); }
+
+    return array(
+        'id'           => $post_id,
+        'title'        => get_the_title( $post_id ),
+        'dates'        => $m( 'fw_dates' ),
+        'destination'  => $m( 'fw_destination' ),
+        'price'        => $m( 'fw_price' ),
+        'couple_price' => $m( 'fw_couple_price' ),
+        'seat_price'   => $m( 'fw_seat_price' ),
+        'price_unit'   => $m( 'fw_price_unit' ) ?: 'per person',
+        'permalink'    => get_permalink( $post_id ),
+        'blurb'        => $custom_blurb,
+        'badges'       => $badges,
+    );
 }
 
 /* ── Helper: resolve deduped campaign audience — fw_subscribers ∪ fw_members ──
@@ -632,6 +699,23 @@ function fw_admin_campaign_expeditions( $request ) {
     return rest_ensure_response( array( 'success' => true, 'expeditions' => $out ) );
 }
 
+/* ── GET /admin/campaign-trip-picker — richer picker for the trip-card composer, returns
+   real pricing/dates/destination per expedition so cards render from source data, not
+   retyped numbers. New route name deliberately, sidesteps whatever was caching or
+   breaking /admin/campaign-expeditions rather than chasing an unreproducible bug. ── */
+function fw_admin_campaign_trip_picker( $request ) {
+    $user = fw_admin_auth( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $posts = get_posts( array( 'post_type' => 'fw_expedition', 'post_status' => 'publish', 'posts_per_page' => -1, 'orderby' => 'date', 'order' => 'DESC' ) );
+    $out = array();
+    foreach ( $posts as $p ) {
+        $card = fw_build_trip_card_data( $p->ID );
+        if ( $card ) $out[] = $card;
+    }
+    return rest_ensure_response( array( 'success' => true, 'expeditions' => $out ) );
+}
+
 /* ── GET /admin/campaign-audience — resolve + return recipient count/list ── */
 function fw_admin_campaign_audience( $request ) {
     $user = fw_admin_auth( $request );
@@ -686,6 +770,7 @@ function fw_admin_send_campaign_batch( $request ) {
     $subject   = sanitize_text_field( $p['subject'] ?? '' );
     $body_text = sanitize_textarea_field( $p['body'] ?? '' );
     $exp_ids   = array_map( 'intval', (array) ( $p['expedition_ids'] ?? array() ) );
+    $trip_meta = is_array( $p['trip_meta'] ?? null ) ? $p['trip_meta'] : array(); // { "123": {blurb, badges: []} }
 
     if ( ! $subject || ! $body_text || empty( $emails ) ) {
         return new WP_Error( 'missing', 'Subject, body, and at least one recipient are required.', array( 'status' => 400 ) );
@@ -694,10 +779,13 @@ function fw_admin_send_campaign_batch( $request ) {
         return new WP_Error( 'batch_too_large', 'Max 25 recipients per batch call.', array( 'status' => 400 ) );
     }
 
-    $expedition_titles = array();
+    $trip_cards = array();
     foreach ( $exp_ids as $pid ) {
-        $post = get_post( $pid );
-        if ( $post ) $expedition_titles[] = get_the_title( $post );
+        $meta   = $trip_meta[ (string) $pid ] ?? array();
+        $blurb  = sanitize_textarea_field( $meta['blurb'] ?? '' );
+        $badges = array_map( 'sanitize_text_field', (array) ( $meta['badges'] ?? array() ) );
+        $card   = fw_build_trip_card_data( $pid, $blurb, $badges );
+        if ( $card ) $trip_cards[] = $card;
     }
 
     $assets = array(
@@ -717,7 +805,7 @@ function fw_admin_send_campaign_batch( $request ) {
         $name  = sanitize_text_field( $recipient['name'] ?? '' );
         $token = sanitize_text_field( $recipient['unsubscribe_token'] ?? '' );
         $unsub_url = $site_url . 'wp-json/freewheel/v1/unsubscribe?token=' . rawurlencode( $token );
-        $html = fw_build_campaign_html( $body_text, $expedition_titles, $unsub_url, $assets );
+        $html = fw_build_campaign_html( $body_text, $trip_cards, $unsub_url, $assets );
         $ok   = fw_send_campaign_email( $email, $name, $subject, $html );
         $ok ? $sent++ : $failed++;
     }

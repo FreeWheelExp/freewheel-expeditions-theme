@@ -1721,6 +1721,7 @@ function adminDeleteProduct(id, title) {
    ══════════════════════════════════════════════════════════════════════ */
 var _campLoaded = false;
 var _campAudience = [];
+var _campTripData = {};
 var _campSending = false;
 
 function loadCampaignsTab() {
@@ -1739,22 +1740,75 @@ function loadCampaignsTab() {
     })
     .catch(function(){ document.getElementById('campAudienceCount').textContent = '?'; });
 
-  fetch(_admRest + '/admin/campaign-expeditions', { headers: h() })
+  fetch(_admRest + '/admin/campaign-trip-picker', { headers: h() })
     .then(function(r){ return r.json(); })
     .then(function(d){
-      var wrap = document.getElementById('campExpeditionList');
+      var wrap = document.getElementById('campTripPicker');
       if (!d.success || !d.expeditions || !d.expeditions.length) {
         wrap.innerHTML = '<span style="font-size:12px;color:rgba(255,255,255,.4)">No published expeditions found.</span>';
         return;
       }
-      wrap.innerHTML = d.expeditions.map(function(e){
-        return '<label style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);padding:6px 12px;border-radius:14px;font-size:12px;color:rgba(255,255,255,.75);cursor:pointer">' +
-          '<input type="checkbox" class="campExpCheck" value="' + e.id + '" style="accent-color:var(--rust)"> ' + e.title.replace(/</g,'&lt;') + '</label>';
-      }).join('');
+      _campTripData = {};
+      wrap.innerHTML = '';
+      d.expeditions.forEach(function(e) {
+        _campTripData[e.id] = e;
+        var row = document.createElement('div');
+        row.style.cssText = 'background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 14px;margin-bottom:8px';
+        var priceStr = e.price ? ('₹' + e.price + ' ' + (e.price_unit || 'per person')) : 'no price set';
+        row.innerHTML = '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#fff">'
+          + '<input type="checkbox" class="campTripCheck" value="' + e.id + '" style="accent-color:var(--rust)">'
+          + '<span style="flex:1">' + String(e.title).replace(/</g,'&lt;') + '</span>'
+          + '<span style="font-size:11px;color:rgba(255,255,255,.4)">' + (e.dates || '') + (e.dates && priceStr ? ' · ' : '') + priceStr + '</span>'
+          + '</label>'
+          + '<input type="text" class="campTripBadges" data-id="' + e.id + '" placeholder="Extra badge, e.g. 4x4 Required (comma separated for more)" class="adm-input" style="margin-top:8px;display:none;font-size:12px;padding:6px 10px">';
+        var cb = row.querySelector('.campTripCheck');
+        var badgeInput = row.querySelector('.campTripBadges');
+        badgeInput.className = 'adm-input campTripBadges';
+        cb.addEventListener('change', function(){ badgeInput.style.display = cb.checked ? 'block' : 'none'; });
+        wrap.appendChild(row);
+      });
     })
     .catch(function(){
-      document.getElementById('campExpeditionList').innerHTML = '<span style="font-size:12px;color:#f87171">Failed to load expeditions.</span>';
+      document.getElementById('campTripPicker').innerHTML = '<span style="font-size:12px;color:#f87171">Failed to load expeditions.</span>';
     });
+}
+
+function campCollectTripSelection() {
+  var ids = [];
+  var meta = {};
+  document.querySelectorAll('.campTripCheck:checked').forEach(function(cb){
+    var id = cb.value;
+    ids.push(parseInt(id, 10));
+    var badgeInput = document.querySelector('.campTripBadges[data-id="' + id + '"]');
+    var badges = badgeInput && badgeInput.value.trim() ? badgeInput.value.split(',').map(function(s){ return s.trim(); }).filter(Boolean) : [];
+    meta[id] = { blurb: '', badges: badges };
+  });
+  return { ids: ids, meta: meta };
+}
+
+function campPreviewCards() {
+  var sel = campCollectTripSelection();
+  var el = document.getElementById('campCardPreview');
+  if (!sel.ids.length) { el.innerHTML = '<div style="font-size:12px;color:rgba(255,255,255,.4)">Select at least one expedition above to preview its card.</div>'; return; }
+
+  el.innerHTML = '<div style="background:#0f0d0b;border-radius:12px;padding:20px">' + sel.ids.map(function(id){
+    var e = _campTripData[id];
+    if (!e) return '';
+    var meta = sel.meta[id] || { badges: [] };
+    var badges = ['Self Drive'].concat(e.max_slots_badge ? [e.max_slots_badge] : []).concat(meta.badges);
+    var badgesHtml = badges.map(function(b){ return '<span style="display:inline-block;background:rgba(232,160,32,.15);border:1px solid rgba(232,160,32,.4);color:#e8a020;font-size:10px;font-weight:bold;letter-spacing:.4px;text-transform:uppercase;padding:3px 8px;border-radius:20px;margin:0 5px 5px 0">' + b + '</span>'; }).join('');
+    var priceRows = ['Self Drive:price', 'Couple Discount:couple_price', 'Seat Sharing:seat_price'].map(function(pair){
+      var parts = pair.split(':'); var label = parts[0]; var key = parts[1];
+      if (!e[key]) return '';
+      return '<tr><td style="padding:4px 0;color:rgba(255,255,255,.7);font-size:12px">' + label + '</td><td style="padding:4px 0;text-align:right;color:#fff;font-size:13px;font-weight:bold">₹' + e[key] + '</td></tr>';
+    }).join('');
+    return '<div style="background:rgba(232,160,32,.06);border:1px solid rgba(232,160,32,.3);border-radius:12px;padding:16px;margin-bottom:12px">'
+      + '<div>' + badgesHtml + '</div>'
+      + '<div style="color:#fff;font-size:16px;font-weight:bold;margin:8px 0 2px">' + e.title + '</div>'
+      + (e.dates ? '<div style="color:#e8a020;font-size:12px;font-weight:600;margin-bottom:10px">' + e.dates + '</div>' : '')
+      + (priceRows ? '<table style="width:100%;background:rgba(0,0,0,.25);border-radius:8px;padding:8px 12px">' + priceRows + '</table>' : '')
+      + '</div>';
+  }).join('') + '</div>';
 }
 
 function campUploadAsset(input, kind) {
@@ -1815,9 +1869,10 @@ function campSend() {
   if (!subject || !body) { msg.textContent = 'Subject and message are required.'; msg.style.color = '#f87171'; return; }
   if (!_campAudience.length) { msg.textContent = 'No recipients to send to.'; msg.style.color = '#f87171'; return; }
 
-  var expIds = Array.prototype.map.call(document.querySelectorAll('.campExpCheck:checked'), function(c){ return parseInt(c.value, 10); });
+  var sel = campCollectTripSelection();
   var payloadExtra = {
-    expedition_ids: expIds,
+    expedition_ids: sel.ids,
+    trip_meta:  sel.meta,
     image_url:  document.getElementById('campImageUrl').value,
     pdf_url:    document.getElementById('campPdfUrl').value,
     pdf_label:  document.getElementById('campPdfLabel').value,
@@ -1843,7 +1898,7 @@ function campSend() {
       // All done — log the campaign
       fetch(_admRest + '/admin/log-campaign', {
         method: 'POST', headers: h(),
-        body: JSON.stringify({ subject: subject, body: body, sent: totalSent, failed: totalFailed, expedition_ids: expIds })
+        body: JSON.stringify({ subject: subject, body: body, sent: totalSent, failed: totalFailed, expedition_ids: sel.ids })
       }).finally(function(){
         _campSending = false;
         document.getElementById('campSendBtn').disabled = false;

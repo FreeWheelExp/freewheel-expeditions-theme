@@ -567,8 +567,13 @@ get_header();
           </div>
 
           <div>
-            <label class="adm-label">Link to expeditions (optional — listed in the email)</label>
-            <div id="campExpeditionList" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px"><span style="font-size:12px;color:rgba(255,255,255,.4)">Loading...</span></div>
+            <label class="adm-label">Feature trip cards (optional — pulls real dates/pricing, renders as visual cards in the email)</label>
+            <div id="campTripPicker" style="margin-top:6px"><span style="font-size:12px;color:rgba(255,255,255,.4)">Loading...</span></div>
+          </div>
+
+          <div>
+            <button type="button" class="adm-btn btn-secondary" onclick="campPreviewCards()" style="font-size:12px">Preview Selected Cards</button>
+            <div id="campCardPreview" style="margin-top:12px"></div>
           </div>
 
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
