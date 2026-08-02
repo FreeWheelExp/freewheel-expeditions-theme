@@ -241,8 +241,15 @@ echo '<script type="application/ld+json">' . json_encode($schema_exp, JSON_UNESC
   .exp-gal-grid{grid-template-columns:repeat(2,1fr)}
   .day-row{grid-template-columns:1fr}
   .inc-exc-grid{grid-template-columns:1fr}
-  /* Sidebar stacks below main on mobile — add bottom padding so sticky bar doesn't cover it */
-  .exp-sidebar{padding-bottom:90px}
+  /* Pricing + member perk were sitting below the full itinerary in DOM order, meaning
+     on a single-column mobile layout visitors had to scroll past the entire day-by-day
+     itinerary before ever seeing a price. Reorder so the sidebar renders right after the
+     hero, before the itinerary, without touching the desktop 2-column layout at all. */
+  .exp-sidebar{order:-1}
+  .exp-main{order:1}
+  /* exp-main is now the last thing on the page after the reorder above, so it needs
+     the clearance from the fixed sticky bar that used to belong to exp-sidebar */
+  .exp-main{padding-bottom:90px}
 }
 @media(max-width:600px){.exp-gal-grid{grid-template-columns:1fr}}
 
