@@ -576,6 +576,15 @@ get_header();
             <div id="campCardPreview" style="margin-top:12px"></div>
           </div>
 
+          <div style="background:rgba(232,160,32,.06);border:1px solid rgba(232,160,32,.3);border-radius:10px;padding:16px">
+            <label class="adm-label" style="color:#e8a020">Send Trial Mail — check the real format in a real inbox before sending to everyone</label>
+            <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap">
+              <input type="email" id="campTestEmail" class="adm-input" placeholder="your@email.com" style="flex:1;min-width:200px">
+              <button type="button" class="adm-btn btn-secondary" onclick="campSendTest()" id="campTestBtn">Send Test</button>
+            </div>
+            <div id="campTestMsg" style="font-size:12px;margin-top:8px"></div>
+          </div>
+
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
             <button class="adm-btn btn-save" onclick="campSend()" id="campSendBtn">Send Notification</button>
             <button class="adm-btn btn-secondary" onclick="campExportWhatsapp()">Export WhatsApp Numbers</button>

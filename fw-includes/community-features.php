@@ -518,7 +518,46 @@ function fw_send_campaign_email( $email, $name, $subject, $html_body ) {
     return true;
 }
 
-/* ── Helper: build campaign HTML email body ──
+/* ── POST /admin/send-test-campaign — sends the exact HTML a real send would produce,
+   to one address only, for checking format/UI before blasting the real subscriber list.
+   Deliberately does NOT write to fw_notification_log — this isn't a real campaign. ── */
+function fw_admin_send_test_campaign( $request ) {
+    $user = fw_admin_auth( $request );
+    if ( is_wp_error( $user ) ) return $user;
+
+    $p          = $request->get_json_params() ?: array();
+    $test_email = sanitize_email( $p['test_email'] ?? '' );
+    $subject    = sanitize_text_field( $p['subject'] ?? '' );
+    $body_text  = sanitize_textarea_field( $p['body'] ?? '' );
+    $exp_ids    = array_map( 'intval', (array) ( $p['expedition_ids'] ?? array() ) );
+    $trip_meta  = is_array( $p['trip_meta'] ?? null ) ? $p['trip_meta'] : array();
+
+    if ( ! is_email( $test_email ) ) return new WP_Error( 'bad_email', 'Enter a valid email address to send the test to.', array( 'status' => 400 ) );
+    if ( ! $subject || ! $body_text )  return new WP_Error( 'missing', 'Subject and body are required.', array( 'status' => 400 ) );
+
+    $trip_cards = array();
+    foreach ( $exp_ids as $pid ) {
+        $meta   = $trip_meta[ (string) $pid ] ?? array();
+        $blurb  = sanitize_textarea_field( $meta['blurb'] ?? '' );
+        $badges = array_map( 'sanitize_text_field', (array) ( $meta['badges'] ?? array() ) );
+        $card   = fw_build_trip_card_data( $pid, $blurb, $badges );
+        if ( $card ) $trip_cards[] = $card;
+    }
+
+    $assets = array(
+        'image_url' => esc_url_raw( $p['image_url'] ?? '' ),
+        'pdf_url'   => esc_url_raw( $p['pdf_url'] ?? '' ),
+        'pdf_label' => sanitize_text_field( $p['pdf_label'] ?? '' ),
+        'cta_url'   => esc_url_raw( $p['cta_url'] ?? '' ),
+        'cta_label' => sanitize_text_field( $p['cta_label'] ?? '' ),
+    );
+
+    $html = fw_build_campaign_html( $body_text, $trip_cards, '#', $assets );
+    $sent = fw_send_campaign_email( $test_email, 'Test', '[TEST] ' . $subject, $html );
+
+    if ( ! $sent ) return new WP_Error( 'send_fail', 'Could not send test email. Check the Brevo API key is configured.', array( 'status' => 500 ) );
+    return rest_ensure_response( array( 'success' => true ) );
+}
    $trip_cards: array of structured expedition data (see fw_build_trip_card_data()) — each
    renders as its own visually distinct card, not a flat bullet list.
    $assets: optional array with keys image_url, pdf_url, pdf_label, cta_url, cta_label */

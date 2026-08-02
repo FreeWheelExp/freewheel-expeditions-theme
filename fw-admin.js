@@ -1858,6 +1858,50 @@ function campExportWhatsapp() {
     .catch(function(){ msg.textContent = 'Error exporting.'; msg.style.color = '#f87171'; });
 }
 
+function campSendTest() {
+  var testEmail = document.getElementById('campTestEmail').value.trim();
+  var msg = document.getElementById('campTestMsg');
+  if (!testEmail) { msg.textContent = 'Enter an email address first.'; msg.style.color = '#f87171'; return; }
+
+  var subject = document.getElementById('campSubject').value.trim();
+  var body = document.getElementById('campBody').value.trim();
+  if (!subject || !body) { msg.textContent = 'Subject and message are required.'; msg.style.color = '#f87171'; return; }
+
+  var sel = campCollectTripSelection();
+  var payload = {
+    test_email: testEmail,
+    subject: subject,
+    body: body,
+    expedition_ids: sel.ids,
+    trip_meta: sel.meta,
+    image_url: document.getElementById('campImageUrl').value,
+    pdf_url: document.getElementById('campPdfUrl').value,
+    pdf_label: document.getElementById('campPdfLabel').value,
+    cta_url: document.getElementById('campCtaUrl').value,
+    cta_label: document.getElementById('campCtaLabel').value
+  };
+
+  var btn = document.getElementById('campTestBtn');
+  btn.disabled = true;
+  msg.textContent = 'Sending test...'; msg.style.color = 'rgba(255,255,255,.5)';
+
+  fetch(_admRest + '/admin/send-test-campaign', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + _admToken, 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+    .then(function(r){
+      if (!r.ok) return r.json().then(function(d){ throw new Error(d.message || ('HTTP ' + r.status)); });
+      return r.json();
+    })
+    .then(function(d){
+      btn.disabled = false;
+      if (d.success) { msg.textContent = 'Test sent to ' + testEmail + '. Check the inbox (and spam folder).'; msg.style.color = '#4ade80'; }
+      else { msg.textContent = d.message || 'Could not send test.'; msg.style.color = '#f87171'; }
+    })
+    .catch(function(e){ btn.disabled = false; msg.textContent = 'Error: ' + e.message; msg.style.color = '#f87171'; });
+}
+
 function campSend() {
   if (_campSending) return;
 

@@ -1341,6 +1341,7 @@ add_action( 'rest_api_init', function() {
     register_rest_route( 'freewheel/v1', '/admin/campaign-trip-picker', array( 'methods'=>'GET', 'callback'=>'fw_admin_campaign_trip_picker', 'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/campaign-upload',    array( 'methods'=>'POST', 'callback'=>'fw_admin_campaign_upload',     'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/send-campaign-batch',array( 'methods'=>'POST', 'callback'=>'fw_admin_send_campaign_batch', 'permission_callback'=>'__return_true' ));
+    register_rest_route( 'freewheel/v1', '/admin/send-test-campaign', array( 'methods'=>'POST', 'callback'=>'fw_admin_send_test_campaign', 'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/log-campaign',       array( 'methods'=>'POST', 'callback'=>'fw_admin_log_campaign',        'permission_callback'=>'__return_true' ));
     register_rest_route( 'freewheel/v1', '/unsubscribe',              array( 'methods'=>'GET',  'callback'=>'fw_handle_unsubscribe',        'permission_callback'=>'__return_true' ));
 });
