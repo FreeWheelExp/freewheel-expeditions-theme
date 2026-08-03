@@ -309,7 +309,8 @@ function fw_my_waitlist( $request ) {
     )), true );
     if ( ! is_array( $rows ) ) $rows = array();
     foreach ( $rows as &$r ) {
-        $post = get_post( (int) $r['expedition_id'] );
+        if ( ! is_array( $r ) ) { $r = array(); continue; }
+        $post = get_post( (int) ( $r['expedition_id'] ?? 0 ) );
         $r['expedition_title'] = $post ? html_entity_decode( get_the_title( $post ) ) : 'Unknown trip';
     }
     unset( $r );
@@ -353,7 +354,8 @@ function fw_admin_get_waitlist( $request ) {
     }
 
     foreach ( $rows as &$r ) {
-        $post = get_post( (int) $r['expedition_id'] );
+        if ( ! is_array( $r ) ) { $r = array(); continue; }
+        $post = get_post( (int) ( $r['expedition_id'] ?? 0 ) );
         $r['expedition_title'] = $post ? html_entity_decode( get_the_title( $post ) ) : 'Unknown trip';
         $mem = $members[ $r['user_id'] ] ?? array();
         $r['member_name']  = trim( ( $mem['first_name'] ?? '' ) . ' ' . ( $mem['last_name'] ?? '' ) ) ?: 'Unknown';
@@ -558,6 +560,8 @@ function fw_admin_send_test_campaign( $request ) {
     if ( ! $sent ) return new WP_Error( 'send_fail', 'Could not send test email. Check the Brevo API key is configured.', array( 'status' => 500 ) );
     return rest_ensure_response( array( 'success' => true ) );
 }
+
+/* ── Helper: build campaign HTML email body ──
    $trip_cards: array of structured expedition data (see fw_build_trip_card_data()) — each
    renders as its own visually distinct card, not a flat bullet list.
    $assets: optional array with keys image_url, pdf_url, pdf_label, cta_url, cta_label */
