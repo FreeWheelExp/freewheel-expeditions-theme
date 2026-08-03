@@ -241,15 +241,12 @@ echo '<script type="application/ld+json">' . json_encode($schema_exp, JSON_UNESC
   .exp-gal-grid{grid-template-columns:repeat(2,1fr)}
   .day-row{grid-template-columns:1fr}
   .inc-exc-grid{grid-template-columns:1fr}
-  /* Pricing + member perk were sitting below the full itinerary in DOM order, meaning
-     on a single-column mobile layout visitors had to scroll past the entire day-by-day
-     itinerary before ever seeing a price. Reorder so the sidebar renders right after the
-     hero, before the itinerary, without touching the desktop 2-column layout at all. */
-  .fwexp-sidebar{order:-1;display:flex;flex-direction:column}
-  .exp-main{order:1}
-  /* exp-main is now the last thing on the page after the reorder above, so it needs
-     the clearance from the fixed sticky bar that used to belong to fwexp-sidebar */
-  .exp-main{padding-bottom:90px}
+  /* Sidebar (pricing + member perk) stays in natural DOM order on mobile: after the
+     itinerary/package tabs, right before the "Things To Carry" section that follows
+     .fwexp-layout in markup. Explicit display so it can never be silently hidden by
+     an unrelated stylesheet again. Bottom padding clears the fixed mobile booking bar,
+     since this is now the last element before Things To Carry. */
+  .fwexp-sidebar{display:flex;flex-direction:column;padding-bottom:90px}
 }
 @media(max-width:600px){.exp-gal-grid{grid-template-columns:1fr}}
 
