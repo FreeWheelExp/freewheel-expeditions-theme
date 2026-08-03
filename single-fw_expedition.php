@@ -128,7 +128,7 @@ echo '<script type="application/ld+json">' . json_encode($schema_exp, JSON_UNESC
 .exp-h1{font-family:var(--headline);font-size:clamp(40px,6vw,72px);color:#fff;line-height:.95;letter-spacing:1px;margin-bottom:14px}
 .exp-meta-row{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
 .exp-meta-tag{padding:5px 14px;border:1px solid rgba(255,255,255,.2);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.7)}
-.exp-layout{display:grid;grid-template-columns:1fr 340px;gap:40px;padding:48px 5vw;max-width:1400px;margin:0 auto}
+.fwexp-layout{display:grid;grid-template-columns:1fr 340px;gap:40px;padding:48px 5vw;max-width:1400px;margin:0 auto}
 .exp-main{}
 .exp-section{margin-bottom:40px}
 .exp-section-title{font-family:var(--headline);font-size:26px;letter-spacing:2px;color:#fff;margin-bottom:18px;padding-bottom:8px;border-bottom:2px solid var(--rust)}
@@ -173,7 +173,7 @@ echo '<script type="application/ld+json">' . json_encode($schema_exp, JSON_UNESC
 .btn-ghost{display:inline-block;padding:12px 34px;border:2px solid rgba(255,255,255,.3);color:#fff;text-decoration:none;font-family:var(--headline);font-size:18px;letter-spacing:2px;cursor:pointer;transition:border-color .2s,transform .15s;background:transparent;border-radius:2px}
 .btn-ghost:hover{border-color:var(--amber);color:var(--amber);transform:translateY(-2px)}
 /* Sidebar */
-.exp-sidebar{align-self:start}
+.fwexp-sidebar{align-self:start}
 .pay-panel{background:var(--ink);border-top:4px solid var(--rust);margin-bottom:0}
 .pay-header{padding:22px 24px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
 .pay-header-title{font-family:var(--headline);font-size:28px;color:#fff;letter-spacing:1px;margin-bottom:2px}
@@ -236,7 +236,7 @@ echo '<script type="application/ld+json">' . json_encode($schema_exp, JSON_UNESC
 .exp-lb-prev:hover,.exp-lb-next:hover{background:var(--rust)}
 .exp-lb-counter{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);font-size:12px;letter-spacing:2px;color:rgba(255,255,255,.5);text-transform:uppercase}
 @media(max-width:900px){
-  .exp-layout{grid-template-columns:1fr;padding:32px 5vw}
+  .fwexp-layout{grid-template-columns:1fr;padding:32px 5vw}
   .pay-panel{position:static}
   .exp-gal-grid{grid-template-columns:repeat(2,1fr)}
   .day-row{grid-template-columns:1fr}
@@ -245,10 +245,10 @@ echo '<script type="application/ld+json">' . json_encode($schema_exp, JSON_UNESC
      on a single-column mobile layout visitors had to scroll past the entire day-by-day
      itinerary before ever seeing a price. Reorder so the sidebar renders right after the
      hero, before the itinerary, without touching the desktop 2-column layout at all. */
-  .exp-sidebar{order:-1}
+  .fwexp-sidebar{order:-1;display:flex;flex-direction:column}
   .exp-main{order:1}
   /* exp-main is now the last thing on the page after the reorder above, so it needs
-     the clearance from the fixed sticky bar that used to belong to exp-sidebar */
+     the clearance from the fixed sticky bar that used to belong to fwexp-sidebar */
   .exp-main{padding-bottom:90px}
 }
 @media(max-width:600px){.exp-gal-grid{grid-template-columns:1fr}}
@@ -314,7 +314,7 @@ echo '<script type="application/ld+json">' . json_encode($schema_exp, JSON_UNESC
 </div>
 
 <!-- MAIN LAYOUT -->
-<div class="exp-layout">
+<div class="fwexp-layout">
 
   <!-- LEFT: Content -->
   <div class="exp-main">
@@ -406,7 +406,7 @@ echo '<script type="application/ld+json">' . json_encode($schema_exp, JSON_UNESC
   </div><!-- /exp-main -->
 
   <!-- RIGHT: Sidebar -->
-  <div class="exp-sidebar">
+  <div class="fwexp-sidebar">
     <div class="pay-panel">
       <div class="pay-header">
         <div class="pay-header-title">Book This Expedition</div>
@@ -703,9 +703,9 @@ async function fwExpRzpPay(){
       </button>
     </div>
 
-  </div><!-- /exp-sidebar -->
+  </div><!-- /fwexp-sidebar -->
 
-</div><!-- /exp-layout -->
+</div><!-- /fwexp-layout -->
 
 <script>
 /* payment tab functions removed — using WhatsApp booking */
