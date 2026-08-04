@@ -540,16 +540,25 @@ function fw_register_member( $request ) {
         return rest_ensure_response( array( 'success' => true, 'existing' => true, 'name' => $existing[0]['first_name'] ) );
     }
 
-    $p          = $request->get_json_params() ?: array();
-    $first_name = sanitize_text_field( $p['first_name'] ?? '' );
-    $last_name  = sanitize_text_field( $p['last_name']  ?? '' );
-    $phone      = sanitize_text_field( $p['phone']      ?? '' );
-    $city       = sanitize_text_field( $p['city']       ?? '' );
-    $state      = sanitize_text_field( $p['state']      ?? '' );
-    $country    = sanitize_text_field( $p['country']    ?? 'India' );
+    $p    = $request->get_json_params() ?: array();
+    /* Fallback source: signup-time user_metadata (set via options.data in auth.signUp()).
+       Client-submitted body can be empty if sessionStorage/in-memory state was lost
+       between the signup step and OTP verify (new tab, different device, cleared storage) —
+       without this fallback that left confirmed auth users with no fw_members row. */
+    $meta = is_array( $user['user_metadata'] ?? null ) ? $user['user_metadata'] : array();
+
+    $first_name = sanitize_text_field( $p['first_name'] ?? $meta['first_name'] ?? '' );
+    $last_name  = sanitize_text_field( $p['last_name']  ?? $meta['last_name']  ?? '' );
+    $phone      = sanitize_text_field( $p['phone']      ?? $meta['phone']      ?? '' );
+    $city       = sanitize_text_field( $p['city']       ?? $meta['city']       ?? '' );
+    $state      = sanitize_text_field( $p['state']      ?? $meta['state']      ?? '' );
+    $country    = sanitize_text_field( $p['country']    ?? $meta['country']    ?? 'India' );
     $ref_code   = sanitize_text_field( $p['ref_code']   ?? '' );
 
     if ( ! $first_name ) {
+        /* Genuinely no name anywhere (client body empty AND metadata empty) — log it,
+           this should now be rare enough to be worth investigating each time it happens. */
+        error_log( '[FW] fw_register_member: no first_name in body or user_metadata for user_id=' . $user_id );
         return new WP_Error( 'missing', 'First name is required.', array( 'status' => 400 ) );
     }
 
