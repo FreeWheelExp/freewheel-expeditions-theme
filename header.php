@@ -366,6 +366,16 @@ function closeModal(id){
     <li><a href="<?php echo home_url('/merchandise/'); ?>">Merchandise</a></li>
     <li><a href="<?php echo home_url('/community/'); ?>">Community</a></li>
     <li><a href="<?php echo home_url('/blog/'); ?>">Blog</a></li>
+    <li class="nav-dropdown">
+      <a href="#" class="nav-drop-toggle" onclick="return false;">Guides ▾</a>
+      <ul class="nav-drop-menu">
+        <li><a href="<?php echo home_url('/self-drive-leh-ladakh/'); ?>">Leh Ladakh Guide</a></li>
+        <li><a href="<?php echo home_url('/self-drive-spiti-valley/'); ?>">Spiti Valley Guide</a></li>
+        <li><a href="<?php echo home_url('/self-drive-adi-kailash/'); ?>">Adi Kailash Guide</a></li>
+        <li><a href="<?php echo home_url('/self-drive-darma-valley/'); ?>">Darma Valley Guide</a></li>
+        <li><a href="<?php echo home_url('/self-drive-upper-mustang/'); ?>">Upper Mustang Guide</a></li>
+      </ul>
+    </li>
     <li id="navMyAccount" style="display:none"></li>
     <li><button class="nav-search-btn" onclick="fwSearchOpen()" title="Search" style="background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:16px;padding:4px 8px;min-height:44px">🔍</button></li>
     <li><a href="<?php echo esc_url(home_url('/register/')); ?>" class="nav-cta" style="font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase">Register</a></li>
@@ -382,6 +392,8 @@ function closeModal(id){
   <a href="<?php echo home_url('/self-drive-leh-ladakh/'); ?>" onclick="closeMobileMenu()">Leh Ladakh Guide</a>
   <a href="<?php echo home_url('/self-drive-spiti-valley/'); ?>" onclick="closeMobileMenu()">Spiti Valley Guide</a>
   <a href="<?php echo home_url('/self-drive-adi-kailash/'); ?>" onclick="closeMobileMenu()">Adi Kailash Guide</a>
+  <a href="<?php echo home_url('/self-drive-darma-valley/'); ?>" onclick="closeMobileMenu()">Darma Valley Guide</a>
+  <a href="<?php echo home_url('/self-drive-upper-mustang/'); ?>" onclick="closeMobileMenu()">Upper Mustang Guide</a>
   <a href="<?php echo esc_url(home_url('/register/')); ?>" onclick="closeMobileMenu()" class="mob-cta" style="text-align:center">Register</a>
 </div>
 
