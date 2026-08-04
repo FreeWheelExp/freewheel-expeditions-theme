@@ -218,7 +218,7 @@ function fw_rest_send_welcome( $req ) {
 
     if ( $verr )    return new WP_Error( 'curl_fail',   'Verification service unreachable: ' . $verr, array( 'status' => 500 ) );
     if ( $vcode >= 400 ) {
-        error_log( '[FW DEBUG] OTP verify failed. HTTP ' . $vcode . '. Email: ' . $email . '. Token entered: ' . $otp . '. Supabase response: ' . $vbody );
+        error_log( '[FW DEBUG] OTP verify failed. HTTP ' . $vcode . '.' );
         return new WP_Error( 'invalid_otp', 'Incorrect code. Please try again.', array( 'status' => 400 ) );
     }
 
