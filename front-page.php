@@ -79,7 +79,7 @@ a { color: inherit; }
 /* ═══════════════════════════════════════════════════════════════ */
 
 
-.hero{min-height:100vh;background:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:80px 5vw 60px;text-align:center}
+.hero{min-height:100vh;background:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:80px 5vw 60px;text-align:center;z-index:0}
 .hero-bg{position:absolute;inset:0;background-image:radial-gradient(circle at 20% 50%,rgba(193,68,14,.18) 0%,transparent 50%),radial-gradient(circle at 80% 20%,rgba(42,122,110,.12) 0%,transparent 40%),radial-gradient(circle at 60% 80%,rgba(232,160,32,.1) 0%,transparent 40%);pointer-events:none}
 .hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:80px 80px;pointer-events:none}
 .hero-eyebrow{display:inline-flex;align-items:center;gap:12px;font-size:11px;font-weight:500;letter-spacing:4px;text-transform:uppercase;color:var(--amber);margin-bottom:20px;animation:fU .8s ease both}
