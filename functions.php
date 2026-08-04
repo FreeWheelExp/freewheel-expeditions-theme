@@ -564,9 +564,25 @@ function fw_register_member( $request ) {
 
     $h_svc = array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE );
 
-    /* Resolve referral code to a referrer's user id (ignore if invalid/self) */
+    /* Referral fraud guard: the 100/100 credit bonus is paid out later, at
+       first-trip-completion, keyed off referred_by (see fw_maybe_award_referral_bonus
+       in community-features.php). Blocking referred_by here — not the registration
+       itself — is enough to kill the payout without rejecting a legitimate signup
+       (e.g. a family/couple sharing one phone number). */
+    $phone_reused = false;
+    if ( $phone ) {
+        $phone_check = json_decode( wp_remote_retrieve_body( wp_remote_get(
+            FW_SUPABASE_URL . '/rest/v1/fw_members?phone=eq.' . rawurlencode( $phone ) . '&select=id&limit=1',
+            array( 'headers' => $h_svc, 'timeout' => 8 )
+        )), true );
+        $phone_reused = ! empty( $phone_check[0]['id'] );
+    }
+
+    /* Resolve referral code to a referrer's user id (ignore if invalid/self/phone already used) */
     $referred_by = null;
-    if ( $ref_code ) {
+    if ( $ref_code && $phone_reused ) {
+        error_log( '[FW] fw_register_member: referral skipped, phone already registered to another member — user_id=' . $user_id . ' phone=' . $phone );
+    } elseif ( $ref_code ) {
         $ref_lookup = json_decode( wp_remote_retrieve_body( wp_remote_get(
             FW_SUPABASE_URL . '/rest/v1/fw_members?referral_code=eq.' . rawurlencode( $ref_code ) . '&select=id',
             array( 'headers' => $h_svc, 'timeout' => 8 )
