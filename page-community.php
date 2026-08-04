@@ -339,6 +339,105 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
   })();
   </script>
 
+  <!-- ── ROAD STORIES (member-written trip reports, fw_blogs) ── -->
+  <section style="padding:0 0 72px;background:#0a0805;overflow:hidden">
+    <div style="max-width:1200px;margin:0 auto;padding:0 16px;margin-bottom:24px">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--rust);margin-bottom:8px">Road Stories</div>
+          <div style="font-family:var(--headline);font-size:clamp(22px,5vw,36px);color:#fff;letter-spacing:1px;line-height:1.1;word-break:break-word">Written <span style="color:var(--amber)">by Our Riders</span></div>
+          <div style="font-size:14px;color:rgba(255,255,255,.45);margin-top:10px;font-weight:300">First-hand accounts from the road, straight from the community.</div>
+        </div>
+        <a href="<?php echo esc_url(home_url('/register/')); ?>" style="display:inline-flex;align-items:center;gap:8px;padding:11px 22px;background:transparent;border:1px solid rgba(193,68,14,.5);color:var(--rust);text-decoration:none;font-family:var(--headline);font-size:13px;letter-spacing:1.5px;border-radius:2px;white-space:nowrap;transition:all .2s" onmouseover="this.style.background='rgba(193,68,14,.1)'" onmouseout="this.style.background='transparent'">SHARE YOUR STORY →</a>
+      </div>
+    </div>
+
+    <div id="blogCarouselWrap" style="position:relative">
+      <div id="blogCarouselLoading" style="text-align:center;padding:40px;color:rgba(255,255,255,.45);font-size:12px;letter-spacing:2px;text-transform:uppercase">Loading stories...</div>
+      <div id="blogMarquee" style="display:none;overflow:hidden;cursor:grab;user-select:none">
+        <div id="blogMarqueeTrack" style="display:flex;gap:16px;width:max-content;will-change:transform"></div>
+      </div>
+      <div style="position:absolute;top:0;left:0;width:80px;height:100%;background:linear-gradient(to right,#0a0805,transparent);pointer-events:none;z-index:2"></div>
+      <div style="position:absolute;top:0;right:0;width:80px;height:100%;background:linear-gradient(to left,#0a0805,transparent);pointer-events:none;z-index:2"></div>
+    </div>
+
+    <div id="blogCarouselEmpty" style="display:none;text-align:center;padding:40px 24px">
+      <div style="font-size:32px;margin-bottom:12px">✍️</div>
+      <div style="font-size:14px;color:rgba(255,255,255,.5);margin-bottom:8px">No published stories yet — be the first to share yours!</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.45)">Register and write your trip report from the dashboard to appear here.</div>
+      <a href="<?php echo esc_url(home_url('/register/')); ?>" style="display:inline-block;margin-top:16px;padding:10px 22px;background:var(--rust);color:#fff;text-decoration:none;font-family:var(--headline);font-size:14px;letter-spacing:1px;border-radius:2px">Register &amp; Write</a>
+    </div>
+  </section>
+
+  <style>
+  #blogMarqueeTrack .blg-card{width:280px;flex-shrink:0;background:#0f0d0b;border:1px solid rgba(255,255,255,.08);border-radius:4px;overflow:hidden;transition:transform .3s ease,box-shadow .3s ease;text-decoration:none;display:block}
+  #blogMarqueeTrack .blg-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,.5)}
+  #blogMarqueeTrack .blg-cover{width:100%;height:150px;object-fit:cover;display:block;background:rgba(255,255,255,.04)}
+  #blogMarqueeTrack .blg-info{padding:14px 16px}
+  #blogMarqueeTrack .blg-title{font-family:var(--headline);font-size:16px;color:#fff;letter-spacing:.5px;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #blogMarqueeTrack .blg-excerpt{font-size:12px;color:rgba(255,255,255,.5);line-height:1.5;font-weight:300;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:10px}
+  @keyframes fw-scroll-left-blogs { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+  #blogMarqueeTrack { animation: fw-scroll-left-blogs 45s linear infinite; }
+  #blogMarqueeTrack:hover { animation-play-state: paused; }
+  </style>
+
+  <script>
+  (function() {
+    var REST = (window.FW_AUTH && FW_AUTH.rest_url) || '/wp-json/freewheel/v1';
+
+    fetch(REST + '/fw-public-blogs?limit=10')
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        document.getElementById('blogCarouselLoading').style.display = 'none';
+        if (!d.blogs || !d.blogs.length) {
+          document.getElementById('blogCarouselEmpty').style.display = 'block';
+          return;
+        }
+        buildBlogCarousel(d.blogs);
+      })
+      .catch(function(){
+        document.getElementById('blogCarouselLoading').style.display = 'none';
+        document.getElementById('blogCarouselEmpty').style.display = 'block';
+      });
+
+    function buildBlogCarousel(blogs) {
+      var track   = document.getElementById('blogMarqueeTrack');
+      var marquee = document.getElementById('blogMarquee');
+      var cards   = blogs.map(makeBlogCard).join('');
+      track.innerHTML = cards + cards;
+      var duration = Math.max(24, blogs.length * 6);
+      track.style.animationDuration = duration + 's';
+      marquee.style.display = 'block';
+    }
+
+    function makeBlogCard(blog) {
+      var firstName   = (blog.member_name || 'Explorer').split(' ')[0].toUpperCase();
+      var badge       = (blog.member_badge || 'Explorer').toUpperCase();
+      var memberNum   = blog.member_number ? '#' + String(blog.member_number).padStart(4,'0') : '';
+      var profileUrl  = blog.member_number ? '/rider/?n=' + blog.member_number : '#';
+      var cover       = blog.cover_image
+        ? '<img class="blg-cover" src="' + blog.cover_image + '" alt="' + blog.title + '" loading="lazy">'
+        : '<div class="blg-cover"></div>';
+      var avatarHtml  = blog.member_photo
+        ? '<img src="' + blog.member_photo + '" alt="' + firstName + '" style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(193,68,14,.5);flex-shrink:0">'
+        : '<div style="width:28px;height:28px;border-radius:50%;background:rgba(193,68,14,.2);border:1.5px solid rgba(193,68,14,.4);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--rust);font-family:var(--headline);font-weight:700;flex-shrink:0">' + firstName.charAt(0) + '</div>';
+      return '<a class="blg-card" href="' + profileUrl + '">' +
+        cover +
+        '<div class="blg-info">' +
+          '<div class="blg-title">' + blog.title + '</div>' +
+          (blog.excerpt ? '<div class="blg-excerpt">' + blog.excerpt + '</div>' : '') +
+          '<div style="display:flex;align-items:center;gap:8px">' +
+            avatarHtml +
+            '<div style="font-size:11px;color:#fff;font-weight:600;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
+              firstName + (memberNum ? ' <span style="color:rgba(255,255,255,.45);font-weight:400">' + memberNum + '</span>' : '') + ' <span style="color:rgba(255,255,255,.45);font-weight:400">—</span> <span style="color:var(--amber);letter-spacing:1px">' + badge + '</span>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</a>';
+    }
+  })();
+  </script>
+
     <!-- DUAL CTA CARDS -->
     <div style="display:flex;justify-content:center;gap:16px;max-width:700px;margin:0 auto;flex-wrap:wrap;padding:0 16px;box-sizing:border-box">
 

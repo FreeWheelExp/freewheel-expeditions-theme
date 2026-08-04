@@ -1677,6 +1677,11 @@ add_action( 'rest_api_init', function() {
         'callback'            => 'fw_get_public_albums',
         'permission_callback' => '__return_true',
     ));
+    register_rest_route( 'freewheel/v1', '/fw-public-blogs', array(
+        'methods'             => 'GET',
+        'callback'            => 'fw_get_public_blogs',
+        'permission_callback' => '__return_true',
+    ));
 });
 
 function fw_get_public_albums( $request ) {
@@ -1721,6 +1726,44 @@ function fw_get_public_albums( $request ) {
     }
 
     return rest_ensure_response( array( 'success' => true, 'albums' => $albums ) );
+}
+
+/* ── Public Road Stories (fw_blogs) endpoint — mirrors fw_get_public_albums.
+   These are already published; they just had nowhere to surface publicly
+   before this, other than a single member's own /rider/?n= page. ── */
+function fw_get_public_blogs( $request ) {
+    $limit = min( absint( $request->get_param('limit') ?? 10 ), 10 );
+
+    $blogs = json_decode( wp_remote_retrieve_body( wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_blogs?status=eq.published&order=created_at.desc&limit=' . $limit . '&select=id,title,body,cover_image,user_id,created_at',
+        array( 'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE ), 'timeout' => 10 )
+    )), true ) ?: array();
+
+    if ( empty( $blogs ) ) {
+        return rest_ensure_response( array( 'success' => true, 'blogs' => array() ) );
+    }
+
+    foreach ( $blogs as &$blog ) {
+        /* Excerpt: strip tags/shortcodes, trim to ~140 chars on a word boundary */
+        $plain = trim( wp_strip_all_tags( $blog['body'] ?? '' ) );
+        $blog['excerpt'] = ( mb_strlen( $plain ) > 140 ) ? mb_substr( $plain, 0, 140 ) . '…' : $plain;
+        unset( $blog['body'] ); /* full body not needed for the card */
+
+        $member = json_decode( wp_remote_retrieve_body( wp_remote_get(
+            FW_SUPABASE_URL . '/rest/v1/fw_members?id=eq.' . rawurlencode( $blog['user_id'] ) . '&select=first_name,city,instagram,avatar_url,role,trips_completed,member_number',
+            array( 'headers' => array( 'apikey' => FW_SUPABASE_SERVICE, 'Authorization' => 'Bearer ' . FW_SUPABASE_SERVICE ), 'timeout' => 8 )
+        )), true );
+        $blog['member_name']      = $member[0]['first_name'] ?? 'Explorer';
+        $blog['member_city']      = $member[0]['city'] ?? '';
+        $blog['member_instagram'] = $member[0]['instagram'] ?? '';
+        $blog['member_photo']     = $member[0]['avatar_url'] ?? '';
+        $tier = fw_loyalty_tier( $member[0]['trips_completed'] ?? 0 );
+        $blog['member_badge']     = $tier['name'];
+        $blog['member_number']    = $member[0]['member_number'] ?? null;
+        unset( $blog['user_id'] ); /* Don't expose user ID publicly */
+    }
+
+    return rest_ensure_response( array( 'success' => true, 'blogs' => $blogs ) );
 }
 
 /* ── Update fw_create_album to support is_public ── */
