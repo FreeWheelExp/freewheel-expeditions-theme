@@ -171,7 +171,8 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
 .mobile-menu a:last-child{border-bottom:none}
 .mobile-menu a:hover{color:var(--amber);background:rgba(255,255,255,.03)}
 .mobile-menu .mob-cta{background:var(--rust);color:#fff !important;text-align:center;margin:10px 16px;border-radius:2px;border:none}
-.mob-submenu-toggle{width:100%;background:none;border:none;cursor:pointer;text-align:left;display:flex;align-items:center;justify-content:space-between}
+.mob-submenu-toggle{width:100%;background:none;border:none;cursor:pointer;text-align:left;display:flex;align-items:center;justify-content:space-between;padding:14px 24px;font-family:inherit;font-size:13px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.7);border-bottom:1px solid rgba(255,255,255,.06)}
+.mob-submenu-toggle:hover{color:var(--amber);background:rgba(255,255,255,.03)}
 .mob-submenu-toggle .msub-chev{transition:transform .2s;font-size:11px;color:rgba(255,255,255,.4)}
 .mob-submenu-toggle.open .msub-chev{transform:rotate(180deg)}
 .mob-submenu{display:none;background:rgba(255,255,255,.02)}
