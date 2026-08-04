@@ -133,6 +133,11 @@ get_header();
           </div>
         </div>
 
+        <div class="reg-field">
+          <label>Referral Code <span style="color:rgba(255,255,255,.3);font-weight:normal;text-transform:none;letter-spacing:0">(optional)</span></label>
+          <input type="text" id="regRefCode" placeholder="e.g. FW0007" autocomplete="off" style="text-transform:uppercase" maxlength="10">
+        </div>
+
         <button class="reg-btn" id="regBtn1" onclick="regSubmitDetails()">CREATE ACCOUNT →</button>
         <div class="reg-msg" id="regMsg1"></div>
       </div>
@@ -481,6 +486,13 @@ document.addEventListener('DOMContentLoaded',function(){
     var el=document.getElementById(id);
     if(el) el.addEventListener('keydown',function(e){if(e.key==='Enter')regSubmitDetails();});
   });
+  /* Pre-fill referral code from ?ref= link, but leave it editable —
+     covers both the shared-link path and someone typing a code they were told verbally. */
+  var refFromUrl = new URLSearchParams(window.location.search).get('ref');
+  if (refFromUrl) {
+    var rc = document.getElementById('regRefCode');
+    if (rc) rc.value = refFromUrl.trim().toUpperCase();
+  }
 });
 
 /* ── Submit ── */
@@ -525,7 +537,8 @@ async function regSubmitDetails(){
     /* Store for OTP verification and profile save after verify */
     _pendingEmail=email;
     _pendingPassword=password;
-    window._pendingProfile={first_name:firstName,last_name:lastName,phone:phone,city:city,state:state,country:country};
+    var refCode=(document.getElementById('regRefCode').value||'').trim().toUpperCase();
+    window._pendingProfile={first_name:firstName,last_name:lastName,phone:phone,city:city,state:state,country:country,ref_code:refCode};
     sessionStorage.setItem('fw_pending_profile',JSON.stringify(window._pendingProfile));
     sessionStorage.setItem('fw_pending_email',email);
 
@@ -540,7 +553,8 @@ async function regSubmitDetails(){
         var resendResult=await _sb.auth.resend({email:email,type:'signup'});
         if(!resendResult.error){
           _pendingEmail=email;
-          window._pendingProfile={first_name:firstName,last_name:lastName,phone:phone,city:city,state:state,country:country};
+          var refCode2=(document.getElementById('regRefCode').value||'').trim().toUpperCase();
+          window._pendingProfile={first_name:firstName,last_name:lastName,phone:phone,city:city,state:state,country:country,ref_code:refCode2};
           document.getElementById('regVerifyMsg').textContent='We sent a new 6-digit code to '+email+'. Enter it below to activate your account.';
           showStep(2);
           return;
@@ -583,10 +597,6 @@ async function verifySignupOtp(){
     if(!session) throw new Error('Verification succeeded but no session returned. Please log in.');
 
     var profile=window._pendingProfile||{};
-    try {
-      var refFromUrl = new URLSearchParams(window.location.search).get('ref');
-      if (refFromUrl) profile.ref_code = refFromUrl.trim().toUpperCase();
-    } catch(e){}
     localStorage.setItem('fw_session',JSON.stringify({
       access_token:session.access_token,refresh_token:session.refresh_token,
       user_id:session.user.id,email:session.user.email,

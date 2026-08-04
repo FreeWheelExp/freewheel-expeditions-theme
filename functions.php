@@ -583,9 +583,17 @@ function fw_register_member( $request ) {
     if ( $ref_code && $phone_reused ) {
         error_log( '[FW] fw_register_member: referral skipped, phone already registered to another member — user_id=' . $user_id . ' phone=' . $phone );
     } elseif ( $ref_code ) {
+        /* Codes are FW + zero-padded member_number (e.g. FW0007). Resolve via member_number,
+           not the stored referral_code column — that column can be empty (fire-and-forget
+           PATCH at registration, no failure handling) even for a valid, registered member. */
+        $ref_lookup_url = null;
+        if ( preg_match( '/^FW0*(\d+)$/i', $ref_code, $mm ) ) {
+            $ref_lookup_url = FW_SUPABASE_URL . '/rest/v1/fw_members?member_number=eq.' . (int) $mm[1] . '&select=id';
+        } else {
+            $ref_lookup_url = FW_SUPABASE_URL . '/rest/v1/fw_members?referral_code=eq.' . rawurlencode( $ref_code ) . '&select=id';
+        }
         $ref_lookup = json_decode( wp_remote_retrieve_body( wp_remote_get(
-            FW_SUPABASE_URL . '/rest/v1/fw_members?referral_code=eq.' . rawurlencode( $ref_code ) . '&select=id',
-            array( 'headers' => $h_svc, 'timeout' => 8 )
+            $ref_lookup_url, array( 'headers' => $h_svc, 'timeout' => 8 )
         )), true );
         if ( ! empty( $ref_lookup[0]['id'] ) && $ref_lookup[0]['id'] !== $user_id ) {
             $referred_by = $ref_lookup[0]['id'];

@@ -202,10 +202,17 @@ function fw_referral_stats( $request ) {
     $credited = 0;
     foreach ( $referrals as $r ) { if ( ! empty( $r['referral_bonus_given'] ) ) $credited++; }
 
+    /* Derive the code from member_number rather than trusting the stored referral_code
+       column — that column is written by a fire-and-forget PATCH at registration time
+       (see fw_register_member) with no failure handling, so it can end up empty even
+       for a fully-registered member. member_number always exists, so compute from it. */
+    $member_number = $me[0]['member_number'] ?? null;
+    $referral_code = $member_number ? ( 'FW' . str_pad( $member_number, 4, '0', STR_PAD_LEFT ) ) : ( $me[0]['referral_code'] ?? '' );
+
     return rest_ensure_response( array(
         'success'        => true,
-        'referral_code'  => $me[0]['referral_code'] ?? '',
-        'member_number'  => $me[0]['member_number'] ?? null,
+        'referral_code'  => $referral_code,
+        'member_number'  => $member_number,
         'total_referred' => count( $referrals ),
         'credited_count' => $credited,
         'referrals'      => $referrals,
