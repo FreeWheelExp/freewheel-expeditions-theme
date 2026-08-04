@@ -92,7 +92,7 @@ a { color: inherit; }
 .stat{text-align:center}.stat-n{font-family:var(--headline);font-size:50px;color:var(--amber);line-height:1;margin-bottom:4px}.stat-l{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.4)}
 @keyframes fU{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
 /* ── ABOUT ── */
-.about{background:var(--paper);padding:96px 5vw}
+.about{background:var(--paper);padding:96px 5vw;position:relative;z-index:0}
 .about-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1.2fr;gap:80px;align-items:center}
 .sec-tag{font-size:11px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:var(--rust);margin-bottom:14px}
 .sec-h2{font-family:var(--headline);font-size:clamp(40px,5vw,66px);color:var(--ink);line-height:.95;letter-spacing:1px;margin-bottom:22px}
@@ -106,7 +106,7 @@ a { color: inherit; }
 .about-acc{position:absolute;bottom:-16px;right:-16px;width:120px;height:120px;border:3px solid var(--rust);z-index:-1}
 @media(max-width:800px){.about-inner{grid-template-columns:1fr}.about-vis{display:none}}
 /* ── UPCOMING ── */
-.upcoming{background:var(--ink);padding:80px 0 40px}
+.upcoming{background:var(--ink);padding:80px 0 40px;position:relative;z-index:0}
 .sec-header{text-align:center;margin-bottom:52px;padding:0 5vw}
 .sec-h2-light{font-family:var(--headline);font-size:clamp(36px,5vw,64px);letter-spacing:1px;line-height:1;color:#fff}
 .sec-sub{font-size:15px;font-weight:300;color:rgba(255,255,255,.4);margin-top:10px}
@@ -136,7 +136,7 @@ a { color: inherit; }
 .dot.active{background:var(--amber);width:24px;border-radius:4px}
 .past-section{padding-top:48px!important}
 /* ── PAST ── */
-.past{background:var(--ink);padding:96px 5vw}
+.past{background:var(--ink);padding:96px 5vw;position:relative;z-index:0}
 .past-inner{max-width:1200px;margin:0 auto}
 .past-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:44px;flex-wrap:wrap;gap:20px}
 .past-sub{font-size:15px;font-weight:300;color:rgba(255,255,255,.35);margin-top:8px}
@@ -164,7 +164,7 @@ a { color: inherit; }
 @media(max-width:900px){.past-album-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:560px){.past-album-grid{grid-template-columns:1fr}.past-header{flex-direction:column;align-items:flex-start}}
 /* ── LOYALTY ── */
-.loyalty{background:var(--teal);padding:80px 5vw;text-align:center}
+.loyalty{background:var(--teal);padding:80px 5vw;text-align:center;position:relative;z-index:0}
 .loyalty .sec-tag{color:rgba(255,255,255,.6)}
 .benefits{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;max-width:900px;margin:44px auto 0;background:rgba(0,0,0,.15)}
 .ben{background:rgba(255,255,255,.06);padding:30px 22px;text-align:center}
@@ -173,7 +173,7 @@ a { color: inherit; }
 .ben-d{font-size:12px;color:rgba(255,255,255,.55);font-weight:300;line-height:1.6}
 .ben.hl{background:rgba(232,160,32,.15);border-top:3px solid var(--amber)}
 /* ── SUBSCRIBE ── */
-.subscribe{background:var(--ink);padding:96px 5vw;text-align:center;position:relative;overflow:hidden}
+.subscribe{background:var(--ink);padding:96px 5vw;text-align:center;position:relative;overflow:hidden;z-index:0}
 .subscribe::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(193,68,14,.13),transparent);pointer-events:none}
 .sub-wrap{max-width:620px;margin:0 auto;position:relative}
 .sub-eyebrow{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--rust);margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:10px}
@@ -707,7 +707,7 @@ if (!empty($_fw_testis)):
 </section>
 
 <style>
-.fw-testi-section{background:#0a0805;padding:80px 0 90px;overflow:hidden;position:relative}
+.fw-testi-section{background:#0a0805;padding:80px 0 90px;overflow:hidden;position:relative;z-index:0}
 .fw-testi-section::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(196,75,25,.08) 0%,transparent 65%);pointer-events:none}
 .fw-testi-inner{max-width:1200px;margin:0 auto;padding:0 24px;position:relative}
 .fw-testi-title{font-family:var(--headline,'Impact',sans-serif);font-size:clamp(32px,5vw,56px);color:#fff;letter-spacing:1px;text-align:center;margin:0 0 10px}
