@@ -400,7 +400,7 @@ function toggleMobGuides(){
     <li><a href="<?php echo home_url('/community/'); ?>">Community</a></li>
     <li><a href="<?php echo home_url('/blog/'); ?>">Blog</a></li>
     <li class="nav-dropdown">
-      <a href="#" class="nav-drop-toggle" onclick="toggleNavDropdown(event,this)">Guides ▾</a>
+      <a href="javascript:void(0)" class="nav-drop-toggle" onclick="toggleNavDropdown(event,this)">Guides ▾</a>
       <ul class="nav-drop-menu">
         <li><a href="<?php echo home_url('/self-drive-leh-ladakh/'); ?>">Leh Ladakh Guide</a></li>
         <li><a href="<?php echo home_url('/self-drive-spiti-valley/'); ?>">Spiti Valley Guide</a></li>

@@ -350,7 +350,10 @@ document.addEventListener('DOMContentLoaded', function() {
   /* -- 6. SMOOTH SCROLL for all anchor links -- */
   document.querySelectorAll('a[href^="#"]').forEach(function(a) {
     a.addEventListener('click', function(e) {
-      var target = document.querySelector(this.getAttribute('href'));
+      var href = this.getAttribute('href');
+      if (!href || href.length < 2) return; // bare "#" — not a scroll target, e.g. dropdown/modal toggles
+      var target;
+      try { target = document.querySelector(href); } catch (err) { return; }
       if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     });
   });
