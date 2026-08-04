@@ -171,6 +171,12 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
 .mobile-menu a:last-child{border-bottom:none}
 .mobile-menu a:hover{color:var(--amber);background:rgba(255,255,255,.03)}
 .mobile-menu .mob-cta{background:var(--rust);color:#fff !important;text-align:center;margin:10px 16px;border-radius:2px;border:none}
+.mob-submenu-toggle{width:100%;background:none;border:none;cursor:pointer;text-align:left;display:flex;align-items:center;justify-content:space-between}
+.mob-submenu-toggle .msub-chev{transition:transform .2s;font-size:11px;color:rgba(255,255,255,.4)}
+.mob-submenu-toggle.open .msub-chev{transform:rotate(180deg)}
+.mob-submenu{display:none;background:rgba(255,255,255,.02)}
+.mob-submenu.open{display:block}
+.mob-submenu a{padding:12px 24px 12px 40px !important;font-size:12px !important;color:rgba(255,255,255,.55) !important}
 
 /* ── MOBILE RESPONSIVE ── */
 @media(max-width:680px){
@@ -349,6 +355,32 @@ function closeModal(id){
   var el = document.getElementById(id);
   if (el) { el.classList.remove('open'); document.body.style.overflow = ''; }
 }
+
+/* Desktop "Guides" dropdown — click to toggle instead of relying on :hover
+   (hover-only was unreliable on trackpads/touch laptops per FORCE FIX history) */
+function toggleNavDropdown(e, toggleEl){
+  e.preventDefault();
+  e.stopPropagation();
+  var li = toggleEl.closest('.nav-dropdown');
+  if (!li) return;
+  var willOpen = !li.classList.contains('open');
+  document.querySelectorAll('.nav-dropdown.open').forEach(function(d){ d.classList.remove('open'); });
+  if (willOpen) li.classList.add('open');
+}
+document.addEventListener('click', function(e){
+  if (!e.target.closest('.nav-dropdown')) {
+    document.querySelectorAll('.nav-dropdown.open').forEach(function(d){ d.classList.remove('open'); });
+  }
+});
+
+/* Mobile "Guides" submenu — collapsed by default, expands on tap */
+function toggleMobGuides(){
+  var sub = document.getElementById('mobGuidesSubmenu');
+  var btn = document.getElementById('mobGuidesToggle');
+  if (!sub || !btn) return;
+  sub.classList.toggle('open');
+  btn.classList.toggle('open');
+}
 </script>
 
 
@@ -367,7 +399,7 @@ function closeModal(id){
     <li><a href="<?php echo home_url('/community/'); ?>">Community</a></li>
     <li><a href="<?php echo home_url('/blog/'); ?>">Blog</a></li>
     <li class="nav-dropdown">
-      <a href="#" class="nav-drop-toggle" onclick="return false;">Guides ▾</a>
+      <a href="#" class="nav-drop-toggle" onclick="toggleNavDropdown(event,this)">Guides ▾</a>
       <ul class="nav-drop-menu">
         <li><a href="<?php echo home_url('/self-drive-leh-ladakh/'); ?>">Leh Ladakh Guide</a></li>
         <li><a href="<?php echo home_url('/self-drive-spiti-valley/'); ?>">Spiti Valley Guide</a></li>
@@ -389,11 +421,14 @@ function closeModal(id){
   <a href="<?php echo home_url('/merchandise/'); ?>" onclick="closeMobileMenu()">Merchandise</a>
   <a href="<?php echo home_url('/community/'); ?>" onclick="closeMobileMenu()">Community</a>
   <a href="<?php echo home_url('/blog/'); ?>" onclick="closeMobileMenu()">Blog</a>
-  <a href="<?php echo home_url('/self-drive-leh-ladakh/'); ?>" onclick="closeMobileMenu()">Leh Ladakh Guide</a>
-  <a href="<?php echo home_url('/self-drive-spiti-valley/'); ?>" onclick="closeMobileMenu()">Spiti Valley Guide</a>
-  <a href="<?php echo home_url('/self-drive-adi-kailash/'); ?>" onclick="closeMobileMenu()">Adi Kailash Guide</a>
-  <a href="<?php echo home_url('/self-drive-darma-valley/'); ?>" onclick="closeMobileMenu()">Darma Valley Guide</a>
-  <a href="<?php echo home_url('/self-drive-upper-mustang/'); ?>" onclick="closeMobileMenu()">Upper Mustang Guide</a>
+  <button type="button" class="mob-submenu-toggle" id="mobGuidesToggle" onclick="toggleMobGuides()">Guides <span class="msub-chev">▾</span></button>
+  <div class="mob-submenu" id="mobGuidesSubmenu">
+    <a href="<?php echo home_url('/self-drive-leh-ladakh/'); ?>" onclick="closeMobileMenu()">Leh Ladakh Guide</a>
+    <a href="<?php echo home_url('/self-drive-spiti-valley/'); ?>" onclick="closeMobileMenu()">Spiti Valley Guide</a>
+    <a href="<?php echo home_url('/self-drive-adi-kailash/'); ?>" onclick="closeMobileMenu()">Adi Kailash Guide</a>
+    <a href="<?php echo home_url('/self-drive-darma-valley/'); ?>" onclick="closeMobileMenu()">Darma Valley Guide</a>
+    <a href="<?php echo home_url('/self-drive-upper-mustang/'); ?>" onclick="closeMobileMenu()">Upper Mustang Guide</a>
+  </div>
   <a href="<?php echo esc_url(home_url('/register/')); ?>" onclick="closeMobileMenu()" class="mob-cta" style="text-align:center">Register</a>
 </div>
 
