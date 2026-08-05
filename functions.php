@@ -5,8 +5,13 @@
  */
 
 /* Split into includes for maintainability — function bodies live here,
-   route registrations stay in this file. */
-require_once get_template_directory() . '/fw-includes/community-features.php';
+   route registrations stay in this file.
+   community-features.php was split further on 2026-08-05 (was 1132 lines,
+   mixing 5+ unrelated concerns) into four focused files below. */
+require_once get_template_directory() . '/fw-includes/member-actions.php';
+require_once get_template_directory() . '/fw-includes/referrals-waitlist.php';
+require_once get_template_directory() . '/fw-includes/campaign-engine.php';
+require_once get_template_directory() . '/fw-includes/campaign-rest.php';
 require_once get_template_directory() . '/fw-includes/google-reviews.php';
 
 // Prevent Sucuri from blocking/stripping POST body on our REST endpoints
