@@ -282,6 +282,42 @@ body{font-family:var(--body);background:#0a0805!important;color:#fff;overflow-x:
       <div id="orderHistory"></div>
 
 
+    <!-- GARAGE -->
+    <div class="dash-section">
+      <div class="dash-section-title">My Garage <span style="font-size:13px;color:rgba(255,255,255,.5);font-family:var(--body);letter-spacing:0;font-weight:300">Show up on your public profile</span></div>
+      <div id="vehicleList"></div>
+      <div style="margin-top:20px">
+        <button onclick="openNewVehicle()" style="display:inline-flex;align-items:center;gap:8px;padding:11px 22px;background:var(--rust);border:none;color:#fff;font-family:var(--headline);font-size:14px;letter-spacing:1px;cursor:pointer;border-radius:2px">+ ADD VEHICLE</button>
+      </div>
+      <!-- New Vehicle Form -->
+      <div id="newVehicleForm" style="display:none;margin-top:24px;background:#0f0d0b;border:1px solid rgba(255,255,255,.1);padding:24px;border-radius:2px">
+        <div style="font-size:12px;letter-spacing:2px;color:var(--rust);text-transform:uppercase;margin-bottom:16px">Add Vehicle</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <input type="text" id="vehMake" placeholder="Make (e.g. Isuzu)" style="width:100%;box-sizing:border-box;padding:11px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:var(--body);font-size:14px;border-radius:2px;outline:none">
+          <input type="text" id="vehModel" placeholder="Model (e.g. D-Max V-Cross)" style="width:100%;box-sizing:border-box;padding:11px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:var(--body);font-size:14px;border-radius:2px;outline:none">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <input type="number" id="vehYear" placeholder="Year" style="width:100%;box-sizing:border-box;padding:11px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:var(--body);font-size:14px;border-radius:2px;outline:none">
+          <input type="text" id="vehNickname" placeholder="Nickname (optional)" style="width:100%;box-sizing:border-box;padding:11px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:var(--body);font-size:14px;border-radius:2px;outline:none">
+        </div>
+        <div style="margin-bottom:14px">
+          <textarea id="vehMods" placeholder="Mods / build notes (optional)" rows="3" style="width:100%;box-sizing:border-box;padding:11px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:var(--body);font-size:14px;border-radius:2px;outline:none;resize:vertical"></textarea>
+        </div>
+        <label style="display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;cursor:pointer;padding:14px;background:rgba(42,122,110,.08);border:1px solid rgba(42,122,110,.25);border-radius:2px">
+          <input type="checkbox" id="vehIsPublic" checked style="width:18px;height:18px;margin-top:2px;accent-color:var(--teal);cursor:pointer;flex-shrink:0">
+          <div>
+            <div style="font-size:13px;color:#fff;font-weight:500">Show on my public profile</div>
+            <div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:3px;line-height:1.5">Visible to anyone who views your rider profile page.</div>
+          </div>
+        </label>
+        <div style="display:flex;gap:10px">
+          <button onclick="submitNewVehicle()" style="padding:10px 20px;background:var(--rust);border:none;color:#fff;font-family:var(--headline);font-size:14px;letter-spacing:1px;cursor:pointer;border-radius:2px">ADD VEHICLE</button>
+          <button onclick="document.getElementById('newVehicleForm').style.display='none'" style="padding:10px 20px;background:rgba(255,255,255,.08);border:none;color:#fff;font-family:var(--body);font-size:14px;cursor:pointer;border-radius:2px">Cancel</button>
+        </div>
+        <div id="vehicleFormMsg" style="font-size:12px;margin-top:10px;color:#f87171"></div>
+      </div>
+    </div>
+
     <!-- ALBUMS -->
     <div class="dash-section">
       <div class="dash-section-title">My Trip Albums <span style="font-size:13px;color:rgba(255,255,255,.5);font-family:var(--body);letter-spacing:0;font-weight:300">Max 6 photos per album · Earns 50 credits on approval</span></div>
@@ -497,7 +533,7 @@ window.addEventListener('load', function() {
     }
 
     /* Load remaining data in parallel — each failure is isolated */
-    var [creditData, bookData, orderData, albumData, blogData, testiData, refData, wlData] = await Promise.all([
+    var [creditData, bookData, orderData, albumData, blogData, testiData, refData, wlData, vehicleData] = await Promise.all([
       safeFetch(_rest + '/fw-credit-history',   { headers: h }),
       safeFetch(_rest + '/fw-get-bookings',     { headers: h }),
       safeFetch(_rest + '/fw-get-orders',       { headers: h }),
@@ -506,11 +542,13 @@ window.addEventListener('load', function() {
       safeFetch(_rest + '/fw-get-testimonials', { headers: h }),
       safeFetch(_rest + '/fw-referral-stats',   { headers: h }),
       safeFetch(_rest + '/fw-my-waitlist',      { headers: h }),
+      safeFetch(_rest + '/fw-my-vehicles',      { headers: h }),
     ]);
 
     render(profData, creditData, bookData, orderData, albumData, blogData, testiData);
     renderReferral(refData);
     renderWaitlist(wlData);
+    renderVehicles(vehicleData);
   }
 
   function renderWaitlist(wlData) {
@@ -839,6 +877,81 @@ window.addEventListener('load', function() {
     } catch(e){}
     window.location.href=(window.FW_AUTH&&FW_AUTH.home_url)||'/';
   };
+  /* ── RENDER VEHICLES (Garage) ── */
+  function renderVehicles(vehicleData) {
+    var el = document.getElementById('vehicleList');
+    if (!el) return;
+    var vehicles = (vehicleData && vehicleData.vehicles) || [];
+    if (!vehicles.length) {
+      el.innerHTML = '<div style="color:rgba(255,255,255,.5);font-size:13px;padding:10px 0">No vehicles yet. Add one below.</div>';
+      return;
+    }
+    el.innerHTML = vehicles.map(function(v) {
+      var title = (v.nickname ? v.nickname + ' — ' : '') + (v.year ? v.year + ' ' : '') + v.make + ' ' + v.model;
+      var visLabel = v.is_public
+        ? '<span style="color:#4ade80">Public</span>'
+        : '<span style="color:rgba(255,255,255,.4)">Private</span>';
+      return '<div style="background:#0f0d0b;border:1px solid rgba(255,255,255,.08);border-radius:3px;margin-bottom:10px;padding:14px 18px;display:flex;align-items:center;gap:14px">' +
+        '<div style="flex:1;min-width:0"><div style="font-size:15px;color:#fff;margin-bottom:3px">' + title + '</div>' +
+        '<div style="font-size:12px;color:rgba(255,255,255,.5)">' + visLabel + (v.mods ? ' &middot; ' + v.mods : '') + '</div></div>' +
+        '<button data-vid="' + v.id + '" onclick="fwDeleteVehicle(this.dataset.vid,this)" style="padding:7px 14px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);color:#f87171;font-size:11px;cursor:pointer;border-radius:2px">✕ DELETE</button>' +
+      '</div>';
+    }).join('');
+  }
+
+  window.openNewVehicle = function() {
+    var f = document.getElementById('newVehicleForm');
+    if (f) f.style.display = (f.style.display === 'none' ? 'block' : 'none');
+  };
+
+  window.submitNewVehicle = async function() {
+    var make  = document.getElementById('vehMake').value.trim();
+    var model = document.getElementById('vehModel').value.trim();
+    var msg   = document.getElementById('vehicleFormMsg');
+    if (!make || !model) {
+      if (msg) { msg.textContent = 'Make and model are required.'; msg.style.color = '#f87171'; }
+      return;
+    }
+    var body = {
+      make: make,
+      model: model,
+      year: document.getElementById('vehYear').value ? parseInt(document.getElementById('vehYear').value, 10) : null,
+      nickname: document.getElementById('vehNickname').value.trim(),
+      mods: document.getElementById('vehMods').value.trim(),
+      is_public: document.getElementById('vehIsPublic').checked,
+    };
+    try {
+      var r = await fetch(_rest + '/fw-vehicle-add', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _token }, body: JSON.stringify(body) });
+      var d = await r.json();
+      if (!r.ok || !d.success) throw new Error(d.message || 'Failed to add vehicle');
+      document.getElementById('newVehicleForm').style.display = 'none';
+      ['vehMake','vehModel','vehYear','vehNickname','vehMods'].forEach(function(id){ document.getElementById(id).value = ''; });
+      document.getElementById('vehIsPublic').checked = true;
+      toast('Vehicle added to your garage 🚙');
+      var refreshed = await safeFetch(_rest + '/fw-my-vehicles', { headers: { 'Authorization': 'Bearer ' + _token } });
+      renderVehicles(refreshed);
+    } catch (err) {
+      if (msg) { msg.textContent = err.message || 'Failed to add vehicle'; msg.style.color = '#f87171'; }
+      toast(err.message || 'Failed to add vehicle', true);
+    }
+  };
+
+  window.fwDeleteVehicle = async function(id, btn) {
+    if (!confirm('Remove this vehicle from your garage?')) return;
+    btn.disabled = true;
+    try {
+      var r = await fetch(_rest + '/fw-vehicle-delete', { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _token }, body: JSON.stringify({ id: id }) });
+      var d = await r.json();
+      if (!d.success) throw new Error(d.message || 'Failed to delete');
+      toast('Vehicle removed.');
+      var refreshed = await safeFetch(_rest + '/fw-my-vehicles', { headers: { 'Authorization': 'Bearer ' + _token } });
+      renderVehicles(refreshed);
+    } catch (err) {
+      toast(err.message || 'Failed to delete', true);
+      btn.disabled = false;
+    }
+  };
+
   /* ── RENDER ALBUMS ── */
   function renderAlbums(albums) {
     var el = document.getElementById('albumList');

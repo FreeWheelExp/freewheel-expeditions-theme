@@ -256,15 +256,22 @@ function fw_public_profile( $request ) {
         array( 'headers' => $h, 'timeout' => 10 )
     )), true ) ?: array();
 
+    /* Garage — public vehicles only */
+    $vehicles = json_decode( wp_remote_retrieve_body( wp_remote_get(
+        FW_SUPABASE_URL . '/rest/v1/fw_vehicles?user_id=eq.' . rawurlencode($user_id) . '&is_public=eq.true&order=created_at.desc&select=id,make,model,year,nickname,mods,photo_url',
+        array( 'headers' => $h, 'timeout' => 10 )
+    )), true ) ?: array();
+
     /* Remove internal id from response */
     unset( $profile['id'] );
 
     return rest_ensure_response( array(
-        'success' => true,
-        'profile' => $profile,
-        'tier'    => $tier,
-        'albums'  => $albums,
-        'blogs'   => $blogs,
+        'success'  => true,
+        'profile'  => $profile,
+        'tier'     => $tier,
+        'albums'   => $albums,
+        'blogs'    => $blogs,
+        'vehicles' => $vehicles,
     ));
 }
 

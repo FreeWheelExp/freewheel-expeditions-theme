@@ -22,6 +22,13 @@ html,body,body.page,#page,#content,#primary,#main,.site,.site-content,.entry-con
 .rider-section-title{font-family:var(--headline);font-size:18px;color:#fff;letter-spacing:1px;margin:0 0 16px;display:flex;align-items:center;gap:10px}
 .rider-section-title span{font-size:11px;color:rgba(255,255,255,.45);font-family:var(--body);letter-spacing:0;font-weight:400}
 .rider-albums-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-bottom:48px}
+.rider-garage-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-bottom:48px}
+.rider-vehicle-card{background:#0f0d0b;border:1px solid rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
+.rider-vehicle-photo{width:100%;aspect-ratio:16/10;object-fit:cover;display:block;background:rgba(255,255,255,.05)}
+.rider-vehicle-body{padding:14px}
+.rider-vehicle-name{color:#fff;font-size:14px;font-weight:600}
+.rider-vehicle-meta{color:rgba(255,255,255,.5);font-size:12px;margin-top:3px}
+.rider-vehicle-mods{color:rgba(255,255,255,.4);font-size:11px;margin-top:8px;line-height:1.5}
 .rider-album-card{background:#0f0d0b;border:1px solid rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
 .rider-album-photos{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
 .rider-album-photos img{width:100%;aspect-ratio:1;object-fit:cover;display:block}
@@ -47,6 +54,9 @@ html,body,body.page,#page,#content,#primary,#main,.site,.site-content,.entry-con
         <div id="riderInstaWrap"></div>
       </div>
     </div>
+
+    <h2 class="rider-section-title">The Garage <span id="riderGarageCount"></span></h2>
+    <div id="riderGarage" class="rider-garage-grid"></div>
 
     <h2 class="rider-section-title">Trip Albums <span id="riderAlbumCount"></span></h2>
     <div id="riderAlbums" class="rider-albums-grid"></div>
@@ -108,6 +118,24 @@ html,body,body.page,#page,#content,#primary,#main,.site,.site-content,.entry-con
 
     if (p.instagram) {
       document.getElementById('riderInstaWrap').innerHTML = '<br><a class="rider-insta" href="https://instagram.com/' + p.instagram.replace(/^@/,'') + '" target="_blank" rel="noopener">&#128247; ' + p.instagram + '</a>';
+    }
+
+    /* Garage */
+    var vehicles = d.vehicles || [];
+    if (vehicles.length) {
+      document.getElementById('riderGarageCount').textContent = '(' + vehicles.length + ')';
+      document.getElementById('riderGarage').innerHTML = vehicles.map(function(v) {
+        var title = (v.nickname ? v.nickname + ' — ' : '') + (v.year ? v.year + ' ' : '') + v.make + ' ' + v.model;
+        var photo = v.photo_url ? '<img class="rider-vehicle-photo" src="' + v.photo_url + '" alt="' + title + '" loading="lazy">' : '';
+        var mods = v.mods ? '<div class="rider-vehicle-mods">' + v.mods + '</div>' : '';
+        return '<div class="rider-vehicle-card">' + photo + '<div class="rider-vehicle-body"><div class="rider-vehicle-name">' + title + '</div>' + mods + '</div></div>';
+      }).join('');
+    } else {
+      /* No vehicles added — hide the whole section rather than show an empty state,
+         since not every member has a vehicle to log (unlike albums/blogs). */
+      var garageEl = document.getElementById('riderGarage');
+      if (garageEl.previousElementSibling) garageEl.previousElementSibling.style.display = 'none';
+      garageEl.style.display = 'none';
     }
 
     /* Albums */

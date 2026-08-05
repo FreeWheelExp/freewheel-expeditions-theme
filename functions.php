@@ -7,6 +7,7 @@
 /* Split into includes for maintainability — function bodies live here,
    route registrations stay in this file. */
 require_once get_template_directory() . '/fw-includes/community-features.php';
+require_once get_template_directory() . '/fw-includes/garage.php';
 require_once get_template_directory() . '/fw-includes/google-reviews.php';
 
 // Prevent Sucuri from blocking/stripping POST body on our REST endpoints
@@ -1021,6 +1022,9 @@ add_action( 'rest_api_init', function() {
     register_rest_route( 'freewheel/v1', '/fw-leave-waitlist',    array( 'methods' => 'POST', 'callback' => 'fw_leave_waitlist',       'permission_callback' => '__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/waitlist',       array( 'methods' => 'GET',  'callback' => 'fw_admin_get_waitlist',   'permission_callback' => '__return_true' ));
     register_rest_route( 'freewheel/v1', '/admin/waitlist-action',array( 'methods' => 'POST', 'callback' => 'fw_admin_waitlist_action','permission_callback' => '__return_true' ));
+    register_rest_route( 'freewheel/v1', '/fw-my-vehicles',       array( 'methods' => 'GET',    'callback' => 'fw_my_vehicles',    'permission_callback' => '__return_true' ));
+    register_rest_route( 'freewheel/v1', '/fw-vehicle-add',       array( 'methods' => 'POST',   'callback' => 'fw_vehicle_add',    'permission_callback' => '__return_true' ));
+    register_rest_route( 'freewheel/v1', '/fw-vehicle-delete',    array( 'methods' => 'DELETE', 'callback' => 'fw_vehicle_delete', 'permission_callback' => '__return_true' ));
 });
 
 /* ── Helper: compress image to WebP, max 1920px, return temp path ── */
