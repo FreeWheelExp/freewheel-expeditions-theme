@@ -228,6 +228,18 @@ body{font-family:var(--body);background:#0a0805!important;color:#fff;overflow-x:
     </div>
   </div>
 
+  <!-- Share Your Profile -->
+  <div style="padding:24px 5vw 28px;background:#0d0b07;border-bottom:1px solid rgba(255,255,255,.06)">
+    <div style="max-width:760px">
+      <div class="dash-section-title" style="margin-bottom:6px">Share Your Profile <span style="font-size:13px;color:rgba(255,255,255,.5);font-family:var(--body);letter-spacing:0;font-weight:300">Your garage, trip reports &amp; badge — all in one link</span></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px">
+        <div id="profileLinkBox" style="flex:1;min-width:240px;padding:11px 14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:2px;color:rgba(255,255,255,.6);font-size:13px;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Loading…</div>
+        <button onclick="copyProfileLink()" style="padding:11px 22px;background:var(--rust);border:none;color:#fff;font-family:var(--headline);font-size:13px;letter-spacing:1px;cursor:pointer;border-radius:2px;white-space:nowrap">COPY LINK</button>
+        <button onclick="shareProfileWhatsapp()" style="padding:11px 22px;background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.35);color:#25D366;font-family:var(--headline);font-size:13px;letter-spacing:1px;cursor:pointer;border-radius:2px;white-space:nowrap">WHATSAPP</button>
+      </div>
+    </div>
+  </div>
+
 
   <!-- Main -->
   <div class="dash-content">
@@ -601,6 +613,25 @@ window.addEventListener('load', function() {
     });
   };
 
+  window.copyProfileLink = function() {
+    var box = document.getElementById('profileLinkBox');
+    var link = box ? box.dataset.link : '';
+    if (!link) { toast('Profile not ready yet — try again in a moment.', true); return; }
+    navigator.clipboard.writeText(link).then(function(){ toast('Profile link copied!'); }).catch(function(){
+      var ta = document.createElement('textarea'); ta.value = link; document.body.appendChild(ta);
+      ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+      toast('Profile link copied!');
+    });
+  };
+
+  window.shareProfileWhatsapp = function() {
+    var box = document.getElementById('profileLinkBox');
+    var link = box ? box.dataset.link : '';
+    if (!link) { toast('Profile not ready yet — try again in a moment.', true); return; }
+    var text = 'Check out my FreeWheel Expeditions rider profile — garage, trip reports, and all: ' + link;
+    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+  };
+
   /* ── RENDER ── */
   function render(profData, creditData, bookData, orderData, albumData, blogData, testiData) {
     var prof   = profData.profile || {};
@@ -632,6 +663,11 @@ window.addEventListener('load', function() {
       var b2 = document.getElementById('junglibadgeDisc');
       if (b1) { b1.textContent = junglText; b1.style.display = 'inline-block'; }
       if (b2) { b2.textContent = junglText; b2.style.display = 'block'; }
+
+      /* Share Your Profile link */
+      var profLink = (((window.FW_AUTH && FW_AUTH.home_url) || '/').replace(/\/$/, '')) + '/rider/?n=' + prof.member_number;
+      var plBox = document.getElementById('profileLinkBox');
+      if (plBox) { plBox.textContent = profLink; plBox.dataset.link = profLink; }
     }
 
     /* Role label on gtag */
