@@ -364,14 +364,48 @@ function toggleNavDropdown(e, toggleEl){
   e.stopPropagation();
   var li = toggleEl.closest('.nav-dropdown');
   if (!li) return;
-  var willOpen = !li.classList.contains('open');
-  document.querySelectorAll('.nav-dropdown.open').forEach(function(d){ d.classList.remove('open'); });
-  if (willOpen) li.classList.add('open');
+  var menu = li.querySelector('.nav-drop-menu');
+  if (!menu) return;
+  var isOpen = menu.getAttribute('data-open') === '1';
+  // Close any other open portal menus first
+  document.querySelectorAll('.nav-drop-menu[data-portal="1"]').forEach(function(m){
+    m.style.setProperty('display', 'none', 'important');
+    m.setAttribute('data-open', '0');
+  });
+  li.classList.remove('open');
+  if (isOpen) return; // was open, click just closed it — done
+  // Move menu to <body> as position:fixed. This makes it immune to any
+  // ancestor/sibling stacking-context or compositing-layer conflict —
+  // fw-styles.css has the same selector (nav, .hero, etc.) redefined many
+  // times with conflicting values, so winning a z-index fight inside that
+  // cascade is unreliable. Escaping the cascade entirely is the fix.
+  if (menu.getAttribute('data-portal') !== '1') {
+    document.body.appendChild(menu);
+    menu.setAttribute('data-portal', '1');
+  }
+  var r = toggleEl.getBoundingClientRect();
+  menu.style.setProperty('position', 'fixed', 'important');
+  menu.style.setProperty('top', (r.bottom + 2) + 'px', 'important');
+  menu.style.setProperty('left', r.left + 'px', 'important');
+  menu.style.setProperty('z-index', '2147483647', 'important');
+  menu.style.setProperty('display', 'block', 'important');
+  menu.setAttribute('data-open', '1');
+  li.classList.add('open');
 }
 document.addEventListener('click', function(e){
-  if (!e.target.closest('.nav-dropdown')) {
-    document.querySelectorAll('.nav-dropdown.open').forEach(function(d){ d.classList.remove('open'); });
-  }
+  if (e.target.closest('.nav-dropdown') || e.target.closest('.nav-drop-menu[data-portal="1"]')) return;
+  document.querySelectorAll('.nav-drop-menu[data-portal="1"]').forEach(function(m){
+    m.style.setProperty('display', 'none', 'important');
+    m.setAttribute('data-open', '0');
+  });
+  document.querySelectorAll('.nav-dropdown.open').forEach(function(d){ d.classList.remove('open'); });
+});
+window.addEventListener('resize', function(){
+  document.querySelectorAll('.nav-drop-menu[data-open="1"]').forEach(function(m){
+    m.style.setProperty('display', 'none', 'important');
+    m.setAttribute('data-open', '0');
+  });
+  document.querySelectorAll('.nav-dropdown.open').forEach(function(d){ d.classList.remove('open'); });
 });
 
 /* Mobile "Guides" submenu — collapsed by default, expands on tap */
