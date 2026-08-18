@@ -402,12 +402,12 @@ echo '<script type="application/ld+json">' . json_encode($schema_exp, JSON_UNESC
     <?php endif; ?>
 
     <?php if($op > 0): ?>
-    <div class="exp-section" style="background:var(--smoke);border-radius:3px;padding:28px 32px;text-align:center">
+    <div class="exp-section" style="background:rgba(42,122,110,.08);border:1px solid rgba(42,122,110,.25);border-radius:3px;padding:28px 32px;text-align:center">
       <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--teal);margin-bottom:10px">Want To Overland?</div>
-      <div style="font-family:var(--headline);font-size:26px;color:var(--ink);letter-spacing:1px;margin-bottom:14px">We're Game For This</div>
-      <p style="font-size:14px;font-weight:300;color:#4a4237;line-height:1.7;margin-bottom:6px;text-align:left">Prefer to camp instead of hotel stays? Some of our travellers do — inside their car, a roof-top tent, or a ground tent, making their own arrangements for stay and cooking.</p>
-      <p style="font-size:14px;font-weight:300;color:#4a4237;line-height:1.7;margin-bottom:20px;text-align:left">The overlanding fee doesn't cover accommodation — it covers what we still provide on the road: convoy building, expedition accessories, and our support team enroute. It's charged per car, split however your group likes, and camping costs are yours to arrange and share.</p>
-      <div style="display:inline-block;background:var(--ink);padding:16px 32px;margin-bottom:18px">
+      <div style="font-family:var(--headline);font-size:26px;color:#fff;letter-spacing:1px;margin-bottom:14px">We're Game For This</div>
+      <p style="font-size:15px;line-height:1.8;color:rgba(255,255,255,.75);font-weight:300;margin-bottom:6px;text-align:left">Prefer to camp instead of hotel stays? Some of our travellers do — inside their car, a roof-top tent, or a ground tent, making their own arrangements for stay and cooking.</p>
+      <p style="font-size:15px;line-height:1.8;color:rgba(255,255,255,.75);font-weight:300;margin-bottom:20px;text-align:left">The overlanding fee doesn't cover accommodation — it covers what we still provide on the road: convoy building, expedition accessories, and our support team enroute. It's charged per car, split however your group likes, and camping costs are yours to arrange and share.</p>
+      <div style="display:inline-block;background:var(--ink);border:1px solid rgba(193,68,14,.35);padding:16px 32px;margin-bottom:18px">
         <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:4px">Overlanding Fee</div>
         <div style="font-family:var(--headline);font-size:28px;color:#fff;letter-spacing:1px">₹<?php echo number_format($op); ?> <span style="font-size:14px;color:rgba(255,255,255,.6)">per car</span></div>
       </div>
