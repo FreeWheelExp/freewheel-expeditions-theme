@@ -505,8 +505,8 @@ function tgNavLB(dir) {
           <!-- Price strip -->
           <div class="price-strip">
             <div class="ps-item"><div class="ps-label">Self Drive</div><div class="ps-val">₹14,999</div><div class="ps-note">per person · twin sharing</div></div>
-            <div class="ps-item"><div class="ps-label">Couple Discount</div><div class="ps-val">₹11,999</div><div class="ps-note">per person</div></div>
-            <div class="ps-item"><div class="ps-label">Seat Sharing</div><div class="ps-val">₹19,999</div><div class="ps-note">per person</div></div>
+            <div class="ps-item"><div class="ps-label">Couple Discount</div><div class="ps-val">₹12,999</div><div class="ps-note">per person</div></div>
+            <div class="ps-item"><div class="ps-label">Seat Sharing</div><div class="ps-val">₹21,999</div><div class="ps-note">per person</div></div>
           </div>
 
           <!-- Method tabs -->
