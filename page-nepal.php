@@ -532,9 +532,9 @@ function tgNavLB(dir) {
 
           <!-- Price strip -->
           <div class="price-strip">
-            <div class="ps-item"><div class="ps-label">Self Drive</div><div class="ps-val">₹5,000 per Car</div><div class="ps-note">per person · twin sharing</div></div>
-            <div class="ps-item"><div class="ps-label">Couple Discount</div><div class="ps-val">₹24,999</div><div class="ps-note">per person</div></div>
-            <div class="ps-item"><div class="ps-label">Seat Sharing</div><div class="ps-val">₹34,999</div><div class="ps-note">per person</div></div>
+            <div class="ps-item"><div class="ps-label">Self Drive</div><div class="ps-val">₹40,999</div><div class="ps-note">per person · twin sharing</div></div>
+            <div class="ps-item"><div class="ps-label">Couple Discount</div><div class="ps-val">₹34,999</div><div class="ps-note">per person</div></div>
+            <div class="ps-item"><div class="ps-label">Seat Sharing</div><div class="ps-val">₹49,999</div><div class="ps-note">per person</div></div>
           </div>
 
           <!-- Method tabs -->
@@ -657,6 +657,23 @@ function tgNavLB(dir) {
           <li>100% of amount charged as Cancellation Fee if cancelled within 10 days of Departure Date</li>
         </ul>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- OVERLANDING -->
+<section style="background:var(--smoke);padding:60px 5vw">
+  <div style="max-width:760px;margin:0 auto;text-align:center">
+    <div class="sec-tag" style="color:var(--teal)">Want To Overland?</div>
+    <h2 style="font-family:var(--headline);font-size:clamp(28px,3.5vw,42px);color:var(--ink);letter-spacing:1px;margin-bottom:16px">We're Game For This</h2>
+    <p style="font-size:15px;font-weight:300;color:#4a4237;line-height:1.7;margin-bottom:8px">Prefer to camp instead of hotel stays? Some of our travellers do — inside their car, a roof-top tent, or a ground tent, making their own arrangements for stay and cooking.</p>
+    <p style="font-size:15px;font-weight:300;color:#4a4237;line-height:1.7;margin-bottom:28px">The overlanding fee doesn't cover accommodation — it covers what we still provide on the road: convoy building, expedition accessories, and our support team enroute. It's charged per car, split however your group likes, and camping costs are yours to arrange and share.</p>
+    <div style="display:inline-block;background:var(--ink);padding:20px 40px;margin-bottom:24px">
+      <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:6px">Overlanding Fee</div>
+      <div style="font-family:var(--headline);font-size:32px;color:#fff;letter-spacing:1px">₹9,000 <span style="font-size:16px;color:rgba(255,255,255,.6)">per car</span></div>
+    </div>
+    <div>
+      <a href="https://wa.me/917817838060?text=Hi%20FreeWheel!%20I'm%20interested%20in%20Overlanding%20for%20the%20Upper%20Mustang%20expedition." target="_blank" class="btn-ghost" style="border-color:var(--rust);color:var(--rust)">Still want to ask anything? 💬 WhatsApp</a>
     </div>
   </div>
 </section>
