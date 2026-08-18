@@ -31,6 +31,7 @@ $price      = (int)$m('fw_price');
 $unit       = $m('fw_price_unit') ?: 'per person';
 $cp         = (int)$m('fw_couple_price');
 $sp         = (int)$m('fw_seat_price');
+$op         = (int)$m('fw_overland_price');
 $cancellation = array_filter(array_map('trim', explode("\n", $m('fw_cancellation'))));
 $things_carry = array_filter(array_map('trim', explode("\n", $m('fw_things_carry'))));
 /* slot tracking removed — managed via WhatsApp */
@@ -327,7 +328,7 @@ echo '<script type="application/ld+json">' . json_encode($schema_exp, JSON_UNESC
     <?php endif; ?>
 
     <?php if($dates): ?>
-    <div class="exp-section" style="background:rgba(196,75,25,.08);border:1px solid rgba(196,75,25,.25);border-radius:3px;padding:16px 20px;margin-bottom:0">
+    <div class="exp-section" style="background:rgba(196,75,25,.08);border:1px solid rgba(196,75,25,.25);border-radius:3px;padding:16px 20px">
       <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--rust);margin-bottom:6px">Expedition Dates</div>
       <div style="font-family:var(--headline);font-size:26px;color:#fff;letter-spacing:.5px">📅 <?php echo esc_html($dates); ?></div>
     </div>
@@ -396,6 +397,22 @@ echo '<script type="application/ld+json">' . json_encode($schema_exp, JSON_UNESC
           </ul>
           <?php else: ?><p style="color:#8a7052;font-size:14px;font-weight:300">No cancellation policy added yet.</p><?php endif; ?>
         </div>
+      </div>
+    </div>
+    <?php endif; ?>
+
+    <?php if($op > 0): ?>
+    <div class="exp-section" style="background:var(--smoke);border-radius:3px;padding:28px 32px;text-align:center">
+      <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--teal);margin-bottom:10px">Want To Overland?</div>
+      <div style="font-family:var(--headline);font-size:26px;color:var(--ink);letter-spacing:1px;margin-bottom:14px">We're Game For This</div>
+      <p style="font-size:14px;font-weight:300;color:#4a4237;line-height:1.7;margin-bottom:6px;text-align:left">Prefer to camp instead of hotel stays? Some of our travellers do — inside their car, a roof-top tent, or a ground tent, making their own arrangements for stay and cooking.</p>
+      <p style="font-size:14px;font-weight:300;color:#4a4237;line-height:1.7;margin-bottom:20px;text-align:left">The overlanding fee doesn't cover accommodation — it covers what we still provide on the road: convoy building, expedition accessories, and our support team enroute. It's charged per car, split however your group likes, and camping costs are yours to arrange and share.</p>
+      <div style="display:inline-block;background:var(--ink);padding:16px 32px;margin-bottom:18px">
+        <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:4px">Overlanding Fee</div>
+        <div style="font-family:var(--headline);font-size:28px;color:#fff;letter-spacing:1px">₹<?php echo number_format($op); ?> <span style="font-size:14px;color:rgba(255,255,255,.6)">per car</span></div>
+      </div>
+      <div>
+        <a href="https://wa.me/<?php echo esc_attr($wa_num); ?>?text=<?php echo rawurlencode('Hi FreeWheel! I\'m interested in Overlanding for the ' . $title . ' expedition.'); ?>" target="_blank" class="btn-ghost" style="border-color:var(--rust);color:var(--rust)">Still want to ask anything? 💬 WhatsApp</a>
       </div>
     </div>
     <?php endif; ?>

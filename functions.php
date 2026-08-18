@@ -2087,6 +2087,10 @@ function fw_exp_slots_cb($post) {
             <input type="number" name="fw_seat_price" value="<?php echo esc_attr($m('fw_seat_price')); ?>" placeholder="34999">
         </div>
         <div class="fw-f">
+            <label>Overlanding Price (₹ per car)</label>
+            <input type="number" name="fw_overland_price" value="<?php echo esc_attr($m('fw_overland_price')); ?>" placeholder="9000">
+        </div>
+        <div class="fw-f">
             <label>Total Slots</label>
             <input type="number" name="fw_max_slots" value="<?php echo esc_attr($max); ?>">
         </div>
@@ -2460,7 +2464,7 @@ function freewheel_save_all_meta($post_id) {
 
     if ($type === 'fw_expedition' && isset($_POST['fw_exp_nonce']) && wp_verify_nonce($_POST['fw_exp_nonce'],'fw_save_exp')) {
         $tf = array('fw_status','fw_destination','fw_dates','fw_month','fw_duration','fw_region','fw_difficulty','fw_subtitle','fw_overview','fw_highlights','fw_badge','fw_hero_emoji','fw_inclusions','fw_exclusions','fw_cancellation','fw_things_carry','fw_whatsapp','fw_price_unit','fw_qr_image','fw_waitlist_mode');
-        $nf = array('fw_price','fw_couple_price','fw_seat_price','fw_max_slots','fw_filled_slots','fw_order');
+        $nf = array('fw_price','fw_couple_price','fw_seat_price','fw_overland_price','fw_max_slots','fw_filled_slots','fw_order');
         foreach ($tf as $f) { if (isset($_POST[$f])) update_post_meta($post_id,$f,sanitize_textarea_field($_POST[$f])); }
         foreach ($nf as $f) { if (isset($_POST[$f])) update_post_meta($post_id,$f,intval($_POST[$f])); }
         if (isset($_POST['fw_itinerary_json']) && !empty($_POST['fw_itinerary_json'])) {
@@ -3697,7 +3701,7 @@ function fw_admin_get_expedition( $request ) {
     );
     $tf = array('fw_status','fw_destination','fw_dates','fw_month','fw_duration','fw_region','fw_difficulty','fw_subtitle','fw_overview','fw_highlights','fw_badge','fw_hero_emoji','fw_inclusions','fw_exclusions','fw_cancellation','fw_things_carry','fw_whatsapp','fw_price_unit','fw_qr_image','fw_waitlist_mode');
     foreach ( $tf as $f ) $data[$f] = $m( $f );
-    $nf = array('fw_price','fw_couple_price','fw_seat_price','fw_max_slots','fw_filled_slots','fw_order');
+    $nf = array('fw_price','fw_couple_price','fw_seat_price','fw_overland_price','fw_max_slots','fw_filled_slots','fw_order');
     foreach ( $nf as $f ) $data[$f] = $m( $f );
     $data['itinerary'] = json_decode( $m( 'fw_itinerary' ) ?: '[]', true ) ?: array();
     $data['gallery']   = json_decode( $m( 'fw_gallery' ) ?: '[]', true ) ?: array();
@@ -3733,7 +3737,7 @@ function fw_admin_save_expedition( $request ) {
     $tf = array('fw_status','fw_destination','fw_dates','fw_month','fw_duration','fw_region','fw_difficulty','fw_subtitle','fw_overview','fw_highlights','fw_badge','fw_hero_emoji','fw_inclusions','fw_exclusions','fw_cancellation','fw_things_carry','fw_whatsapp','fw_price_unit','fw_qr_image','fw_waitlist_mode');
     foreach ( $tf as $f ) { if ( isset( $p[$f] ) ) update_post_meta( $post_id, $f, sanitize_textarea_field( $p[$f] ) ); }
 
-    $nf = array('fw_price','fw_couple_price','fw_seat_price','fw_max_slots','fw_filled_slots','fw_order');
+    $nf = array('fw_price','fw_couple_price','fw_seat_price','fw_overland_price','fw_max_slots','fw_filled_slots','fw_order');
     foreach ( $nf as $f ) { if ( isset( $p[$f] ) ) update_post_meta( $post_id, $f, intval( $p[$f] ) ); }
 
     if ( isset( $p['itinerary'] ) && is_array( $p['itinerary'] ) ) {

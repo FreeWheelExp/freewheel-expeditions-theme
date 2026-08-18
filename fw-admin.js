@@ -1331,6 +1331,7 @@ function expResetForm() {
   document.getElementById('expPrice').value = '';
   document.getElementById('expCouplePrice').value = '';
   document.getElementById('expSeatPrice').value = '';
+  document.getElementById('expOverlandPrice').value = '';
   document.getElementById('expOrder').value = '0';
   document.getElementById('expMaxSlots').value = '20';
   document.getElementById('expFilledSlots').value = '0';
@@ -1377,6 +1378,7 @@ function adminShowExpeditionEditor(id) {
       document.getElementById('expBadge').value = e.fw_badge || '';
       document.getElementById('expCouplePrice').value = e.fw_couple_price || '';
       document.getElementById('expSeatPrice').value = e.fw_seat_price || '';
+      document.getElementById('expOverlandPrice').value = e.fw_overland_price || '';
       document.getElementById('expOrder').value = e.fw_order || '0';
       document.getElementById('expMaxSlots').value = e.fw_max_slots || '20';
       document.getElementById('expFilledSlots').value = e.fw_filled_slots || '0';
@@ -1520,6 +1522,7 @@ function adminSaveExpedition() {
     fw_badge: document.getElementById('expBadge').value,
     fw_couple_price: document.getElementById('expCouplePrice').value,
     fw_seat_price: document.getElementById('expSeatPrice').value,
+    fw_overland_price: document.getElementById('expOverlandPrice').value,
     fw_order: document.getElementById('expOrder').value,
     fw_max_slots: document.getElementById('expMaxSlots').value,
     fw_filled_slots: document.getElementById('expFilledSlots').value,

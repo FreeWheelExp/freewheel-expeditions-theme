@@ -385,6 +385,7 @@ get_header();
           <div class="adm-grid-3" style="margin-bottom:12px">
             <div><label class="adm-label">Couple Discount Price (₹)</label><input type="number" id="expCouplePrice" class="adm-input"></div>
             <div><label class="adm-label">Seat Sharing Price (₹)</label><input type="number" id="expSeatPrice" class="adm-input"></div>
+            <div><label class="adm-label">Overlanding Price (₹ per car)</label><input type="number" id="expOverlandPrice" class="adm-input" placeholder="9000"></div>
             <div><label class="adm-label">Display Order (lower = first)</label><input type="number" id="expOrder" class="adm-input" value="0"></div>
           </div>
           <div class="adm-grid-3" style="margin-bottom:12px">
