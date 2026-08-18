@@ -406,7 +406,17 @@ echo '<script type="application/ld+json">' . json_encode($schema_exp, JSON_UNESC
       <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--teal);margin-bottom:10px">Want To Overland?</div>
       <div style="font-family:var(--headline);font-size:26px;color:#fff;letter-spacing:1px;margin-bottom:14px">We're Game For This</div>
       <p style="font-size:15px;line-height:1.8;color:rgba(255,255,255,.75);font-weight:300;margin-bottom:6px;text-align:left">Prefer to camp instead of hotel stays? Some of our travellers do — inside their car, a roof-top tent, or a ground tent, making their own arrangements for stay and cooking.</p>
-      <p style="font-size:15px;line-height:1.8;color:rgba(255,255,255,.75);font-weight:300;margin-bottom:20px;text-align:left">The overlanding fee doesn't cover accommodation — it covers what we still provide on the road: convoy building, expedition accessories, and our support team enroute. It's charged per car, split however your group likes, and camping costs are yours to arrange and share.</p>
+      <p style="font-size:15px;line-height:1.8;color:rgba(255,255,255,.75);font-weight:300;margin-bottom:24px;text-align:left">The overlanding fee doesn't cover accommodation — it covers what we still provide on the road: convoy building, expedition accessories, and our support team enroute. It's charged per car, split however your group likes, and camping costs are yours to arrange and share.</p>
+      <div style="text-align:left;margin-bottom:28px">
+        <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:10px">You're Still Part Of The Convoy — Never On Your Own</div>
+        <ul class="ie-list">
+          <li>Full breakdown &amp; roadside support, same as every other participant</li>
+          <li>If plans change, we'll do our best to help you find a place to stay nearby</li>
+          <li>Radio sets for convoy coordination, same as the rest of the group</li>
+          <li>Candid photographs &amp; videos from the expedition team</li>
+          <li>Trip merchandise, same as everyone else on the expedition</li>
+        </ul>
+      </div>
       <div style="display:inline-block;background:var(--ink);border:1px solid rgba(193,68,14,.35);padding:16px 32px;margin-bottom:18px">
         <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:4px">Overlanding Fee</div>
         <div style="font-family:var(--headline);font-size:28px;color:#fff;letter-spacing:1px">₹<?php echo number_format($op); ?> <span style="font-size:14px;color:rgba(255,255,255,.6)">per car</span></div>

@@ -639,7 +639,17 @@ function tgNavLB(dir) {
     <div class="sec-tag" style="color:var(--teal)">Want To Overland?</div>
     <h2 style="font-family:var(--headline);font-size:clamp(28px,3.5vw,42px);color:#fff;letter-spacing:1px;margin-bottom:16px">We're Game For This</h2>
     <p style="font-size:15px;font-weight:300;color:rgba(255,255,255,.75);line-height:1.8;margin-bottom:8px">Prefer to camp instead of hotel stays? Some of our travellers do — inside their car, a roof-top tent, or a ground tent, making their own arrangements for stay and cooking.</p>
-    <p style="font-size:15px;font-weight:300;color:rgba(255,255,255,.75);line-height:1.8;margin-bottom:28px">The overlanding fee doesn't cover accommodation — it covers what we still provide on the road: convoy building, expedition accessories, and our support team enroute. It's charged per car, split however your group likes, and camping costs are yours to arrange and share.</p>
+    <p style="font-size:15px;font-weight:300;color:rgba(255,255,255,.75);line-height:1.8;margin-bottom:24px">The overlanding fee doesn't cover accommodation — it covers what we still provide on the road: convoy building, expedition accessories, and our support team enroute. It's charged per car, split however your group likes, and camping costs are yours to arrange and share.</p>
+    <div style="text-align:left;margin-bottom:28px">
+      <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:10px">You're Still Part Of The Convoy — Never On Your Own</div>
+      <ul class="ie-list">
+        <li>Full breakdown &amp; roadside support, same as every other participant</li>
+        <li>If plans change, we'll do our best to help you find a place to stay nearby</li>
+        <li>Radio sets for convoy coordination, same as the rest of the group</li>
+        <li>Candid photographs &amp; videos from the expedition team</li>
+        <li>Trip merchandise, same as everyone else on the expedition</li>
+      </ul>
+    </div>
     <div style="display:inline-block;background:var(--ink);border:1px solid rgba(193,68,14,.35);padding:20px 40px;margin-bottom:24px">
       <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:6px">Overlanding Fee</div>
       <div style="font-family:var(--headline);font-size:32px;color:#fff;letter-spacing:1px">₹5,000 <span style="font-size:16px;color:rgba(255,255,255,.6)">per car</span></div>
