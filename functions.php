@@ -2718,7 +2718,11 @@ function fw_expedition_card($pid){
     $month   = $m('fw_month')?:$m('fw_dates');
     $dur     = $m('fw_duration');
     $dest    = $m('fw_destination');
-    $price   = (int)$m('fw_price');
+    $price_sd = (int)$m('fw_price');
+    $price_cp = (int)$m('fw_couple_price');
+    $price_sp = (int)$m('fw_seat_price');
+    $price_tiers = array_filter(array($price_sd,$price_cp,$price_sp), function($v){ return $v > 0; });
+    $price   = !empty($price_tiers) ? min($price_tiers) : $price_sd;
     $unit    = $m('fw_price_unit')?:'per person';
     $max     = (int)($m('fw_max_slots')?:20);
     $filled  = (int)$m('fw_filled_slots');
@@ -4245,3 +4249,4 @@ add_action( 'wp_ajax_fw_camp_whatsapp_export', function() {
     $numbers = array_column( $rows, 'mobile' );
     wp_send_json_success( array( 'count' => count( $numbers ), 'csv' => implode( "\n", $numbers ) ) );
 });
+
