@@ -171,7 +171,7 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
   <style>
   #albumMarqueeTrack .alb-card{width:240px;flex-shrink:0;background:#0f0d0b;border:1px solid rgba(255,255,255,.08);border-radius:4px;overflow:hidden;transition:transform .3s ease,box-shadow .3s ease}
   #albumMarqueeTrack .alb-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,.5)}
-  #albumMarqueeTrack .alb-photos{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;height:180px}
+  #albumMarqueeTrack .alb-photos{display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;height:180px}
   #albumMarqueeTrack .alb-photos img{width:100%;height:100%;object-fit:cover;display:block}
   #albumMarqueeTrack .alb-photos .alb-photo-empty{background:rgba(255,255,255,.04)}
   #albumMarqueeTrack .alb-info{padding:14px 16px}
@@ -575,7 +575,7 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
   div[style*="flex:1;min-width:240px"]{min-width:unset!important;width:100%!important}
   /* Album carousel card size */
   #albumMarqueeTrack .alb-card{width:200px!important}
-  #albumMarqueeTrack .alb-photos{height:130px!important}
+  #albumMarqueeTrack .alb-photos{height:130px!important;grid-template-rows:1fr 1fr!important}
   /* Community stats */
   .comm-stats{grid-template-columns:1fr 1fr!important}
   /* General overflow fix */
