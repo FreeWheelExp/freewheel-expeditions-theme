@@ -37,7 +37,7 @@ $things_carry = array_filter(array_map('trim', explode("\n", $m('fw_things_carry
 /* slot tracking removed — managed via WhatsApp */
 $wa_num_raw  = $m('fw_whatsapp');
 $wa_num      = ($wa_num_raw && $wa_num_raw !== '919999999999') ? $wa_num_raw : '917817838060';
-$badge      = $m('fw_badge');
+$badge      = fw_active_badge_label($id);
 $highlights = array_filter(array_map('trim', explode("\n", $m('fw_highlights'))));
 $inclusions = array_filter(array_map('trim', explode("\n", $m('fw_inclusions'))));
 $exclusions = array_filter(array_map('trim', explode("\n", $m('fw_exclusions'))));
