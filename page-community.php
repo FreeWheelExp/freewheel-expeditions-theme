@@ -179,18 +179,70 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
   #albumMarqueeTrack .alb-meta{font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.5px}
   </style>
 
-  <style>
-  @keyframes fw-scroll-left {
-    0%   { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
-  }
-  #albumMarqueeTrack {
-    animation: fw-scroll-left 40s linear infinite;
-  }
-  #albumMarqueeTrack:hover {
-    animation-play-state: paused;
-  }
-  </style>
+  <script>
+  /* Shared: auto-scrolling marquee that's also drag-scrollable (mouse + touch).
+     Replaces the old CSS @keyframes approach — a running CSS animation would
+     fight with a manually-set transform, so this drives translateX in JS instead. */
+  window.fwInitMarqueeDrag = function(marqueeEl, trackEl, durationSeconds) {
+    var offset = 0, singleSetWidth = 0, lastTs = null;
+    var isDragging = false, dragStartX = 0, dragStartOffset = 0, hasDragged = false, paused = false;
+
+    function measure() { singleSetWidth = trackEl.scrollWidth / 2; }
+    measure();
+    window.addEventListener('resize', measure);
+
+    function wrap() {
+      if (singleSetWidth <= 0) return;
+      if (offset <= -singleSetWidth) offset += singleSetWidth;
+      if (offset > 0) offset -= singleSetWidth;
+    }
+    function apply() { trackEl.style.transform = 'translateX(' + offset + 'px)'; }
+
+    function tick(ts) {
+      if (lastTs === null) lastTs = ts;
+      var dt = (ts - lastTs) / 1000;
+      lastTs = ts;
+      if (!isDragging && !paused && singleSetWidth > 0) {
+        offset -= (singleSetWidth / durationSeconds) * dt;
+        wrap();
+        apply();
+      }
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+
+    marqueeEl.addEventListener('mouseenter', function(){ paused = true; });
+    marqueeEl.addEventListener('mouseleave', function(){ paused = false; isDragging = false; marqueeEl.style.cursor = 'grab'; });
+
+    function dragStart(clientX) {
+      isDragging = true; hasDragged = false;
+      dragStartX = clientX; dragStartOffset = offset;
+      marqueeEl.style.cursor = 'grabbing';
+    }
+    function dragMove(clientX) {
+      if (!isDragging) return;
+      var delta = clientX - dragStartX;
+      if (Math.abs(delta) > 4) hasDragged = true;
+      offset = dragStartOffset + delta;
+      wrap();
+      apply();
+    }
+    function dragEnd() { isDragging = false; marqueeEl.style.cursor = 'grab'; }
+
+    marqueeEl.addEventListener('mousedown', function(e){ dragStart(e.clientX); e.preventDefault(); });
+    window.addEventListener('mousemove', function(e){ dragMove(e.clientX); });
+    window.addEventListener('mouseup', dragEnd);
+
+    marqueeEl.addEventListener('touchstart', function(e){ paused = true; dragStart(e.touches[0].clientX); }, {passive:true});
+    marqueeEl.addEventListener('touchmove', function(e){ dragMove(e.touches[0].clientX); }, {passive:true});
+    marqueeEl.addEventListener('touchend', function(){ dragEnd(); paused = false; });
+
+    /* A real drag shouldn't also fire the card's onclick (which opens the lightbox) */
+    marqueeEl.addEventListener('click', function(e){
+      if (hasDragged) { e.stopPropagation(); e.preventDefault(); hasDragged = false; }
+    }, true);
+  };
+  </script>
 
   <script>
   (function() {
@@ -215,13 +267,13 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
       var track   = document.getElementById('albumMarqueeTrack');
       var marquee = document.getElementById('albumMarquee');
 
-      /* Duplicate cards — CSS animation goes 0% to -50%, so 2x width = seamless */
+      /* Duplicate cards — the JS scroll loops offset back to 0 at -singleSetWidth, so 2x width = seamless */
       var cards = albums.map(makeCard).join('');
       track.innerHTML = cards + cards;
 
-      /* Speed: fewer cards = faster animation so it feels right */
+      /* Speed: fewer cards = faster loop so it feels right */
       var duration = Math.max(20, albums.length * 5);
-      track.style.animationDuration = duration + 's';
+      window.fwInitMarqueeDrag(marquee, track, duration);
 
       marquee.style.display = 'block';
     }
@@ -376,9 +428,6 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
   #blogMarqueeTrack .blg-info{padding:14px 16px}
   #blogMarqueeTrack .blg-title{font-family:var(--headline);font-size:16px;color:#fff;letter-spacing:.5px;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   #blogMarqueeTrack .blg-excerpt{font-size:12px;color:rgba(255,255,255,.5);line-height:1.5;font-weight:300;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:10px}
-  @keyframes fw-scroll-left-blogs { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-  #blogMarqueeTrack { animation: fw-scroll-left-blogs 45s linear infinite; }
-  #blogMarqueeTrack:hover { animation-play-state: paused; }
   </style>
 
   <script>
@@ -406,7 +455,7 @@ footer{background:#070503;padding:28px 5vw;display:flex;justify-content:space-be
       var cards   = blogs.map(makeBlogCard).join('');
       track.innerHTML = cards + cards;
       var duration = Math.max(24, blogs.length * 6);
-      track.style.animationDuration = duration + 's';
+      window.fwInitMarqueeDrag(marquee, track, duration);
       marquee.style.display = 'block';
     }
 
