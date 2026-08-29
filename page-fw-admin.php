@@ -377,10 +377,15 @@ get_header();
           <div style="margin-bottom:20px"><label class="adm-label">Highlights (one per line)</label><textarea id="expHighlights" class="adm-input" rows="3" placeholder="Mustang Valley&#10;Lo Manthang&#10;Kagbeni"></textarea></div>
 
           <div class="adm-section-title" style="font-size:14px">Slots &amp; Pricing</div>
-          <div class="adm-grid-3" style="margin-bottom:12px">
+          <div class="adm-grid-2" style="margin-bottom:12px">
             <div><label class="adm-label">Price (₹)</label><input type="number" id="expPrice" class="adm-input" placeholder="29999"></div>
             <div><label class="adm-label">Price Unit</label><select id="expPriceUnit" class="adm-select"><option value="per person">per person</option><option value="per car">per car</option><option value="per couple">per couple</option></select></div>
+          </div>
+          <div class="adm-grid-2" style="margin-bottom:12px">
             <div><label class="adm-label">Card Badge</label><input type="text" id="expBadge" class="adm-input" placeholder="Early Bird Discount"></div>
+            <div><label class="adm-label">Badge Valid Until</label><input type="date" id="expBadgeUntil" class="adm-input">
+              <p class="fw-tip" style="font-size:11px;color:rgba(255,255,255,.4);margin-top:4px">Leave blank for a badge that never expires. If set, the badge shows "· Till &lt;date&gt;" and disappears automatically the day after — on the site and in campaign emails.</p>
+            </div>
           </div>
           <div class="adm-grid-3" style="margin-bottom:12px">
             <div><label class="adm-label">Couple Discount Price (₹)</label><input type="number" id="expCouplePrice" class="adm-input"></div>
@@ -388,11 +393,7 @@ get_header();
             <div><label class="adm-label">Overlanding Price (₹ per car)</label><input type="number" id="expOverlandPrice" class="adm-input" placeholder="9000"></div>
             <div><label class="adm-label">Display Order (lower = first)</label><input type="number" id="expOrder" class="adm-input" value="0"></div>
           </div>
-          <div class="adm-grid-3" style="margin-bottom:12px">
-            <div><label class="adm-label">Total Slots</label><input type="number" id="expMaxSlots" class="adm-input" value="20"></div>
-            <div><label class="adm-label">Slots Filled</label><input type="number" id="expFilledSlots" class="adm-input" value="0"></div>
-            <div><label class="adm-label">Booking Status</label><select id="expWaitlist" class="adm-select"><option value="">Open for Booking</option><option value="1">Full — Show Waitlist</option></select></div>
-          </div>
+          <div style="margin-bottom:12px;max-width:280px"><label class="adm-label">Booking Status</label><select id="expWaitlist" class="adm-select"><option value="">Open for Booking</option><option value="1">Full — Show Waitlist</option></select></div>
           <div class="adm-grid-2" style="margin-bottom:12px">
             <div><label class="adm-label">Booking WhatsApp Number</label><input type="text" id="expWhatsapp" class="adm-input" placeholder="917817838060"></div>
             <div><label class="adm-label">UPI QR Code Image URL</label><input type="text" id="expQrImage" class="adm-input"></div>
