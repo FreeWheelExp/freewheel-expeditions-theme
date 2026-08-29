@@ -1321,7 +1321,7 @@ function adminLoadExpeditions() {
 }
 
 function expResetForm() {
-  ['expId','expDestination','expDates','expMonth','expDuration','expRegion','expSubtitle','expOverview','expHighlights','expBadge','expWhatsapp','expQrImage','expCancellation','expThingsCarry','expInclusions','expExclusions','expThumbId'].forEach(function(id){ document.getElementById(id).value = ''; });
+  ['expId','expDestination','expDates','expMonth','expDuration','expRegion','expSubtitle','expOverview','expHighlights','expBadge','expBadgeUntil','expWhatsapp','expQrImage','expCancellation','expThingsCarry','expInclusions','expExclusions','expThumbId'].forEach(function(id){ document.getElementById(id).value = ''; });
   document.getElementById('expTitle').value = '';
   document.getElementById('expStatus').value = 'upcoming';
   document.getElementById('expDifficulty').value = 'Moderate';
@@ -1333,8 +1333,6 @@ function expResetForm() {
   document.getElementById('expSeatPrice').value = '';
   document.getElementById('expOverlandPrice').value = '';
   document.getElementById('expOrder').value = '0';
-  document.getElementById('expMaxSlots').value = '20';
-  document.getElementById('expFilledSlots').value = '0';
   document.getElementById('expPostStatus').value = 'publish';
   document.getElementById('expItinRows').innerHTML = '';
   document.getElementById('expFaqRows').innerHTML = '';
@@ -1376,12 +1374,11 @@ function adminShowExpeditionEditor(id) {
       document.getElementById('expPrice').value = e.fw_price || '';
       document.getElementById('expPriceUnit').value = e.fw_price_unit || 'per person';
       document.getElementById('expBadge').value = e.fw_badge || '';
+      document.getElementById('expBadgeUntil').value = e.fw_badge_until || '';
       document.getElementById('expCouplePrice').value = e.fw_couple_price || '';
       document.getElementById('expSeatPrice').value = e.fw_seat_price || '';
       document.getElementById('expOverlandPrice').value = e.fw_overland_price || '';
       document.getElementById('expOrder').value = e.fw_order || '0';
-      document.getElementById('expMaxSlots').value = e.fw_max_slots || '20';
-      document.getElementById('expFilledSlots').value = e.fw_filled_slots || '0';
       document.getElementById('expWaitlist').value = e.fw_waitlist_mode || '';
       document.getElementById('expWhatsapp').value = e.fw_whatsapp || '';
       document.getElementById('expQrImage').value = e.fw_qr_image || '';
@@ -1520,12 +1517,11 @@ function adminSaveExpedition() {
     fw_price: document.getElementById('expPrice').value,
     fw_price_unit: document.getElementById('expPriceUnit').value,
     fw_badge: document.getElementById('expBadge').value,
+    fw_badge_until: document.getElementById('expBadgeUntil').value,
     fw_couple_price: document.getElementById('expCouplePrice').value,
     fw_seat_price: document.getElementById('expSeatPrice').value,
     fw_overland_price: document.getElementById('expOverlandPrice').value,
     fw_order: document.getElementById('expOrder').value,
-    fw_max_slots: document.getElementById('expMaxSlots').value,
-    fw_filled_slots: document.getElementById('expFilledSlots').value,
     fw_waitlist_mode: document.getElementById('expWaitlist').value,
     fw_whatsapp: document.getElementById('expWhatsapp').value,
     fw_qr_image: document.getElementById('expQrImage').value,
