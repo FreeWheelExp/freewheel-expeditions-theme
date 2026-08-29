@@ -2710,6 +2710,19 @@ function fw_products(){
         'meta_key'=>'fw_prod_order','orderby'=>'meta_value_num','order'=>'ASC'));
 }
 
+/* ── Badge label: appends "· Till <date>" when fw_badge_until is set, auto-hides once past ── */
+function fw_active_badge_label( $post_id ) {
+    $badge = get_post_meta( $post_id, 'fw_badge', true );
+    if ( ! $badge ) return '';
+    $until = get_post_meta( $post_id, 'fw_badge_until', true );
+    if ( $until ) {
+        if ( $until < current_time( 'Y-m-d' ) ) return ''; // expired — hide badge entirely
+        $ts = strtotime( $until );
+        $badge .= ' · Till ' . ( $ts ? date_i18n( 'j M', $ts ) : $until );
+    }
+    return $badge;
+}
+
 function fw_expedition_card($pid){
     $m=function($k)use($pid){return get_post_meta($pid,$k,true);};
     $title   = get_the_title($pid);
@@ -2728,7 +2741,7 @@ function fw_expedition_card($pid){
     $filled  = (int)$m('fw_filled_slots');
     $left    = max(0,$max-$filled);
     $pct     = $max>0?round($filled/$max*100):0;
-    $badge   = $m('fw_badge');
+    $badge   = fw_active_badge_label($pid);
     $emoji   = $m('fw_hero_emoji')?:'🏔️';
     $grad    = 'linear-gradient(145deg,#1a1208,#0f0d0b)';
     $badge_h = $badge?'<div style="position:absolute;top:12px;left:12px;background:#c1440e;color:#fff;font-size:9px;letter-spacing:2px;text-transform:uppercase;padding:4px 10px;z-index:5;font-family:var(--body);font-weight:500">'.esc_html($badge).'</div>':'';
@@ -3703,7 +3716,7 @@ function fw_admin_get_expedition( $request ) {
         'thumbnail_id'  => (int) get_post_thumbnail_id( $id ),
         'thumbnail_url' => get_the_post_thumbnail_url( $id, 'medium' ),
     );
-    $tf = array('fw_status','fw_destination','fw_dates','fw_month','fw_duration','fw_region','fw_difficulty','fw_subtitle','fw_overview','fw_highlights','fw_badge','fw_hero_emoji','fw_inclusions','fw_exclusions','fw_cancellation','fw_things_carry','fw_whatsapp','fw_price_unit','fw_qr_image','fw_waitlist_mode');
+    $tf = array('fw_status','fw_destination','fw_dates','fw_month','fw_duration','fw_region','fw_difficulty','fw_subtitle','fw_overview','fw_highlights','fw_badge','fw_hero_emoji','fw_inclusions','fw_exclusions','fw_cancellation','fw_things_carry','fw_whatsapp','fw_price_unit','fw_qr_image','fw_waitlist_mode','fw_badge_until');
     foreach ( $tf as $f ) $data[$f] = $m( $f );
     $nf = array('fw_price','fw_couple_price','fw_seat_price','fw_overland_price','fw_max_slots','fw_filled_slots','fw_order');
     foreach ( $nf as $f ) $data[$f] = $m( $f );
@@ -3738,7 +3751,7 @@ function fw_admin_save_expedition( $request ) {
     }
     if ( is_wp_error( $post_id ) ) return $post_id;
 
-    $tf = array('fw_status','fw_destination','fw_dates','fw_month','fw_duration','fw_region','fw_difficulty','fw_subtitle','fw_overview','fw_highlights','fw_badge','fw_hero_emoji','fw_inclusions','fw_exclusions','fw_cancellation','fw_things_carry','fw_whatsapp','fw_price_unit','fw_qr_image','fw_waitlist_mode');
+    $tf = array('fw_status','fw_destination','fw_dates','fw_month','fw_duration','fw_region','fw_difficulty','fw_subtitle','fw_overview','fw_highlights','fw_badge','fw_hero_emoji','fw_inclusions','fw_exclusions','fw_cancellation','fw_things_carry','fw_whatsapp','fw_price_unit','fw_qr_image','fw_waitlist_mode','fw_badge_until');
     foreach ( $tf as $f ) { if ( isset( $p[$f] ) ) update_post_meta( $post_id, $f, sanitize_textarea_field( $p[$f] ) ); }
 
     $nf = array('fw_price','fw_couple_price','fw_seat_price','fw_overland_price','fw_max_slots','fw_filled_slots','fw_order');
