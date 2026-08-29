@@ -667,7 +667,8 @@ function fw_build_trip_card_data( $post_id, $custom_blurb = '', $extra_badges = 
 
     $m = function( $k ) use ( $post_id ) { return get_post_meta( $post_id, $k, true ); };
     $badges = array( 'Self Drive' );
-    if ( $m( 'fw_max_slots' ) ) $badges[] = $m( 'fw_max_slots' ) . ' Vehicle Slots';
+    $early_bird = fw_active_badge_label( $post_id );
+    if ( $early_bird ) $badges[] = $early_bird;
     foreach ( (array) $extra_badges as $b ) { if ( trim( (string) $b ) !== '' ) $badges[] = trim( (string) $b ); }
 
     return array(
