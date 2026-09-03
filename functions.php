@@ -2846,11 +2846,11 @@ function fw_get_payment_details() {
         exit;
     }
     wp_send_json_success(array(
-        'upi'      => 'freewheelexpeditions@okicici',
+        'upi'      => 'freewheelexpeditions@okhdfcbank',
         'acc_num'  => '0501001000000499',
         'ifsc'     => 'NTBL0HAL050',
         'bank'     => 'Nainital Bank, Haldwani',
-        'qr_image' => get_option('fw_upi_qr_image', 'https://freewheelexpeditions.in/wp-content/uploads/2026/04/QR.jpeg'),
+        'qr_image' => get_option('fw_upi_qr_image', 'https://freewheelexpeditions.in/wp-content/uploads/2026/09/QR-1.jpeg'),
     ));
     exit;
 }
